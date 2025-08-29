@@ -1,0 +1,378 @@
+#page-admin-local-learnwise-setup {
+    background-color: #fff;
+    line-height: 1.5;
+}
+#page-admin-local-learnwise-setup #region-main {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+#page-admin-local-learnwise-setup #region-main .container {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+#page-admin-local-learnwise-setup #region-main .main-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+}
+#page-admin-local-learnwise-setup #region-main .section {
+    margin-bottom: 2rem;
+}
+#page-admin-local-learnwise-setup #region-main .section-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+#page-admin-local-learnwise-setup #region-main .section-description {
+    font-size: 0.75rem;
+    margin-bottom: 1rem;
+}
+#page-admin-local-learnwise-setup #region-main .section-description-multi {
+    margin-bottom: 1rem;
+}
+#page-admin-local-learnwise-setup #region-main .section-description-multi p {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+#page-admin-local-learnwise-setup #region-main .section-description-multi .note {
+    font-style: italic;
+}
+#page-admin-local-learnwise-setup #region-main .field-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+#page-admin-local-learnwise-setup #region-main .field-label {
+    min-width: 12.5rem;
+    text-align: right;
+    padding-right: 1rem;
+}
+#page-admin-local-learnwise-setup #region-main .label {
+    font-size: inherit;
+    font-weight: 500;
+    color: inherit;
+    display: block;
+    background-color: transparent;
+    text-align: right;
+}
+#page-admin-local-learnwise-setup #region-main .label-hint {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+#page-admin-local-learnwise-setup #region-main .field-input {
+    flex: 1;
+    position: relative;
+}
+#page-admin-local-learnwise-setup #region-main .input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    background-color: #fff;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+#page-admin-local-learnwise-setup #region-main .input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+#page-admin-local-learnwise-setup #region-main .input.readonly {
+    background-color: #f9fafb;
+}
+#page-admin-local-learnwise-setup #region-main .input.small-text {
+    font-size: 0.75rem;
+}
+#page-admin-local-learnwise-setup #region-main .input.mono {
+    font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+}
+#page-admin-local-learnwise-setup #region-main .textarea {
+    width: 100%;
+    min-height: 7.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    background-color: #fff;
+    resize: none;
+    font-family: inherit;
+}
+#page-admin-local-learnwise-setup #region-main .textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+#page-admin-local-learnwise-setup #region-main .textarea-hint {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+#page-admin-local-learnwise-setup #region-main .copy-field {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+#page-admin-local-learnwise-setup #region-main .copy-btn {
+    flex-shrink: 0;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: #fff;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+#page-admin-local-learnwise-setup #region-main .copy-btn:hover {
+    background-color: #f9fafb;
+}
+#page-admin-local-learnwise-setup #region-main .copy-icon {
+    width: 1rem;
+    height: 1rem;
+}
+#page-admin-local-learnwise-setup #region-main .toggle-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+#page-admin-local-learnwise-setup #region-main .switch-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+#page-admin-local-learnwise-setup #region-main .switch {
+    width: 2.75rem;
+    height: 1.5rem;
+    background-color: #e5e7eb;
+    border-radius: 0.75rem;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+#page-admin-local-learnwise-setup #region-main .switch.active {
+    background-color: #3b82f6;
+}
+#page-admin-local-learnwise-setup #region-main .switch.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+#page-admin-local-learnwise-setup #region-main .switch-thumb {
+    width: 1.25rem;
+    height: 1.25rem;
+    background-color: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+#page-admin-local-learnwise-setup #region-main .switch.active .switch-thumb {
+    transform: translateX(1.25rem);
+}
+#page-admin-local-learnwise-setup #region-main .toggle-status {
+    font-size: 0.875rem;
+}
+#page-admin-local-learnwise-setup #region-main .tooltip {
+    position: absolute;
+    top: -2.5rem;
+    left: 0;
+    background-color: #1f2937;
+    color: #fff;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+    z-index: 10;
+}
+#page-admin-local-learnwise-setup #region-main .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 1rem;
+    border: 4px solid transparent;
+    border-top-color: #1f2937;
+}
+#page-admin-local-learnwise-setup #region-main .switch-wrapper:hover + .tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+#page-admin-local-learnwise-setup #region-main .lti-config,
+#page-admin-local-learnwise-setup #region-main .webservices-config,
+#page-admin-local-learnwise-setup #region-main .liveapi-config {
+    padding-left: 1rem;
+    border-left: 2px solid #dbeafe;
+    margin-top: 1rem;
+}
+#page-admin-local-learnwise-setup #region-main .save-section {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 1rem;
+}
+#page-admin-local-learnwise-setup #region-main .save-btn {
+    background-color: #2563eb;
+    color: #fff;
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+#page-admin-local-learnwise-setup #region-main .save-btn:hover {
+    background-color: #1d4ed8;
+}
+#page-admin-local-learnwise-setup #region-main .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+#page-admin-local-learnwise-setup #region-main .mmodal {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    max-width: 28rem;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+#page-admin-local-learnwise-setup #region-main .modal-header {
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+}
+#page-admin-local-learnwise-setup #region-main .modal-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+}
+#page-admin-local-learnwise-setup #region-main .modal-body {
+    padding: 0 1.5rem 1rem 1.5rem;
+}
+#page-admin-local-learnwise-setup #region-main .modal-body p {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+#page-admin-local-learnwise-setup #region-main .modal-footer {
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+#page-admin-local-learnwise-setup #region-main .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    border: 1px solid transparent;
+}
+#page-admin-local-learnwise-setup #region-main .btn-secondary {
+    background-color: #fff;
+    color: #374151;
+    border-color: #d1d5db;
+}
+#page-admin-local-learnwise-setup #region-main .btn-secondary:hover {
+    background-color: #f9fafb;
+}
+#page-admin-local-learnwise-setup #region-main .btn-danger {
+    background-color: #dc2626;
+    color: #fff;
+}
+#page-admin-local-learnwise-setup #region-main .btn-danger:hover {
+    background-color: #b91c1c;
+}
+/* Radio button styles */
+#page-admin-local-learnwise-setup #region-main .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+#page-admin-local-learnwise-setup #region-main .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #374151;
+}
+#page-admin-local-learnwise-setup #region-main .radio-option.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+#page-admin-local-learnwise-setup #region-main .radio-option input[type="radio"] {
+    display: none;
+}
+#page-admin-local-learnwise-setup #region-main .radio-button {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    position: relative;
+    transition: border-color 0.2s ease-in-out;
+    flex-shrink: 0;
+}
+#page-admin-local-learnwise-setup #region-main .radio-option:not(.disabled):hover .radio-button {
+    border-color: #3b82f6;
+}
+#page-admin-local-learnwise-setup #region-main .radio-option input[type="radio"]:checked + .radio-button {
+    border-color: #3b82f6;
+    background-color: #fff;
+}
+#page-admin-local-learnwise-setup #region-main .radio-option input[type="radio"]:checked + .radio-button::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: #3b82f6;
+    border-radius: 50%;
+}
+#page-admin-local-learnwise-setup #region-main .radio-option.disabled .radio-button {
+    border-color: #e5e7eb;
+    background-color: #f9fafb;
+}
+#page-admin-local-learnwise-setup #region-main .radio-label {
+    font-weight: 500;
+}
+#page-admin-local-learnwise-setup #region-main .radio-option.disabled .radio-label {
+    color: #9ca3af;
+}
+
+@media (max-width: 768px) {
+    #page-admin-local-learnwise-setup #region-main .container {
+        padding: 1rem;
+    }
+    #page-admin-local-learnwise-setup #region-main .field-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #page-admin-local-learnwise-setup #region-main .field-label {
+        min-width: auto;
+        text-align: left;
+        padding-right: 0;
+        margin-bottom: 0.5rem;
+    }
+    #page-admin-local-learnwise-setup #region-main .copy-field {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #page-admin-local-learnwise-setup #region-main .copy-btn {
+        align-self: flex-start;
+        margin-top: 0.5rem;
+    }
+}

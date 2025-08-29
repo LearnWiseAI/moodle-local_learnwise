@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<libraries>
+    <library>
+        <location>OAuth2</location>
+        <name>OAuth2</name>
+        <description>A library for implementing an OAuth2 Server in php</description>
+        <version>v1.14.2</version>
+        <license>MIT</license>
+        <repository>https://github.com/bshaffer/oauth2-server-php</repository>
+    </library>
+    <library>
+        <location>vendorjs/zenorocha/clipboard.min.js</location>
+        <name>clipboard.js</name>
+        <description>✂️ Modern copy to clipboard. No Flash. Just 3kb gzipped 📋</description>
+        <version>v2.0.11</version>
+        <license>MIT</license>
+        <repository>https://github.com/zenorocha/clipboard.js</repository>
+    </library>
+</libraries>

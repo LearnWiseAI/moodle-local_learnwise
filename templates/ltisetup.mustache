@@ -1,0 +1,75 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_learnwise/ltisetup
+
+    TODO describe template ltisetup
+
+    Example context (json):
+    [{
+        "index": 1,
+        "header": "Platform ID",
+        "value": "http:\/\/php72moodle.titlocal\/learnwise"
+    },
+    {
+        "index": 2,
+        "header": "Client ID",
+        "value": "iyWye9N2kGLuWF1"
+    },
+    {
+        "index": 3,
+        "header": "Deployment ID",
+        "value": "20"
+    },
+    {
+        "index": 4,
+        "header": "Public keyset URL",
+        "value": "http:\/\/php72moodle.titlocal\/learnwise\/mod\/lti\/certs.php"
+    },
+    {
+        "index": 5,
+        "header": "Access token URL",
+        "value": "http:\/\/php72moodle.titlocal\/learnwise\/mod\/lti\/token.php"
+    },
+    {
+        "index": 6,
+        "header": "Authentication request URL",
+        "value": "http:\/\/php72moodle.titlocal\/learnwise\/mod\/lti\/auth.php"
+    }]
+}}
+{{#data}}
+<div class="field-row">
+    <div class="field-label">
+        <label class="label">{{{ header }}}</label>
+    </div>
+    <div class="field-input copy-field">
+        <input
+            id="input-{{{index}}}"
+            type="text"
+            class="input readonly"
+            value="{{{ value }}}"
+            readonly
+        />
+        <button type="button" class="copy-btn" data-clipboard-target="#input-{{{index}}}">
+            <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+            </svg>
+        </button>
+    </div>
+</div>
+{{/data}}

@@ -1,0 +1,324 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_learnwise/setup
+
+    TODO describe template setup
+
+    Example context (json):
+    {
+        "floatingButtonAssistantId": "TEMPID",
+        "liveApiConfigClientId": "kAG1uySlafJOO95",
+        "liveApiConfigClientSecret": "SmMUno551IXyx7Yc1MBSAYl29k3XjwDUCN1ju2LbyCUK1Gy9fE8kMzbzyU7P5Cj4biXBOJEh80MK6mD2dU2fUJKkDjioNQS5OfyF",
+        "liveApiConfigRedirectURLs": "https:\/\/oauth.pstmn.io\/v1\/callback\r\nhttps:\/\/oauth.pstmn.io\/v1\/vscode-callback\r\nhttp:\/\/php72moodle.titlocal\/learnwise\/local\/learnwise\/testintegration.html",
+        "floatingButtonStatus": false,
+        "ltiStatus": true,
+        "webServicesStatus": true,
+        "liveApiStatus": true,
+        "showltisetup": true,
+        "showtoast": true,
+        "envProduction": false,
+        "envDevelopment": false,
+        "envSandbox": true,
+        "ltiAssistantId": "TEMP2",
+        "webServicesConfigHtml": "<div class=\"field-row\">\n    <div class=\"field-label\">\n        <label class=\"label\">Access Token<\/label>\n        <div class=\"label-hint\">local_learnwise | accesstoken<\/div>\n    <\/div>\n    <div class=\"field-input copy-field\">\n        <input\n            id=\"webserviceaccesstokeninput\"\n            type=\"text\"\n            class=\"input readonly mono small-text\"\n            value=\"c86fdae14c74f1540c83c50dc86504bc\"\n            readonly\n        >\n        <button type=\"button\" class=\"copy-btn\" data-clipboard-target=\"#webserviceaccesstokeninput\">\n            <svg class=\"copy-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">\n                <rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"\/>\n                <path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"\/>\n            <\/svg>\n        <\/button>\n    <\/div>\n<\/div>"
+    }
+}}
+<form id="form1" method="post">
+    <input type="hidden" name="sesskey" value="{{{ config.sesskey }}}">
+    <input type="hidden" name="floatingButtonStatus" value="{{#floatingButtonStatus}}1{{/floatingButtonStatus}}">
+    <input type="hidden" name="ltiStatus" value="{{#ltiStatus}}1{{/ltiStatus}}">
+    <input type="hidden" name="webServicesStatus" value="{{#webServicesStatus}}1{{/webServicesStatus}}">
+    <input type="hidden" name="liveApiStatus" value="{{#liveApiStatus}}1{{/liveApiStatus}}">
+    <div class="container">
+        <h1 class="main-title">{{#str}} integration_listpage, local_learnwise {{/str}}</h1>
+
+        <!-- Environment Configuration -->
+        <div class="section">
+            <h2 class="section-title">{{#str}} environment, local_learnwise {{/str}}</h2>
+            <p class="section-description">
+                {{#str}} environment_desc, local_learnwise {{/str}}
+            </p>
+
+            <div class="field-row">
+                <label class="field-label label">{{#str}} environment, local_learnwise {{/str}}</label>
+                <div class="field-input">
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="environment" value="production" id="envProduction"{{#envProduction}} checked{{/envProduction}}>
+                            <span class="radio-button"></span>
+                            <span class="radio-label">{{#str}} environmentproduction, local_learnwise {{/str}}</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="environment" value="development" id="envDevelopment"{{#envDevelopment}} checked{{/envDevelopment}}>
+                            <span class="radio-button"></span>
+                            <span class="radio-label">{{#str}} environmentdevelopment, local_learnwise {{/str}}</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="environment" value="sandbox" id="envSandbox"{{#envSandbox}} checked{{/envSandbox}}>
+                            <span class="radio-button"></span>
+                            <span class="radio-label">{{#str}} environmentsandbox, local_learnwise {{/str}}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating button configuration -->
+        <div class="section">
+            <h2 class="section-title">{{#str}} floatingbuttonconfig, local_learnwise {{/str}}</h2>
+            <p class="section-description">
+                {{#str}} floatingbuttonconfigdesc, local_learnwise {{/str}}
+            </p>
+
+            <!-- Assistant ID -->
+            <div class="field-row">
+                <div class="field-label">
+                    <label for="floatingButtonAssistantId" class="label">{{#str}} assistantid, local_learnwise {{/str}}</label>
+                    <div class="label-hint">local_learnwise | assistantid</div>
+                </div>
+                <div class="field-input">
+                    <input
+                        type="text"
+                        id="floatingButtonAssistantId"
+                        name="floatingButtonAssistantId"
+                        class="input"
+                        placeholder="{{#str}} enterassistantid, local_learnwise {{/str}}"
+                        value="{{{floatingButtonAssistantId}}}"
+                    >
+                </div>
+            </div>
+
+            <!-- Region -->
+            <div class="field-row">
+                <div class="field-label">
+                    <label for="floatingButtonRegion" class="label">{{#str}} region, local_learnwise {{/str}}</label>
+                    <div class="label-hint">local_learnwise | region</div>
+                </div>
+                <div class="field-input">
+                    <select
+                        id="floatingButtonRegion"
+                        name="floatingButtonRegion"
+                        class="custom-select input"
+                    >
+                        {{#regionOptions}}
+                        <option value="{{{ key }}}"{{#selected}} selected{{/selected}}>{{{ value }}}</option>
+                        {{/regionOptions}}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Show floating button toggle -->
+            <div class="field-row">
+                <label class="field-label label">{{#str}} showfloatingbutton, local_learnwise {{/str}}</label>
+                <div class="field-input toggle-container">
+                    <div class="switch-wrapper" id="floatingButtonSwitchWrapper">
+                        <div class="switch" id="floatingButtonSwitch">
+                            <div class="switch-thumb"></div>
+                        </div>
+                        <span class="toggle-status" id="floatingButtonStatus">
+                            {{#str}} statusdisabled, local_learnwise {{/str}}
+                        </span>
+                    </div>
+                    <div class="tooltip" id="floatingButtonTooltip">
+                        {{#str}} showfloatingbuttontooltip, local_learnwise {{/str}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{#showltisetup}}
+        <!-- LTI Configuration -->
+        <div class="section">
+            <h2 class="section-title">{{#str}} lticonfig, local_learnwise {{/str}}</h2>
+            <div class="section-description-multi">
+                <p>{{#str}} lticonfig_desc, local_learnwise {{/str}}</p>
+                <p class="note">{{#str}} lticonfig_note, local_learnwise {{/str}}</p>
+            </div>
+
+            <!-- Assistant ID -->
+            <div class="field-row">
+                <div class="field-label">
+                    <label for="ltiAssistantId" class="label">{{#str}} assistantid, local_learnwise {{/str}}</label>
+                    <div class="label-hint">local_learnwise | ltiassistantid</div>
+                </div>
+                <div class="field-input">
+                    <input
+                        type="text"
+                        id="ltiAssistantId"
+                        name="ltiAssistantId"
+                        class="input"
+                        placeholder="{{#str}} enterassistantid, local_learnwise {{/str}}"
+                        value="{{{ltiAssistantId}}}"
+                    >
+                </div>
+            </div>
+
+            <!-- LTI Toggle -->
+            <div class="field-row">
+                <label class="field-label label">{{#str}} enablelti, local_learnwise {{/str}}</label>
+                <div class="field-input toggle-container">
+                    <div class="switch-wrapper" id="ltiSwitchWrapper">
+                        <div class="switch" id="ltiSwitch">
+                            <div class="switch-thumb"></div>
+                        </div>
+                        <span class="toggle-status" id="ltiStatus">{{#str}} statusdisabled, local_learnwise {{/str}}</span>
+                    </div>
+                    <div class="tooltip" id="ltiTooltip">
+                        {{#str}} enablelti_tooltip, local_learnwise {{/str}}
+                    </div>
+                </div>
+            </div>
+
+            <!-- LTI Configuration Fields -->
+            <div class="lti-config" id="ltiConfig" style="display: none;"></div>
+        </div>
+        {{/showltisetup}}
+
+        <!-- Course contents integration -->
+        <div class="section">
+            <h2 class="section-title">{{#str}} coursecontentsintegration, local_learnwise {{/str}}</h2>
+            <p class="section-description">
+                {{#str}} coursecontentsintegration_desc, local_learnwise {{/str}}
+            </p>
+
+            <div class="field-row">
+                <label class="field-label label">{{#str}} coursecontentsintegration_label, local_learnwise {{/str}}</label>
+                <div class="field-input toggle-container">
+                    <div class="switch-wrapper">
+                        <div class="switch" id="webServicesSwitch">
+                            <div class="switch-thumb"></div>
+                        </div>
+                        <span class="toggle-status" id="webServicesStatus">{{#str}} statusdisabled, local_learnwise {{/str}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="webservices-config" id="webServicesConfig" style="display: none;">{{{webServicesConfigHtml}}}</div>
+        </div>
+
+        <!-- Live API Integration -->
+        <div class="section">
+            <h2 class="section-title">{{#str}} liveapiintegration, local_learnwise {{/str}}</h2>
+            <p class="section-description">
+                {{#str}} liveapiintegration_desc, local_learnwise {{/str}}
+            </p>
+
+            <div class="field-row">
+                <label class="field-label label">{{#str}} enableliveapiintegration, local_learnwise {{/str}}</label>
+                <div class="field-input toggle-container">
+                    <div class="switch-wrapper">
+                        <div class="switch" id="liveApiSwitch">
+                            <div class="switch-thumb"></div>
+                        </div>
+                        <span class="toggle-status" id="liveApiStatus">{{#str}} statusdisabled, local_learnwise {{/str}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="liveapi-config" id="liveApiConfig" style="display: none;">
+                <div class="field-row">
+                    <div class="field-label">
+                        <label class="label">{{#str}} clientid, local_learnwise {{/str}}</label>
+                        <div class="label-hint">local_learnwise | clientid</div>
+                    </div>
+                    <div class="field-input copy-field">
+                        <input
+                            id="liveApiConfigClientId"
+                            type="text"
+                            class="input readonly"
+                            value="{{{liveApiConfigClientId}}}"
+                            readonly
+                        >
+                        <button type="button" class="copy-btn" data-clipboard-target="#liveApiConfigClientId">
+                            <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field-label">
+                        <label class="label">{{#str}} clientsecret, local_learnwise {{/str}}</label>
+                        <div class="label-hint">local_learnwise | clientsecret</div>
+                    </div>
+                    <div class="field-input copy-field">
+                        <input
+                            id="liveApiConfigClientSecret"
+                            type="text"
+                            class="input readonly mono small-text"
+                            value="{{{liveApiConfigClientSecret}}}"
+                            readonly
+                        >
+                        <button type="button" class="copy-btn" data-clipboard-target="#liveApiConfigClientSecret">
+                            <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field-label">
+                        <label class="label">{{#str}} redirecturl, local_learnwise {{/str}}</label>
+                        <div class="label-hint">local_learnwise | redirecturi</div>
+                    </div>
+                    <div class="field-input">
+                        <textarea
+                            name="liveApiConfigRedirectURLs"
+                            class="textarea"
+                            placeholder="{{#str}} redirecturl_desc, local_learnwise {{/str}}"
+                        >{{{liveApiConfigRedirectURLs}}}</textarea>
+                        <div class="textarea-hint">{{#str}} redirecturl_desc, local_learnwise {{/str}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save button -->
+        <div class="save-section">
+            <div class="field-label"></div>
+            <div class="field-input">
+                <button class="save-btn">{{#str}} savechanges, local_learnwise {{/str}}</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Modal for LTI removal confirmation -->
+<div class="modal-overlay" id="ltiRemovalModal" style="display: none;">
+    <div class="mmodal">
+        <div class="modal-header">
+            <h3 class="modal-title">{{#str}} removelticonfig, local_learnwise {{/str}}</h3>
+        </div>
+        <div class="modal-body">
+            <p>{{#str}} removelticonfig_desc, local_learnwise {{/str}}</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="closeLtiModal" class="btn btn-secondary">{{#str}} removelticonfig_no, local_learnwise {{/str}}</button>
+            <button type="button" id="confirmLtiRemoval" class="btn btn-danger">{{#str}} removelticonfig_yes, local_learnwise {{/str}}</button>
+        </div>
+    </div>
+</div>
+{{#js}}
+require(['local_learnwise/setup'], function(amd) {
+    amd.init({{#showtoast}}true{{/showtoast}});
+});
+{{/js}}
