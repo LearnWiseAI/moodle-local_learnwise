@@ -20,6 +20,7 @@ defined('MOODLE_INTERNAL') || die();
 
 use context_user;
 use core_calendar\external\calendar_event_exporter;
+use core_calendar\local\event\container;
 use core_calendar\local\event\entities\event_interface;
 use external_function_parameters;
 use external_value;
@@ -153,8 +154,7 @@ class calenderdetails extends baseapi {
             return $param;
         }, [$calendar->users, $calendar->groups, $calendar->courses, $calendar->categories]);
 
-        \local_learnwise\local\calendarcontainer::$nofilter = true;
-        $vault = \local_learnwise\local\calendarcontainer::get_event_vault();
+        $vault = container::get_event_vault();
         $events = $vault->get_events(
             $tstart,
             $tend,

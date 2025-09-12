@@ -17,7 +17,7 @@
 namespace local_learnwise\external;
 
 use context_course;
-use context_user;
+use context_module;
 use external_multiple_structure;
 use external_single_structure;
 use external_value;
@@ -63,11 +63,14 @@ class forums extends baseapi {
             'courseid' => $courseid,
         ]);
 
-        $coursecontext = context_course::instance($params['courseid']);
-        if (empty(baseapi::$my)) {
-            $coursecontext = context_user::instance($USER->id);
+        $context = context_course::instance($params['courseid']);
+        if (static::is_singleoperation()) {
+            $context = context_module::instance(static::get_id());
         }
-        static::validate_context($coursecontext);
+        static::validate_context($context);
+        if (static::is_singleoperation()) {
+            require_capability('mod/forum:viewdiscussion', $context);
+        }
 
         $course = get_course($params['courseid']);
 
@@ -76,6 +79,11 @@ class forums extends baseapi {
         $foruminfos = [];
         foreach ($modinfo->get_instances_of('forum') as $cm) {
             if (static::skip_record($cm->id)) {
+                continue;
+            }
+
+            $context = context_module::instance($cm->id);
+            if (!has_capability('mod/forum:viewdiscussion', $context)) {
                 continue;
             }
 

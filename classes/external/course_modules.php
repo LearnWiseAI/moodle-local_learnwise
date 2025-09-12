@@ -18,7 +18,7 @@ namespace local_learnwise\external;
 
 use completion_info;
 use context_course;
-use context_user;
+use context_module;
 use external_single_structure;
 use external_value;
 
@@ -70,11 +70,11 @@ class course_modules extends baseapi {
             'courseid' => $courseid,
         ]);
 
-        $coursecontext = context_course::instance($params['courseid']);
-        if (empty(baseapi::$my)) {
-            $coursecontext = context_user::instance($USER->id);
+        $context = context_course::instance($params['courseid']);
+        if (static::is_singleoperation()) {
+            $context = context_module::instance(static::get_id());
         }
-        static::validate_context($coursecontext);
+        static::validate_context($context);
 
         $course = get_course($params['courseid']);
 

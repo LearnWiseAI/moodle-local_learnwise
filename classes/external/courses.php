@@ -18,6 +18,7 @@ namespace local_learnwise\external;
 
 use completion_completion;
 use completion_info;
+use context_course;
 use context_user;
 use core_course_category;
 use external_single_structure;
@@ -58,8 +59,13 @@ class courses extends baseapi {
         global $CFG, $USER;
         require_once($CFG->libdir . '/completionlib.php');
 
-        $usercontext = context_user::instance($USER->id);
-        static::validate_context($usercontext);
+        if (static::is_singleoperation()) {
+            $coursecontext = context_course::instance(static::get_id());
+            static::validate_context($coursecontext);
+        } else {
+            $usercontext = context_user::instance($USER->id);
+            static::validate_context($usercontext);
+        }
 
         $response = [];
         if (!empty(baseapi::$my)) {
@@ -81,7 +87,9 @@ class courses extends baseapi {
             ];
             $courseurl = new moodle_url('/course/view.php', ['id' => $course->id]);
             $courseitem['url'] = $courseurl->out(false);
-            if (empty(baseapi::$my)) {
+            $coursecontext = context_course::instance($course->id);
+            $isenrolled = is_enrolled($coursecontext);
+            if (empty(baseapi::$my) && $isenrolled) {
                 $completionifo = new completion_info($course);
                 $courseitem['participants'] = $completionifo->get_num_tracked_users();
             } else {
@@ -95,7 +103,9 @@ class courses extends baseapi {
                     $courseitem['completiondate'] = $completion->timecompleted;
                 }
             }
-            $courseitem['modules'] = course_modules::execute($course->id, true);
+            if ($isenrolled) {
+                $courseitem['modules'] = course_modules::execute($course->id);
+            }
             if (static::is_singleoperation()) {
                 return $courseitem;
             }
@@ -110,17 +120,19 @@ class courses extends baseapi {
      * @return \external_single_structure
      */
     public static function single_structure() {
+        $modulestructure = course_modules::execute_returns();
+        $modulestructure->required = VALUE_OPTIONAL;
         $structure = new external_single_structure([
             'id' => new external_value(PARAM_INT, 'id of course'),
             'name' => new external_value(PARAM_TEXT, 'name of course'),
             'shortname' => new external_value(PARAM_TEXT, 'code of course'),
             'startdate' => new external_value(PARAM_INT, 'start date of course in unix format'),
             'enddate' => new external_value(PARAM_INT, 'start date of course in unix format'),
-            'participants' => new external_value(PARAM_INT, 'count of participants'),
+            'participants' => new external_value(PARAM_INT, 'count of participants', VALUE_DEFAULT, 0),
             'completionstatus' => new external_value(PARAM_TEXT, 'completion status'),
             'completiondate' => new external_value(PARAM_INT, 'completion date of course in unix format'),
             'url' => new external_value(PARAM_URL, 'url of course'),
-            'modules' => course_modules::execute_returns(),
+            'modules' => $modulestructure,
         ]);
         if (!empty(baseapi::$my)) {
             unset($structure->keys['participants']);

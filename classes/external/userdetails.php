@@ -72,8 +72,12 @@ class userdetails extends baseapi {
         if (empty($userid)) {
             $userid = $USER->id;
         }
-        self::validate_context(context_user::instance($userid));
+        $context = context_user::instance($userid);
+        self::validate_context($context);
         $user = core_user::get_user($userid, '*', MUST_EXIST);
+        if ($userid != $USER->id && user_can_view_profile($user)) {
+            require_capability('moodle/user:viewdetails', $context);
+        }
         return user_get_user_details_courses($user);
     }
 

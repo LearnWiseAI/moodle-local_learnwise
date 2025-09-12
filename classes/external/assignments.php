@@ -19,7 +19,6 @@ namespace local_learnwise\external;
 use assign;
 use context_course;
 use context_module;
-use context_user;
 use external_multiple_structure;
 use external_single_structure;
 use external_value;
@@ -63,11 +62,14 @@ class assignments extends baseapi {
             'courseid' => $courseid,
         ]);
 
-        $coursecontext = context_course::instance($params['courseid']);
-        if (empty(baseapi::$my)) {
-            $coursecontext = context_user::instance($USER->id);
+        $context = context_course::instance($params['courseid']);
+        if (static::is_singleoperation()) {
+            $context = context_module::instance(static::get_id());
         }
-        static::validate_context($coursecontext);
+        static::validate_context($context);
+        if (static::is_singleoperation()) {
+            require_capability('mod/assign:view', $context);
+        }
 
         $course = get_course($params['courseid']);
         $cms = get_coursemodules_in_course('assign', $course->id, 'm.duedate');
@@ -85,6 +87,10 @@ class assignments extends baseapi {
         $assignmentinfos = [];
         foreach ($modinfo->instances['assign'] as $cm) {
             if (static::skip_record($cm->id)) {
+                continue;
+            }
+            $context = context_module::instance($cm->id);
+            if (!has_capability('mod/assign:view', $context)) {
                 continue;
             }
             $timedue = $cms[$cm->id]->duedate;
