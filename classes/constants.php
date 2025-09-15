@@ -54,12 +54,12 @@ class constants extends util {
      *
      * @return string[]
      */
-    public static function region_options() {
+    public static function regionOptions() {
         return [
             'ca',
             'eu',
             'uk',
-            'us',
+            'us'
         ];
     }
 

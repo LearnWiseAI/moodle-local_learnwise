@@ -122,6 +122,25 @@
                 </div>
             </div>
 
+            <!-- Courseids -->
+            <div class="field-row">
+                <div class="field-label">
+                    <label for="courseIds" class="label">{{#str}} courseids, local_learnwise {{/str}}</label>
+                    <div class="label-hint">local_learnwise | courseids</div>
+                </div>
+                <div class="field-input">
+                    <input
+                        type="text"
+                        id="courseIds"
+                        name="courseIds"
+                        class="input"
+                        placeholder="{{#str}} entercourseids, local_learnwise {{/str}}"
+                        value="{{{courseIds}}}"
+                    >
+                    <div class="text-hint">{{#str}} courseids_desc, local_learnwise {{/str}}</div>
+                </div>
+            </div>
+
             <!-- Show floating button toggle -->
             <div class="field-row">
                 <label class="field-label label">{{#str}} showfloatingbutton, local_learnwise {{/str}}</label>
@@ -296,7 +315,7 @@
         <div class="save-section">
             <div class="field-label"></div>
             <div class="field-input">
-                <button class="save-btn">{{#str}} savechanges, local_learnwise {{/str}}</button>
+                <button id="save-btn" class="save-btn">{{#str}} savechanges, local_learnwise {{/str}}</button>
             </div>
         </div>
     </div>

@@ -51,22 +51,26 @@ class hook_callbacks {
         if (empty($settings->region)) {
             $settings->region = constants::REGION;
         }
+        $html = '';
         if (!empty($settings->showassistantwidget) && !empty($settings->assistantid)) {
-            $html = $renderer->render_from_template('local_learnwise/assistantwidget', [
-                'assistantid' => $settings->assistantid,
-                'courseid' => $COURSE->id > SITEID ? $COURSE->id : null,
-                'userid' => $USER->id,
-                'userfullname' => fullname($USER),
-                'useremail' => $USER->email,
-                'remotehost' => util::get_remotehosturl(),
-                'chathost' => util::get_ltitoolurl(),
-                'region' => $settings->region,
-            ]);
-            if (!empty($hook)) {
-                $hook->add_html($html);
-            } else {
-                return $html;
+            $configcourseids = !empty($settings->courseids) ? explode(',', $settings->courseids) : [];
+            if (empty($configcourseids) || in_array($PAGE->course->id, $configcourseids)) {
+                $html .= $renderer->render_from_template('local_learnwise/assistantwidget', [
+                    'assistantid' => $settings->assistantid,
+                    'courseid' => $COURSE->id > SITEID ? $COURSE->id : null,
+                    'userid' => $USER->id,
+                    'userfullname' => fullname($USER),
+                    'useremail' => $USER->email,
+                    'remotehost' => util::get_remotehosturl(),
+                    'chathost' => util::get_ltitoolurl(),
+                    'region' => $settings->region,
+                ]);
             }
+        }
+        if (!empty($hook)) {
+            $hook->add_html($html);
+        } else {
+            return $html;
         }
     }
 

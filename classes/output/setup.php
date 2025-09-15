@@ -46,6 +46,7 @@ class setup implements renderable, templatable {
         $clientcreds = util::get_or_generate_client();
         $data = new stdClass;
         $data->floatingButtonAssistantId = $config->assistantid;
+        $data->courseIds = $config->courseids;
         $data->liveApiConfigClientId = $clientcreds->uniqid;
         $data->liveApiConfigClientSecret = $clientcreds->secret;
         $data->liveApiConfigRedirectURLs = $config->redirecturl;
@@ -67,7 +68,7 @@ class setup implements renderable, templatable {
                 'value' => strtoupper($r),
                 'selected' => $config->region === $r,
             ];
-        }, constants::region_options());
+        }, constants::regionOptions());
 
         if ($data->showltisetup) {
             $data->ltiAssistantId = $config->ltiassistantid;
@@ -88,6 +89,7 @@ class setup implements renderable, templatable {
     public function save(stdClass $postdata) {
         $plugin = 'local_learnwise';
         set_config('assistantid', $postdata->floatingButtonAssistantId, $plugin);
+        set_config('courseids', $postdata->courseIds, $plugin);
         set_config('showassistantwidget', $postdata->floatingButtonStatus, $plugin);
         set_config('webservices', $postdata->webServicesStatus, $plugin);
         set_config('liveapi', $postdata->liveApiStatus, $plugin);

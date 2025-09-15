@@ -46,6 +46,7 @@ define(
         ltiEnabled: false,
         webServicesEnabled: false,
         liveApiEnabled: false,
+        courseIds: "",
     };
 
     /**
@@ -77,7 +78,9 @@ define(
 
         ltiRemovalModal: document.getElementById("ltiRemovalModal"),
         closeLtiModal: document.getElementById("closeLtiModal"),
-        confirmLtiRemoval: document.getElementById("confirmLtiRemoval")
+        confirmLtiRemoval: document.getElementById("confirmLtiRemoval"),
+
+        courseIds: document.getElementById("courseIds"),
     };
 
     // Initialize state from form values
@@ -103,6 +106,10 @@ define(
 
     if (elements.liveApiStatus) {
         state.liveApiEnabled = parseInt(elements.form.elements.liveApiStatus.value) === 1;
+    }
+
+    if (elements.courseIds) {
+        state.courseIds = elements.courseIds.value;
     }
 
     /**
@@ -146,6 +153,12 @@ define(
         elements.liveApiSwitch.addEventListener("click", function() {
             state.liveApiEnabled = !state.liveApiEnabled;
             updateLiveApiSwitch();
+        });
+
+        // Course ids input
+        elements.courseIds.addEventListener("input", function(e) {
+            state.courseIds = e.target.value;
+            updateCourseIdsInput();
         });
 
         // Modal close on overlay click
@@ -345,6 +358,31 @@ define(
             state.ltiEnabled = false;
         }
         elements.form.elements.ltiStatus.value = state.ltiEnabled ? 1 : 0;
+    }
+
+    /**
+     * Updates the courseid
+     *
+     * @function updateCourseIdsInput
+     * @private
+     */
+    function updateCourseIdsInput() {
+        const pattern = /^(\d+)(,\d+)*$/;
+        const saveBtn = document.getElementById('save-btn');
+        const inputEl = elements.courseIds;
+
+        const value = (state.courseIds || "").trim();
+        if (!value) {
+            inputEl.classList.remove('border-danger');
+            saveBtn.disabled = false;
+            saveBtn.className = 'save-btn';
+            return;
+        }
+
+        const isValid = pattern.test(state.courseIds);
+        inputEl.classList.toggle('border-danger', !isValid);
+        saveBtn.disabled = !isValid;
+        saveBtn.className = isValid ? 'save-btn' : 'save-btn bg-gray text-dark';
     }
 
     /**

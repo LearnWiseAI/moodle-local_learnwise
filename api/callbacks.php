@@ -29,6 +29,7 @@ use local_learnwise\external\course_modules;
 use local_learnwise\external\forum\discussions;
 use local_learnwise\external\forums;
 use local_learnwise\external\notifications;
+use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
 use OAuth2\Response;
 
@@ -85,6 +86,9 @@ $callbacks = [
     ],
     discussions::class => [
         'description' => 'Get forum discussions',
+    ],
+    scorms::class => [
+        'description' => 'Get scorms',
     ],
 ];
 

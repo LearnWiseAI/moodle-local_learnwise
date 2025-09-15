@@ -32,6 +32,7 @@ use local_learnwise\external\course_modules;
 use local_learnwise\external\forum\discussions;
 use local_learnwise\external\forums;
 use local_learnwise\external\notifications;
+use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
 use local_learnwise\server;
 use OAuth2\Request;
@@ -147,6 +148,17 @@ try {
                                     discussions::set_id($nextroute);
                                     $callback = discussions::class;
                                 }
+                            }
+                        }
+                    } else if ($nextroute === scorms::$route) {
+                        $nextroute = array_shift($urlparts);
+                        if (is_null($nextroute)) {
+                            $callback = scorms::class;
+                        } else if (is_number($nextroute)) {
+                            scorms::set_id($nextroute);
+                            $nextroute = array_shift($urlparts);
+                            if (is_null($nextroute)) {
+                                $callback = scorms::class;
                             }
                         }
                     }

@@ -156,7 +156,10 @@ abstract class baseapi extends external_api {
         }
         if (is_string($response)) {
             $response = str_replace(
-                "{$CFG->wwwroot}/pluginfile.php",
+                [
+                    "{$CFG->wwwroot}/webservice/pluginfile.php",
+                    "{$CFG->wwwroot}/pluginfile.php",
+                ],
                 "{$CFG->wwwroot}/local/learnwise/api/file.php",
                 $response
             );

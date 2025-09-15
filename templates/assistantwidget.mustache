@@ -31,18 +31,18 @@
     }
 }}
 <script>
-  window.learnWiseSetup = {
-    host: {{#quote}}{{{ remotehost }}}{{/quote}},
-    chatSrc: {{#quote}}{{{ chathost }}}{{/quote}},
-    assistantId: {{#quote}}{{{ assistantid }}}{{/quote}},
-    courseId: {{#courseid}}{{#quote}}{{{ courseid }}}{{/quote}}{{/courseid}}{{^courseid}}null{{/courseid}},
-    lmsUserId: {{#quote}}{{{ userid }}}{{/quote}},
-    name: {{#quote}}{{{ userfullname }}}{{/quote}},
-    email: {{#quote}}{{{ useremail }}}{{/quote}},
-    region: {{#quote}}{{{ region }}}{{/quote}},
-  };
+    window.learnWiseSetup = {
+        host: {{#quote}}{{{ remotehost }}}{{/quote}},
+        chatSrc: {{#quote}}{{{ chathost }}}{{/quote}},
+        assistantId: {{#quote}}{{{ assistantid }}}{{/quote}},
+        courseId: {{#courseid}}{{#quote}}{{{ courseid }}}{{/quote}}{{/courseid}}{{^courseid}}null{{/courseid}},
+        lmsUserId: {{#quote}}{{{ userid }}}{{/quote}},
+        name: {{#quote}}{{{ userfullname }}}{{/quote}},
+        email: {{#quote}}{{{ useremail }}}{{/quote}},
+        region: {{#quote}}{{{ region }}}{{/quote}},
+    };
 
-  var script = document.createElement("script");
-  script.src = window.learnWiseSetup.host + "/chat_launcher.js";
-  document.head.appendChild(script);
+    var script = document.createElement("script");
+    script.src = window.learnWiseSetup.host + "/chat_launcher.js";
+    document.head.appendChild(script);
 </script>
