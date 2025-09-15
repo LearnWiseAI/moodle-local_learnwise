@@ -26,9 +26,10 @@ Note that this plugin requires an existing organizational account within the Lea
 ## 1. Option A: Floating Support Button Integration
 1. Locate your **Assistant ID** in the Publish > Configure LTI> Moodle window
 2. Paste the Assistant ID into the corresponding field in Moodle.
-3. Click **Save**.
-4. The floating LearnWise button will now appear on the bottom-right corner of your Moodle interface.
-
+3. Select the region.
+4. Enter the Course IDs comma separated (optional) to load the chat on specific courses.
+5. Click **Save**.
+6. The floating LearnWise button will now appear on the bottom-right corner of your Moodle interface.
 ![Floatingbuttion](pix/floatingbutton.png)
 
 ## 2. Option B: LTI Course Assistant Integration
