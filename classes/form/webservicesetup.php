@@ -110,7 +110,7 @@ class webservicesetup extends moodleform {
      * @return bool
      */
     public function update_from_formdata(stdClass $formdata) {
-        global $CFG, $USER;
+        global $CFG;
         if (!empty($formdata->setupwebservicesetup)) {
             set_config('enablewebservices', true);
             $webservicemanager = new webservice();
@@ -141,10 +141,11 @@ class webservicesetup extends moodleform {
             }
 
             if ($extservice->restrictedusers) {
+                $admin = get_admin();
                 $wsauthorizedusers = $webservicemanager->get_ws_authorised_users($extservice->id);
                 $authorizeuserfound = false;
                 foreach ($wsauthorizedusers as $user) {
-                    if ($user->id == $USER->id) {
+                    if ($user->id == $admin->id) {
                         if (empty($user->validuntil) || $user->validuntil > time()) {
                             $authorizeuserfound = true;
                             break;
@@ -156,7 +157,7 @@ class webservicesetup extends moodleform {
                 if (empty($authorizeuserfound)) {
                     $serviceuser = new stdClass();
                     $serviceuser->externalserviceid = $extservice->id;
-                    $serviceuser->userid = $USER->id;
+                    $serviceuser->userid = $admin->id;
                     $webservicemanager->add_ws_authorised_user($serviceuser);
                 }
             }
