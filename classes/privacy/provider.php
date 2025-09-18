@@ -49,7 +49,7 @@ class provider implements
         $collection->add_database_table('local_learnwise_authcode', [
             'code' => 'privacy:metadata:local_learnwise_authcode:code',
             'token' => 'privacy:metadata:local_learnwise_authcode:token',
-            'timexpiry' => 'privacy:metadata:local_learnwise_authcode:timexpiry',
+            'timeexpiry' => 'privacy:metadata:local_learnwise_authcode:timeexpiry',
         ], 'privacy:metadata:local_learnwise_authcode');
 
         $collection->add_database_table('local_learnwise_accesstoken', [
@@ -144,9 +144,6 @@ class provider implements
                     ] as $prop => $table) {
                         $userauth->$prop = $DB->get_records($table, ['authid' => $userauth->id]);
                         foreach ($userauth->$prop as $item) {
-                            if (isset($item->timexpiry)) {
-                                $item->timexpiry = transform::datetime($item->timexpiry);
-                            }
                             if (isset($item->timeexpiry)) {
                                 $item->timeexpiry = transform::datetime($item->timeexpiry);
                             }

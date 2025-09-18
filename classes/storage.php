@@ -155,7 +155,7 @@ class storage implements AccessTokenInterface, AuthorizationCodeInterface,
             'client_id' => $client->uniqid,
             'user_id' => $userauth->userid,
             'redirect_uri' => $redirecturi,
-            'expires' => $authcode->timexpiry,
+            'expires' => $authcode->timeexpiry,
             'scope' => $this->getDefaultScope(),
             'id_token' => $authcode->token,
         ];
@@ -180,7 +180,7 @@ class storage implements AccessTokenInterface, AuthorizationCodeInterface,
         $record = new stdClass;
         $record->authid = $userauth->id;
         $record->code = $code;
-        $record->timexpiry = $expires;
+        $record->timeexpiry = $expires;
         if ($id = $this->db->get_field('local_learnwise_authcode', 'id', ['code' => $code])) {
             $record->id = $id;
             $this->db->update_record('local_learnwise_authcode', $record);

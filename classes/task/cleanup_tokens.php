@@ -45,9 +45,9 @@ class cleanup_tokens extends scheduled_task {
     public function execute() {
         global $DB;
         $time = time();
-        $DB->delete_records_select('local_learnwise_authcode', 'expires < :time', ['time' => $time]);
-        $DB->delete_records_select('local_learnwise_accesstoken', 'expires < :time', ['time' => $time]);
-        $DB->delete_records_select('local_learnwise_refreshtoken', 'expires < :time', ['time' => $time]);
+        $DB->delete_records_select('local_learnwise_authcode', 'timeexpiry < :time', ['time' => $time]);
+        $DB->delete_records_select('local_learnwise_accesstoken', 'timeexpiry < :time', ['time' => $time]);
+        $DB->delete_records_select('local_learnwise_refreshtoken', 'timeexpiry < :time', ['time' => $time]);
     }
 
 }

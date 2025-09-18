@@ -33,6 +33,7 @@
  */
 function xmldb_local_learnwise_upgrade($oldversion) {
     global $CFG, $DB;
+    $dbman = $DB->get_manager();
 
     if ($oldversion < 2025091700) {
         require_once($CFG->dirroot . '/webservice/lib.php');
@@ -62,6 +63,19 @@ function xmldb_local_learnwise_upgrade($oldversion) {
 
         // Learnwise savepoint reached.
         upgrade_plugin_savepoint(true, 2025091700, 'local', 'learnwise');
+    }
+
+    if ($oldversion < 2025091800) {
+
+        // Rename field timeexpiry on table local_learnwise_authcode to timeexpiry.
+        $table = new xmldb_table('local_learnwise_authcode');
+        $field = new xmldb_field('timexpiry', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'token');
+
+        // Launch rename field timeexpiry.
+        $dbman->rename_field($table, $field, 'timeexpiry');
+
+        // Learnwise savepoint reached.
+        upgrade_plugin_savepoint(true, 2025091800, 'local', 'learnwise');
     }
 
     return true;
