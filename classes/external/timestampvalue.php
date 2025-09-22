@@ -34,14 +34,15 @@ class timestampvalue extends \external_value {
      * Create a new instance of timestampvalue.
      *
      * @param \external_value $extenalvalue The external value to base this on.
-     * @return static
+     * @return timestampvalue
      */
     public static function make(\external_value $extenalvalue) {
-        return new static(
-            PARAM_TEXT, $extenalvalue->desc,
-            $extenalvalue->required, $extenalvalue->default,
+        return new timestampvalue(
+            PARAM_TEXT,
+            $extenalvalue->desc,
+            $extenalvalue->required,
+            $extenalvalue->default,
             $extenalvalue->allownull
         );
     }
-
 }

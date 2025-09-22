@@ -17,7 +17,7 @@
 namespace local_learnwise\external;
 
 use context_course;
-use context_user;
+use context_module;
 use external_value;
 use mod_scorm_external;
 
