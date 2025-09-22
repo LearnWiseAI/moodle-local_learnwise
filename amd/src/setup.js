@@ -367,11 +367,11 @@ define(
      * @private
      */
     function updateCourseIdsInput() {
-        const pattern = /^(\d+)(,\d+)*$/;
-        const saveBtn = document.getElementById('save-btn');
-        const inputEl = elements.courseIds;
+        var pattern = /^(\d+)(,\d+)*$/;
+        var saveBtn = document.getElementById('save-btn');
+        var inputEl = elements.courseIds;
 
-        const value = (state.courseIds || "").trim();
+        var value = (state.courseIds || "").trim();
         if (!value) {
             inputEl.classList.remove('border-danger');
             saveBtn.disabled = false;
@@ -379,7 +379,7 @@ define(
             return;
         }
 
-        const isValid = pattern.test(state.courseIds);
+        var isValid = pattern.test(state.courseIds);
         inputEl.classList.toggle('border-danger', !isValid);
         saveBtn.disabled = !isValid;
         saveBtn.className = isValid ? 'save-btn' : 'save-btn bg-gray text-dark';

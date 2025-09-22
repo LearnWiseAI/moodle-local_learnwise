@@ -352,9 +352,6 @@
 #page-admin-local-learnwise-setup #region-main .radio-option.disabled .radio-label {
     color: #9ca3af;
 }
-.path-mod-lti #contentframe {
-    height: 700px !important;
-}
 
 @media (max-width: 768px) {
     #page-admin-local-learnwise-setup #region-main .container {

@@ -68,7 +68,7 @@ class setup implements renderable, templatable {
                 'value' => strtoupper($r),
                 'selected' => $config->region === $r,
             ];
-        }, constants::regionOptions());
+        }, constants::region_options());
 
         if ($data->showltisetup) {
             $data->ltiAssistantId = $config->ltiassistantid;

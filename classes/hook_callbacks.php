@@ -52,6 +52,53 @@ class hook_callbacks {
             $settings->region = constants::REGION;
         }
         $html = '';
+        if (strpos($PAGE->url->out(false), 'mod/lti/view.php') !== false) {
+            $html .= <<<JS
+<script>
+(function() {
+var iframe, iframeclone, iframeheight = innerHeight, iframeid = 'contentframe';
+var intvalid = setInterval(() => {
+    if (document.readyState != 'complete') {
+        iframe = iframe || document.querySelector('iframe#' + iframeid);
+        if (iframe && iframe.getAttribute('allow').indexOf('.learnwise.') === -1) {
+            iframe = undefined;
+        }
+        if (iframe) {
+            iframeclone = iframeclone || document.createElement('div');
+            iframeclone.id = iframeid;
+            iframeclone.style.display = 'none';
+            iframe.setAttribute('id', iframeid + '1');
+            document.body.append(iframeclone);
+        }
+    } else {
+        if (iframe) {
+            var navbar = document.querySelector('.navbar.fixed-top');
+            var pageWrapper = document.querySelector('#page-wrapper');
+            if (navbar) {
+                iframeheight -= navbar.clientHeight;
+            }
+            iframe.setAttribute('id', iframeid);
+            iframe.style.height = iframeheight + 'px';
+            if (pageWrapper && pageWrapper.clientHeight === pageWrapper.scrollHeight) {
+                iframe.scrollIntoView({behavior: 'smooth'});
+            } else {
+                var offsetPosition = iframe.getBoundingClientRect().top;
+                if (navbar) {
+                    offsetPosition += navbar.clientHeight;
+                }
+                scrollTo({top: offsetPosition, behavior: 'smooth'});
+            }
+            if (iframeclone) {
+                iframeclone.setAttribute('id', iframeid + '1');
+            }
+        }
+        clearInterval(intvalid);
+    }
+}, 1);
+})();
+</script>
+JS;
+        }
         if (!empty($settings->showassistantwidget) && !empty($settings->assistantid)) {
             $configcourseids = !empty($settings->courseids) ? explode(',', $settings->courseids) : [];
             if (empty($configcourseids) || in_array($PAGE->course->id, $configcourseids)) {
