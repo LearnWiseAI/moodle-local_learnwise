@@ -79,12 +79,13 @@ var intvalid = setInterval(() => {
             }
             iframe.setAttribute('id', iframeid);
             iframe.style.height = iframeheight + 'px';
+            iframe.style.minHeight = '700px';
             if (pageWrapper && pageWrapper.clientHeight === pageWrapper.scrollHeight) {
                 iframe.scrollIntoView({behavior: 'smooth'});
             } else {
                 var offsetPosition = iframe.getBoundingClientRect().top;
                 if (navbar) {
-                    offsetPosition += navbar.clientHeight;
+                    offsetPosition -= navbar.clientHeight;
                 }
                 scrollTo({top: offsetPosition, behavior: 'smooth'});
             }
