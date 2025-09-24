@@ -17,11 +17,11 @@
 namespace local_learnwise;
 
 use moodle_database;
-use OAuth2\OpenID\Storage\AuthorizationCodeInterface;
-use OAuth2\Storage\AccessTokenInterface;
-use OAuth2\Storage\ClientCredentialsInterface;
-use OAuth2\Storage\RefreshTokenInterface;
-use OAuth2\Storage\ScopeInterface;
+use local_learnwise\local\OAuth2\OpenID\Storage\AuthorizationCodeInterface;
+use local_learnwise\local\OAuth2\Storage\AccessTokenInterface;
+use local_learnwise\local\OAuth2\Storage\ClientCredentialsInterface;
+use local_learnwise\local\OAuth2\Storage\RefreshTokenInterface;
+use local_learnwise\local\OAuth2\Storage\ScopeInterface;
 use stdClass;
 
 // phpcs:disable moodle.NamingConventions.ValidFunctionName.LowercaseMethod
@@ -55,7 +55,7 @@ class storage implements AccessTokenInterface, AuthorizationCodeInterface,
      * @param string $userid
      * @return object
      */
-    public function get_userauth(string $clientid, string $userid): object {
+    public function get_userauth(string $clientid, string $userid): stdClass {
         $client = $this->db->get_record('local_learnwise_clients', ['uniqid' => $clientid]);
         $params = ['clientid' => $client->id, 'userid' => $userid];
         $record = $this->db->get_record('local_learnwise_userauth', $params);

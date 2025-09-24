@@ -16,15 +16,9 @@
 
 namespace local_learnwise;
 
-defined('MOODLE_INTERNAL') || die();
-
-use OAuth2\Autoloader;
-use OAuth2\GrantType\AuthorizationCode;
-use OAuth2\GrantType\RefreshToken;
-use OAuth2\Server as OAuth2Server;
-
-require_once(dirname(dirname(__FILE__)) . '/OAuth2/Autoloader.php');
-Autoloader::register();
+use local_learnwise\local\OAuth2\GrantType\AuthorizationCode;
+use local_learnwise\local\OAuth2\GrantType\RefreshToken;
+use local_learnwise\local\OAuth2\Server as OAuth2Server;
 
 /**
  * Class server

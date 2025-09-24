@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <libraries>
     <library>
-        <location>OAuth2</location>
+        <location>classes/local/OAuth2</location>
         <name>OAuth2</name>
         <description>A library for implementing an OAuth2 Server in php</description>
         <version>v1.14.2</version>

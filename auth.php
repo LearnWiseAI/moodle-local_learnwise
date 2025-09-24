@@ -24,6 +24,7 @@
 
 use local_learnwise\constants;
 use local_learnwise\form\permission;
+use local_learnwise\local\OAuth2;
 use local_learnwise\server;
 
 //phpcs:ignore moodle.Files.RequireLogin.Missing

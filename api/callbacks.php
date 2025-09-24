@@ -31,19 +31,19 @@ use local_learnwise\external\forums;
 use local_learnwise\external\notifications;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
-use OAuth2\Response;
+use local_learnwise\local\OAuth2\Response;
 
 defined('MOODLE_INTERNAL') || die();
 
 if (!function_exists('local_learnwise_call_external_function')) {
     /**
      * Summary of local_learnwise_call_external_function
-     * @param object $wsfunction
+     * @param stdClass $wsfunction
      * @param mixed $params
-     * @param OAuth2\Response $response
+     * @param Response $response
      * @return void
      */
-    function local_learnwise_call_external_function(object $wsfunction, $params, Response $response) {
+    function local_learnwise_call_external_function(stdClass $wsfunction, $params, Response $response) {
         global $CFG;
         require_once("{$CFG->libdir}/external/externallib.php");
         $externalfunctioninfo = core_external::external_function_info($wsfunction);

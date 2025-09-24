@@ -23,9 +23,9 @@
  */
 
 use local_learnwise\constants;
+use local_learnwise\local\OAuth2\Request;
+use local_learnwise\local\OAuth2\Response;
 use local_learnwise\server;
-use OAuth2\Request;
-use OAuth2\Response;
 
 define('NO_MOODLE_COOKIES', true);
 

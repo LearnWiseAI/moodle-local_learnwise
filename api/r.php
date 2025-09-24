@@ -34,9 +34,9 @@ use local_learnwise\external\forums;
 use local_learnwise\external\notifications;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
+use local_learnwise\local\OAuth2\Request;
+use local_learnwise\local\OAuth2\Response;
 use local_learnwise\server;
-use OAuth2\Request;
-use OAuth2\Response;
 
 define('WS_SERVER', true);
 define('AJAX_SCRIPT', true);
