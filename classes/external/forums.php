@@ -31,7 +31,6 @@ use local_learnwise\external\forum\discussions;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class forums extends baseapi {
-
     /**
      * The name of the API.
      *
@@ -119,5 +118,4 @@ class forums extends baseapi {
         }
         return $structure;
     }
-
 }

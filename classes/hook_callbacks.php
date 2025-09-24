@@ -24,7 +24,6 @@ namespace local_learnwise;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class hook_callbacks {
-
     /**
      * Callback executed before the standard footer HTML is generated.
      *
@@ -121,5 +120,4 @@ JS;
             return $html;
         }
     }
-
 }

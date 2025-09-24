@@ -66,7 +66,6 @@ function xmldb_local_learnwise_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025091800) {
-
         // Rename field timeexpiry on table local_learnwise_authcode to timeexpiry.
         $table = new xmldb_table('local_learnwise_authcode');
         $field = new xmldb_field('timexpiry', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'token');

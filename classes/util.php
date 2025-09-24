@@ -30,7 +30,6 @@ use webservice;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class util {
-
     /**
      * Returns the component name for the current class.
      * If the COMPONENT constant is not defined, it will use the first part of the class name.
@@ -134,7 +133,7 @@ class util {
         if (count($tokens) > 0) {
             $token = array_pop($tokens);
         } else if ($create) {
-            $token = new stdClass;
+            $token = new stdClass();
             $token->token = md5(uniqid(rand(), 1));
             $token->userid = $adminuser->id;
             $token->creatorid = $USER->id;
@@ -199,7 +198,7 @@ class util {
         if (!self::valid_env($env)) {
             $env = self::get_env();
         }
-        switch($env) {
+        switch ($env) {
             case constants::ENVIRONMENTS[0]:
                 return 'https://chat.learnwise.ai';
             case constants::ENVIRONMENTS[1]:
@@ -231,5 +230,4 @@ class util {
     public static function get_remotehosturl($env = null) {
         return str_replace('chat.', 'aiden.', self::get_ltitoolurl($env));
     }
-
 }

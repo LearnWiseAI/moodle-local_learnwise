@@ -27,7 +27,6 @@ use local_learnwise\constants;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class cleanup_tokens extends scheduled_task {
-
     /**
      * Returns the name of the task.
      *
@@ -49,5 +48,4 @@ class cleanup_tokens extends scheduled_task {
         $DB->delete_records_select('local_learnwise_accesstoken', 'timeexpiry < :time', ['time' => $time]);
         $DB->delete_records_select('local_learnwise_refreshtoken', 'timeexpiry < :time', ['time' => $time]);
     }
-
 }

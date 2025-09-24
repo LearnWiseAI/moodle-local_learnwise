@@ -32,9 +32,12 @@ use stdClass;
  * @copyright  2025 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class storage implements AccessTokenInterface, AuthorizationCodeInterface,
-    ClientCredentialsInterface, RefreshTokenInterface, ScopeInterface {
-
+class storage implements
+    AccessTokenInterface,
+    AuthorizationCodeInterface,
+    ClientCredentialsInterface,
+    RefreshTokenInterface,
+    ScopeInterface {
     /**
      * @var moodle_database
      */
@@ -174,10 +177,19 @@ class storage implements AccessTokenInterface, AuthorizationCodeInterface,
      * @param string|null $codechallenge
      * @param string|null $codechallengemethod
      */
-    public function setAuthorizationCode($code, $clientid, $userid, $redirecturi, $expires, $scope = null, $idtoken = null,
-        $codechallenge = null, $codechallengemethod = null) {
+    public function setAuthorizationCode(
+        $code,
+        $clientid,
+        $userid,
+        $redirecturi,
+        $expires,
+        $scope = null,
+        $idtoken = null,
+        $codechallenge = null,
+        $codechallengemethod = null
+    ) {
         $userauth = $this->get_userauth($clientid, $userid);
-        $record = new stdClass;
+        $record = new stdClass();
         $record->authid = $userauth->id;
         $record->code = $code;
         $record->timeexpiry = $expires;
@@ -316,7 +328,7 @@ class storage implements AccessTokenInterface, AuthorizationCodeInterface,
      */
     public function setRefreshToken($refreshtoken, $clientid, $userid, $expires, $scope = null) {
         $userauth = $this->get_userauth($clientid, $userid);
-        $record = new stdClass;
+        $record = new stdClass();
         $record->authid = $userauth->id;
         $record->token = $refreshtoken;
         $record->timeexpiry = $expires;

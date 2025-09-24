@@ -26,7 +26,7 @@ use external_function_parameters;
 use external_value;
 
 global $CFG;
-require_once($CFG->dirroot.'/calendar/externallib.php');
+require_once($CFG->dirroot . '/calendar/externallib.php');
 
 /**
  * Class getcalenderdetails
@@ -36,7 +36,6 @@ require_once($CFG->dirroot.'/calendar/externallib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class calenderdetails extends baseapi {
-
     /**
      * Summary of route
      *
@@ -50,7 +49,7 @@ class calenderdetails extends baseapi {
      * @return external_function_parameters
      */
     public static function execute_parameters() {
-        return new external_function_parameters ([
+        return new external_function_parameters([
             'courseid' => new external_value(PARAM_INT, 'Course being viewed', VALUE_DEFAULT, SITEID, NULL_NOT_ALLOWED),
             'categoryid' => new external_value(PARAM_INT, 'Category being viewed', VALUE_DEFAULT, null, NULL_ALLOWED),
         ]);
@@ -64,8 +63,10 @@ class calenderdetails extends baseapi {
      */
     public static function execute($courseid, $categoryid) {
         global $USER;
-        $params = static::validate_parameters(static::execute_parameters(),
-        ['courseid' => $courseid, 'categoryid' => $categoryid]);
+        $params = static::validate_parameters(
+            static::execute_parameters(),
+            ['courseid' => $courseid, 'categoryid' => $categoryid]
+        );
 
         $context = context_user::instance($USER->id);
         static::validate_context($context);
@@ -125,8 +126,12 @@ class calenderdetails extends baseapi {
         }
         $eventlimit = get_user_preferences('calendar_maxevents', $defaultmaxevents);
 
-        $tstart = $type->convert_to_timestamp($calendardate['year'], $calendardate['mon'], $calendardate['mday'],
-                $calendardate['hours']);
+        $tstart = $type->convert_to_timestamp(
+            $calendardate['year'],
+            $calendardate['mon'],
+            $calendardate['mday'],
+            $calendardate['hours']
+        );
         $date->setTimestamp($tstart);
         $date->modify('+' . $lookahead . ' days');
 
@@ -134,7 +139,7 @@ class calenderdetails extends baseapi {
         $date->modify('-1 second');
         $tend = $date->getTimestamp();
 
-        list($userparam, $groupparam, $courseparam, $categoryparam) = array_map(function($param) {
+        [$userparam, $groupparam, $courseparam, $categoryparam] = array_map(function ($param) {
             // If parameter is true, return null.
             if ($param === true) {
                 return null;

@@ -25,7 +25,7 @@ use external_function_parameters;
 use external_value;
 
 global $CFG;
-require_once($CFG->dirroot.'/user/externallib.php');
+require_once($CFG->dirroot . '/user/externallib.php');
 
 /**
  * Class getuserdetails
@@ -35,7 +35,6 @@ require_once($CFG->dirroot.'/user/externallib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class userdetails extends baseapi {
-
     /**
      * The name of the API.
      *
@@ -49,7 +48,7 @@ class userdetails extends baseapi {
      * @return \external_function_parameters
      */
     public static function execute_parameters() {
-        return new external_function_parameters ([
+        return new external_function_parameters([
             'userid' => new external_value(PARAM_INT, 'User id', VALUE_DEFAULT, 0, NULL_ALLOWED),
         ]);
     }
@@ -62,7 +61,7 @@ class userdetails extends baseapi {
      */
     public static function execute($userid) {
         global $CFG, $USER;
-        require_once($CFG->dirroot.'/user/lib.php');
+        require_once($CFG->dirroot . '/user/lib.php');
 
         $params = static::validate_parameters(
             static::execute_parameters(),

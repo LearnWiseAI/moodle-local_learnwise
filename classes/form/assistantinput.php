@@ -40,7 +40,6 @@ require_once($CFG->dirroot . '/mod/lti/locallib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class assistantinput extends moodleform {
-
     /**
      * Summary of definition
      * @return void
@@ -179,7 +178,7 @@ course_id=\$Context.id";
             lti_load_type_if_cartridge($ltidata);
 
             if (!get_config('local_learnwise', 'lticlientid')) {
-                set_config( 'lticlientid', random_string(15), 'local_learnwise');
+                set_config('lticlientid', random_string(15), 'local_learnwise');
             }
             $ltidata->lti_clientid = get_config('local_learnwise', 'lticlientid');
 
@@ -242,5 +241,4 @@ course_id=\$Context.id";
             ['data' => $templatedata]
         );
     }
-
 }

@@ -30,7 +30,6 @@ use external_value;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_modules extends baseapi {
-
     /**
      * The route for the course modules API.
      *

@@ -32,7 +32,6 @@ use local_learnwise\external\timestampvalue;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class discussions extends baseapi {
-
     /**
      * The name of the API.
      *
@@ -159,5 +158,4 @@ class discussions extends baseapi {
         $structure->keys['timecreated'] = timestampvalue::make($structure->keys['timecreated']);
         return $structure;
     }
-
 }

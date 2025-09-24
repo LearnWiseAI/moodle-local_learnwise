@@ -24,7 +24,6 @@ namespace local_learnwise\output;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renderer extends \plugin_renderer_base {
-
     /**
      * Renders the setup widget.
      *
@@ -37,5 +36,4 @@ class renderer extends \plugin_renderer_base {
             $widget->export_for_template($this)
         );
     }
-
 }

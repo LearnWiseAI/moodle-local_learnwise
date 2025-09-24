@@ -27,9 +27,12 @@ use local_learnwise\constants;
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-
-    $setup = new admin_externalpage('local_learnwise_setup', get_string('integration_listpage', constants::COMPONENT),
-        "{$CFG->wwwroot}/local/learnwise/setup.php", 'moodle/site:config', false);
+    $setup = new admin_externalpage(
+        'local_learnwise_setup',
+        get_string('integration_listpage', constants::COMPONENT),
+        "{$CFG->wwwroot}/local/learnwise/setup.php",
+        'moodle/site:config',
+        false
+    );
     $ADMIN->add('server', $setup);
-
 }

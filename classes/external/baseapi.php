@@ -30,7 +30,6 @@ use stored_file;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class baseapi extends external_api {
-
     /**
      * The name of the API.
      *
@@ -184,8 +183,12 @@ abstract class baseapi extends external_api {
      */
     public static function file_url_from_stored_file(stored_file $file) {
         return moodle_url::make_pluginfile_url(
-            $file->get_contextid(), $file->get_component(), $file->get_filearea(),
-            $file->get_itemid(), $file->get_filepath(), $file->get_filename()
+            $file->get_contextid(),
+            $file->get_component(),
+            $file->get_filearea(),
+            $file->get_itemid(),
+            $file->get_filepath(),
+            $file->get_filename()
         );
     }
 
@@ -197,5 +200,4 @@ abstract class baseapi extends external_api {
      * @return \external_single_structure The structure for the API response.
      */
     abstract public static function single_structure();
-
 }

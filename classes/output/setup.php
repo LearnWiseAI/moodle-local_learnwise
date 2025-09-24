@@ -33,7 +33,6 @@ use templatable;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class setup implements renderable, templatable {
-
     /**
      * Exports data for use in a mustache template.
      *
@@ -44,7 +43,7 @@ class setup implements renderable, templatable {
         $config = get_config('local_learnwise');
         $env = constants::get_env();
         $clientcreds = util::get_or_generate_client();
-        $data = new stdClass;
+        $data = new stdClass();
         $data->floatingButtonAssistantId = $config->assistantid;
         $data->courseIds = $config->courseids;
         $data->liveApiConfigClientId = $clientcreds->uniqid;
@@ -62,7 +61,7 @@ class setup implements renderable, templatable {
         if (empty($config->region)) {
             $config->region = constants::REGION;
         }
-        $data->regionOptions = array_map(function($r) use ($config) {
+        $data->regionOptions = array_map(function ($r) use ($config) {
             return [
                 'key' => $r,
                 'value' => strtoupper($r),
@@ -101,7 +100,7 @@ class setup implements renderable, templatable {
         set_config('region', $postdata->floatingButtonRegion, $plugin);
         if (empty($postdata->webServicesStatus)) {
             $form = new webservicesetup();
-            $formdata = new stdClass;
+            $formdata = new stdClass();
             $formdata->removewebservicesetup = true;
             $form->update_from_formdata($formdata);
         }
@@ -110,7 +109,7 @@ class setup implements renderable, templatable {
             set_config('ltiassistantid', $postdata->ltiAssistantId, $plugin);
             if (empty($postdata->ltiStatus)) {
                 $form = new assistantinput();
-                $formdata = new stdClass;
+                $formdata = new stdClass();
                 $formdata->removeltisetup = true;
                 if (empty($formdata->assistantid)) {
                     $formdata->assistantid = '';
@@ -118,7 +117,7 @@ class setup implements renderable, templatable {
                 $form->update_from_formdata($formdata);
             } else {
                 $form = new assistantinput();
-                $formdata = new stdClass;
+                $formdata = new stdClass();
                 $formdata->setupltisetup = true;
                 if (empty($formdata->assistantid)) {
                     $formdata->assistantid = '';
@@ -153,5 +152,4 @@ class setup implements renderable, templatable {
         global $CFG;
         return $CFG->branch >= 38;
     }
-
 }

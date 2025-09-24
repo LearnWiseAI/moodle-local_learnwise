@@ -22,7 +22,7 @@ use context_system;
 use message_popup_external;
 
 global $CFG;
-require_once($CFG->dirroot.'/message/output/popup/externallib.php');
+require_once($CFG->dirroot . '/message/output/popup/externallib.php');
 
 /**
  * Class getnotifications
@@ -32,7 +32,6 @@ require_once($CFG->dirroot.'/message/output/popup/externallib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class notifications extends baseapi {
-
     /**
      * The name of the API.
      *
@@ -76,7 +75,10 @@ class notifications extends baseapi {
         static::validate_context($context);
 
         $data = message_popup_external::get_popup_notifications(
-            $params['useridto'], $params['newestfirst'], $params['limit'], $params['offset']
+            $params['useridto'],
+            $params['newestfirst'],
+            $params['limit'],
+            $params['offset']
         );
 
         return $data['notifications'];
@@ -100,5 +102,4 @@ class notifications extends baseapi {
     public static function get_unixtimestamp_fields() {
         return ['timecreated', 'timeread'];
     }
-
 }

@@ -31,9 +31,9 @@ use core_privacy\local\request\approved_contextlist;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements
+    \core_privacy\local\request\core_userlist_provider,
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\request\core_userlist_provider {
+    \core_privacy\local\request\plugin\provider {
     /**
      * Returns metadata about this plugin's data storage.
      *
@@ -93,7 +93,7 @@ class provider implements
         if ($context->contextlevel == CONTEXT_USER) {
             $userids = $userlist->get_userids();
             if (!empty($userids)) {
-                list($sql, $params) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'userid');
+                [$sql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'userid');
                 self::delete_user_data($sql, $params);
             }
         }
@@ -132,16 +132,17 @@ class provider implements
         }
         $subcontext = [get_string('pluginname', 'local_learnwise')];
         $notexportedstr = get_string('privacy:request:notexportedsecurity', 'local_learnwise');
+        $tablemap = [
+            'authcodes' => 'local_learnwise_authcode',
+            'accesstokens' => 'local_learnwise_accesstoken',
+            'refreshtokens' => 'local_learnwise_refreshtoken',
+        ];
         foreach ($contextlist as $context) {
             if ($context->contextlevel == CONTEXT_USER) {
                 $userauths = $DB->get_records('local_learnwise_userauth', ['userid' => $context->instanceid]);
                 foreach ($userauths as $userauth) {
                     $userauth->clientid = $notexportedstr;
-                    foreach ([
-                        'authcodes' => 'local_learnwise_authcode',
-                        'accesstokens' => 'local_learnwise_accesstoken',
-                        'refreshtokens' => 'local_learnwise_refreshtoken',
-                    ] as $prop => $table) {
+                    foreach ($tablemap as $prop => $table) {
                         $userauth->$prop = $DB->get_records($table, ['authid' => $userauth->id]);
                         foreach ($userauth->$prop as $item) {
                             if (isset($item->timeexpiry)) {

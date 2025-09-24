@@ -31,7 +31,6 @@ use external_value;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class assignments extends baseapi {
-
     /**
      * Summary of route
      * @var string
@@ -112,7 +111,6 @@ class assignments extends baseapi {
             $submitted = false;
             if (has_capability('mod/assign:grade', $context)) {
                 $submitted = $assignment->count_submissions_with_status(ASSIGN_SUBMISSION_STATUS_SUBMITTED) > 0;
-
             } else if (has_capability('mod/assign:submit', $context)) {
                 if ($assignment->get_instance()->teamsubmission) {
                     $usersubmission = $assignment->get_group_submission($USER->id, 0, false);
@@ -139,8 +137,14 @@ class assignments extends baseapi {
 
             if ($assignment->show_intro()) {
                 $activity = $assignment->get_instance();
-                $intro = file_rewrite_pluginfile_urls($activity->intro, 'pluginfile.php', $context->id,
-                'mod_assign', 'intro', null);
+                $intro = file_rewrite_pluginfile_urls(
+                    $activity->intro,
+                    'pluginfile.php',
+                    $context->id,
+                    'mod_assign',
+                    'intro',
+                    null
+                );
                 $assignmentinfo['description'] = content_to_text($intro, FORMAT_MARKDOWN);
             }
 
@@ -149,7 +153,6 @@ class assignments extends baseapi {
             } else if (has_capability('mod/assign:grade', $context) && static::is_singleoperation()) {
                 $gradingmanager = get_grading_manager($assignment->get_context(), 'mod_assign', 'submissions');
                 $gradingmethod = $gradingmanager->get_active_method();
-
             }
 
             if (static::is_singleoperation()) {

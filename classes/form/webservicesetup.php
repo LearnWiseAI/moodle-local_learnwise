@@ -43,7 +43,6 @@ require_once($CFG->dirroot . '/webservice/lib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class webservicesetup extends moodleform {
-
     /**
      * Summary of definition
      * @return void
@@ -199,5 +198,4 @@ class webservicesetup extends moodleform {
             'token' => $currenttoken->token,
         ]);
     }
-
 }

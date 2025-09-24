@@ -28,7 +28,6 @@ use local_learnwise\local\OAuth2\Server as OAuth2Server;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class server extends OAuth2Server {
-
     /**
      * The singleton instance of the server class.
      *
@@ -59,5 +58,4 @@ class server extends OAuth2Server {
         }
         return self::$instance;
     }
-
 }

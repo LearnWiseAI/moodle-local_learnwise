@@ -24,7 +24,6 @@ namespace local_learnwise;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class constants extends util {
-
     /** @var string */
     const COMPONENT = 'local_learnwise';
 
@@ -62,5 +61,4 @@ class constants extends util {
             'us',
         ];
     }
-
 }

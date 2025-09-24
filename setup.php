@@ -25,11 +25,11 @@
 use local_learnwise\output\setup;
 
 require('../../config.php');
-require_once($CFG->libdir.'/adminlib.php');
+require_once($CFG->libdir . '/adminlib.php');
 
 admin_externalpage_setup('local_learnwise_setup');
 
-$widget = new setup;
+$widget = new setup();
 $renderer = $PAGE->get_renderer('local_learnwise');
 
 $postdata = data_submitted();

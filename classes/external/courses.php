@@ -33,7 +33,6 @@ use moodle_url;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class courses extends baseapi {
-
     /**
      * The name of the API function.
      *
@@ -153,5 +152,4 @@ class courses extends baseapi {
     public static function get_unixtimestamp_fields() {
         return ['startdate', 'enddate'];
     }
-
 }

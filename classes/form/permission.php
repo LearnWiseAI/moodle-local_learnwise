@@ -33,7 +33,6 @@ require_once($CFG->libdir . '/formslib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class permission extends moodleform {
-
     /**
      * Summary of definition
      * @return void
@@ -69,7 +68,7 @@ class permission extends moodleform {
             return false;
         }
         $client = $this->get_client();
-        $record = new stdClass;
+        $record = new stdClass();
         $record->clientid = !empty($client) ? $client->id : 0;
         $record->userid = $USER->id;
         $record->id = $DB->insert_record('local_learnwise_userauth', $record);
@@ -101,5 +100,4 @@ class permission extends moodleform {
         }
         return $DB->get_record('local_learnwise_clients', ['uniqid' => $clientid]);
     }
-
 }

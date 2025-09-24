@@ -29,7 +29,6 @@ use mod_scorm_external;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class scorms extends baseapi {
-
     /**
      * The name of the API.
      *
@@ -97,7 +96,7 @@ class scorms extends baseapi {
     public static function single_structure() {
         $structure = mod_scorm_external::get_scorms_by_courses_returns()->keys['scorms']->content;
         $structure->keys['type'] = $structure->keys['scormtype'];
-        $structure->keys = array_filter($structure->keys, function($key) {
+        $structure->keys = array_filter($structure->keys, function ($key) {
             return in_array($key, ['id', 'name', 'type', 'packageurl', 'sha1hash']);
         }, ARRAY_FILTER_USE_KEY);
         if (!static::is_singleoperation()) {
