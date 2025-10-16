@@ -62,6 +62,94 @@ class provider implements
             'timeexpiry' => 'privacy:metadata:local_learnwise_refreshtoken:timeexpiry',
         ], 'privacy:metadata:local_learnwise_refreshtoken');
 
+        $collection->add_external_location_link('userdetails', [
+            'username' => 'privacy:metadata:external:userdetails:username',
+            'firstname' => 'privacy:metadata:external:userdetails:firstname',
+            'lastname' => 'privacy:metadata:external:userdetails:lastname',
+            'fullname' => 'privacy:metadata:external:userdetails:fullname',
+            'email' => 'privacy:metadata:external:userdetails:email',
+            'address' => 'privacy:metadata:external:userdetails:address',
+            'phone1' => 'privacy:metadata:external:userdetails:phone1',
+            'phone2' => 'privacy:metadata:external:userdetails:phone2',
+            'department' => 'privacy:metadata:external:userdetails:department',
+            'institution' => 'privacy:metadata:external:userdetails:institution',
+            'idnumber' => 'privacy:metadata:external:userdetails:idnumber',
+            'interests' => 'privacy:metadata:external:userdetails:interests',
+            'firstaccess' => 'privacy:metadata:external:userdetails:firstaccess',
+            'lastaccess' => 'privacy:metadata:external:userdetails:lastaccess',
+            'auth' => 'privacy:metadata:external:userdetails:auth',
+            'suspended' => 'privacy:metadata:external:userdetails:suspended',
+            'confirmed' => 'privacy:metadata:external:userdetails:confirmed',
+            'lang' => 'privacy:metadata:external:userdetails:lang',
+            'calendartype' => 'privacy:metadata:external:userdetails:calendartype',
+            'theme' => 'privacy:metadata:external:userdetails:theme',
+            'timezone' => 'privacy:metadata:external:userdetails:timezone',
+            'mailformat' => 'privacy:metadata:external:userdetails:mailformat',
+            'trackforums' => 'privacy:metadata:external:userdetails:trackforums',
+            'description' => 'privacy:metadata:external:userdetails:description',
+            'descriptionformat' => 'privacy:metadata:external:userdetails:descriptionformat',
+            'city' => 'privacy:metadata:external:userdetails:city',
+            'country' => 'privacy:metadata:external:userdetails:country',
+            'profileimageurlsmall' => 'privacy:metadata:external:userdetails:profileimageurlsmall',
+            'profileimageurl' => 'privacy:metadata:external:userdetails:profileimageurl',
+            'customfields' => 'privacy:metadata:external:userdetails:customfields',
+            'preferences' => 'privacy:metadata:external:userdetails:preferences',
+        ], 'privacy:metadata:external:userdetails');
+
+        $collection->add_external_location_link('courses', [
+            'name' => 'privacy:metadata:external:courses:name',
+            'shortname' => 'privacy:metadata:external:courses:shortname',
+            'startdate' => 'privacy:metadata:external:courses:startdate',
+            'enddate' => 'privacy:metadata:external:courses:enddate',
+            'url' => 'privacy:metadata:external:courses:url',
+            'participants' => 'privacy:metadata:external:courses:participants',
+            'completionstatus' => 'privacy:metadata:external:courses:completionstatus',
+            'completiondate' => 'privacy:metadata:external:courses:completiondate',
+        ], 'privacy:metadata:external:courses');
+
+        $collection->add_external_location_link('assignments', [
+            'name' => 'privacy:metadata:external:assignments:name',
+            'description' => 'privacy:metadata:external:assignments:description',
+            'sectionname' => 'privacy:metadata:external:assignments:sectionname',
+            'timedue' => 'privacy:metadata:external:assignments:timedue',
+            'opendate' => 'privacy:metadata:external:assignments:opendate',
+            'closedate' => 'privacy:metadata:external:assignments:closedate',
+            'course_id' => 'privacy:metadata:external:assignments:course_id',
+        ], 'privacy:metadata:external:assignments');
+
+        $collection->add_external_location_link('coursemodules', [
+            'name' => 'privacy:metadata:external:coursemodules:name',
+            'type' => 'privacy:metadata:external:coursemodules:type',
+            'completionstatus' => 'privacy:metadata:external:coursemodules:completionstatus',
+        ], 'privacy:metadata:external:coursemodules');
+
+        $collection->add_external_location_link('scorms', [
+            'name' => 'privacy:metadata:external:scorms:name',
+            'type' => 'privacy:metadata:external:scorms:type',
+            'packageurl' => 'privacy:metadata:external:scorms:packageurl',
+            'sha1hash' => 'privacy:metadata:external:scorms:sha1hash',
+        ], 'privacy:metadata:external:scorms');
+
+        $collection->add_external_location_link('forums', [
+            'name' => 'privacy:metadata:external:forums:name',
+        ], 'privacy:metadata:external:forums');
+
+        $collection->add_external_location_link('forumdiscussions', [
+            'name' => 'privacy:metadata:external:forumdiscussions:name',
+            'posts' => 'privacy:metadata:external:forumdiscussions:posts',
+        ], 'privacy:metadata:external:forumdiscussions');
+
+        $collection->add_external_location_link('calendarevents', [
+            'category' => 'privacy:metadata:external:calendarevents:category',
+            'course' => 'privacy:metadata:external:calendarevents:course',
+            'subscription' => 'privacy:metadata:external:calendarevents:subscription',
+            'canedit' => 'privacy:metadata:external:calendarevents:canedit',
+            'candelete' => 'privacy:metadata:external:calendarevents:candelete',
+            'formattedtime' => 'privacy:metadata:external:calendarevents:formattedtime',
+            'formattedlocation' => 'privacy:metadata:external:calendarevents:formattedlocation',
+            'groupname' => 'privacy:metadata:external:calendarevents:groupname',
+        ], 'privacy:metadata:external:calendarevents');
+
         return $collection;
     }
 
