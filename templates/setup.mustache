@@ -74,6 +74,9 @@
                             <span class="radio-label">{{#str}} environmentsandbox, local_learnwise {{/str}}</span>
                         </label>
                     </div>
+                    {{#errors.environment}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.environment}}
                 </div>
             </div>
         </div>
@@ -100,6 +103,9 @@
                         placeholder="{{#str}} enterassistantid, local_learnwise {{/str}}"
                         value="{{{floatingButtonAssistantId}}}"
                     >
+                    {{#errors.floatingButtonAssistantId}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.floatingButtonAssistantId}}
                 </div>
             </div>
 
@@ -119,6 +125,9 @@
                         <option value="{{{ key }}}"{{#selected}} selected{{/selected}}>{{{ value }}}</option>
                         {{/regionOptions}}
                     </select>
+                    {{#errors.floatingButtonRegion}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.floatingButtonRegion}}
                 </div>
             </div>
 
@@ -138,6 +147,9 @@
                         value="{{{courseIds}}}"
                     >
                     <div class="text-hint">{{#str}} courseids_desc, local_learnwise {{/str}}</div>
+                    {{#errors.courseIds}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.courseIds}}
                 </div>
             </div>
 
@@ -156,6 +168,9 @@
                     <div class="tooltip" id="floatingButtonTooltip">
                         {{#str}} showfloatingbuttontooltip, local_learnwise {{/str}}
                     </div>
+                    {{#errors.floatingButtonSwitch}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.floatingButtonSwitch}}
                 </div>
             </div>
         </div>
@@ -184,6 +199,9 @@
                         placeholder="{{#str}} enterassistantid, local_learnwise {{/str}}"
                         value="{{{ltiAssistantId}}}"
                     >
+                    {{#errors.ltiAssistantId}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.ltiAssistantId}}
                 </div>
             </div>
 
@@ -200,6 +218,9 @@
                     <div class="tooltip" id="ltiTooltip">
                         {{#str}} enablelti_tooltip, local_learnwise {{/str}}
                     </div>
+                    {{#errors.ltiStatus}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.ltiStatus}}
                 </div>
             </div>
 
@@ -224,6 +245,9 @@
                         </div>
                         <span class="toggle-status" id="webServicesStatus">{{#str}} statusdisabled, local_learnwise {{/str}}</span>
                     </div>
+                    {{#errors.webServicesStatus}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.webServicesStatus}}
                 </div>
             </div>
 
@@ -246,6 +270,9 @@
                         </div>
                         <span class="toggle-status" id="liveApiStatus">{{#str}} statusdisabled, local_learnwise {{/str}}</span>
                     </div>
+                    {{#errors.liveApiStatus}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.liveApiStatus}}
                 </div>
             </div>
 
@@ -306,6 +333,9 @@
                             placeholder="{{#str}} redirecturl_desc, local_learnwise {{/str}}"
                         >{{{liveApiConfigRedirectURLs}}}</textarea>
                         <div class="textarea-hint">{{#str}} redirecturl_desc, local_learnwise {{/str}}</div>
+                        {{#errors.liveApiConfigRedirectURLs}}
+                            <div class="d-block invalid-feedback">{{{ . }}}</div>
+                        {{/errors.liveApiConfigRedirectURLs}}
                     </div>
                 </div>
             </div>

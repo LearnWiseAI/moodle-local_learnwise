@@ -16,6 +16,8 @@
 
 namespace local_learnwise\output;
 
+use invalid_parameter_exception;
+use lang_string;
 use local_learnwise\constants;
 use local_learnwise\form\assistantinput;
 use local_learnwise\form\webservicesetup;
@@ -34,48 +36,176 @@ use templatable;
  */
 class setup implements renderable, templatable {
     /**
+     * @var array
+     */
+    protected $errors;
+
+    /**
+     * @var stdClass
+     */
+    protected $formvalues;
+
+    /**
+     * Constructor setup
+     */
+    public function __construct() {
+        $config = get_config('local_learnwise');
+        $env = constants::get_env();
+        $clientcreds = util::get_or_generate_client();
+        $this->formvalues = new stdClass();
+        $this->formvalues->floatingButtonAssistantId = !empty($config->assistantid) ? $config->assistantid : '';
+        $this->formvalues->courseIds = !empty($config->courseids) ? $config->courseids : '';
+        $this->formvalues->liveApiConfigClientId = $clientcreds->uniqid;
+        $this->formvalues->liveApiConfigClientSecret = $clientcreds->secret;
+        $this->formvalues->liveApiConfigRedirectURLs = !empty($config->redirecturl) ? $config->redirecturl : '';
+        $this->formvalues->floatingButtonStatus = !empty($config->showassistantwidget);
+        $this->formvalues->ltiStatus = !empty($config->ltisetup);
+        $this->formvalues->webServicesStatus = !empty($config->webservices);
+        $this->formvalues->liveApiStatus = !empty($config->liveapi);
+        $this->formvalues->evironment = $env;
+        $this->formvalues->region = !empty($config->region) ? $config->region : constants::REGION;
+        $this->formvalues->ltiAssistantId = !empty($config->ltiassistantid) ? $config->ltiassistantid : '';
+    }
+
+    /**
+     * Set form data
+     *
+     * @param stdClass $postdata submitted data
+     * @return void
+     */
+    public function update_formvalues(stdClass $postdata) {
+        foreach ($this->formvalues as $prop => $notused) {
+            if (isset($postdata->{$prop})) {
+                $this->formvalues->{$prop} = $postdata->{$prop};
+            }
+        }
+    }
+
+    /**
+     * Validates input data
+     *
+     * @return bool
+     *
+     */
+    public function validate() {
+        $plugin = 'local_learnwise';
+        $paramtypemap = [
+            'floatingButtonAssistantId' => [
+                PARAM_ALPHANUM,
+                new lang_string('assistantid', $plugin),
+            ],
+            'courseIds' => [
+                PARAM_SEQUENCE,
+                new lang_string('courseids', $plugin),
+            ],
+            'floatingButtonStatus' => [
+                PARAM_BOOL,
+                new lang_string('showfloatingbutton', $plugin),
+            ],
+            'webServicesStatus' => [
+                PARAM_BOOL,
+                new lang_string('coursecontentsintegration', $plugin),
+            ],
+            'liveApiStatus' => [
+                PARAM_BOOL,
+                new lang_string('liveapiintegration', $plugin),
+            ],
+            'liveApiConfigRedirectURLs' => [
+                function ($value) {
+                    $lines = preg_split("/\r\n|\n/", $value);
+                    foreach ($lines as $line) {
+                        try {
+                            validate_param($line, PARAM_URL);
+                        } catch (invalid_parameter_exception $e) {
+                            return false;
+                        }
+                    }
+                    return true;
+                },
+                new lang_string('redirecturl', $plugin),
+            ],
+            'environment' => [
+                function ($value) {
+                    return in_array($value, constants::ENVIRONMENTS);
+                },
+                new lang_string('environment', $plugin),
+            ],
+            'floatingButtonRegion' => [
+                function ($value) {
+                    return in_array($value, constants::region_options());
+                },
+                new lang_string('region', $plugin),
+            ],
+        ];
+        if ($this->showltisetup()) {
+            $paramtypemap['ltiStatus'] = [
+                PARAM_BOOL,
+                new lang_string('enablelti', $plugin),
+            ];
+            $paramtypemap['ltiAssistantId'] = [
+                PARAM_ALPHANUM,
+                new lang_string('assistantid', $plugin),
+            ];
+        }
+        $this->errors = [];
+        foreach ($paramtypemap as $key => $paramvalidation) {
+            if (isset($this->formvalues->{$key})) {
+                $value = $this->formvalues->{$key};
+                $paramtypevalidation = $paramvalidation[0];
+                $paramtypename = $paramvalidation[1];
+                if (is_callable($paramtypevalidation)) {
+                    $validationresult = call_user_func($paramtypevalidation, $value);
+                } else {
+                    try {
+                        $validationresult = validate_param($value, $paramtypevalidation);
+                    } catch (invalid_parameter_exception $e) {
+                        $validationresult = false;
+                    }
+                }
+                if ($validationresult === false) {
+                    $this->errors[$key] = get_string(
+                        'fieldvalidationerror',
+                        $plugin,
+                        [
+                            'field' => (string) $paramtypename,
+                        ]
+                    );
+                }
+            }
+        }
+        return empty($this->errors);
+    }
+
+    /**
      * Exports data for use in a mustache template.
      *
      * @param renderer_base $output The renderer to be used for output.
      * @return stdClass Data to be used by the template.
      */
     public function export_for_template(renderer_base $output) {
-        $config = get_config('local_learnwise');
-        $env = constants::get_env();
-        $clientcreds = util::get_or_generate_client();
-        $data = new stdClass();
-        $data->floatingButtonAssistantId = $config->assistantid;
-        $data->courseIds = $config->courseids;
-        $data->liveApiConfigClientId = $clientcreds->uniqid;
-        $data->liveApiConfigClientSecret = $clientcreds->secret;
-        $data->liveApiConfigRedirectURLs = $config->redirecturl;
-        $data->floatingButtonStatus = !empty($config->showassistantwidget);
-        $data->ltiStatus = !empty($config->ltisetup);
-        $data->webServicesStatus = !empty($config->webservices);
-        $data->liveApiStatus = !empty($config->liveapi);
+        $env = $this->formvalues->evironment;
+        $data = clone($this->formvalues);
         $data->showltisetup = $this->showltisetup();
         $data->showtoast = $this->showtoast();
         $data->envProduction = $env === constants::ENVIRONMENTS[0];
         $data->envDevelopment = $env === constants::ENVIRONMENTS[1];
         $data->envSandbox = $env === constants::ENVIRONMENTS[2];
-        if (empty($config->region)) {
-            $config->region = constants::REGION;
-        }
-        $data->regionOptions = array_map(function ($r) use ($config) {
+        $data->regionOptions = array_map(function ($r) {
             return [
                 'key' => $r,
                 'value' => strtoupper($r),
-                'selected' => $config->region === $r,
+                'selected' => $this->formvalues->region === $r,
             ];
         }, constants::region_options());
 
-        if ($data->showltisetup) {
-            $data->ltiAssistantId = $config->ltiassistantid;
+        if (!$data->showltisetup) {
+            unset($data->ltiAssistantId);
         }
         if ($data->webServicesStatus) {
             $form = new webservicesetup();
             $data->webServicesConfigHtml = $form->render_widget();
         }
+        $data->errors = $this->errors;
         return $data;
     }
 

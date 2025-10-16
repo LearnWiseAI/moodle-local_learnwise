@@ -49,6 +49,7 @@ $string['environmentdevelopment'] = 'Development';
 $string['environmentproduction'] = 'Production';
 $string['environmentsandbox'] = 'Sandbox';
 $string['externaltoken'] = 'Token';
+$string['fieldvalidationerror'] = 'The value of "{$a->field}" is not valid';
 $string['floatingbuttonconfig'] = 'Floating Button Configuration';
 $string['floatingbuttonconfigdesc'] = 'This allows showing the Learnwise assistant as a floating chat button that opens a small frame on the bottom of the screen.';
 $string['gradingdisabled'] = 'Grading disabled';

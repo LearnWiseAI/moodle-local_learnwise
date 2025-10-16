@@ -33,7 +33,12 @@ $widget = new setup();
 $renderer = $PAGE->get_renderer('local_learnwise');
 
 $postdata = data_submitted();
-if ($postdata && confirm_sesskey()) {
+if (empty($postdata)) {
+    $postdata = new stdClass();
+}
+$widget->update_formvalues($postdata);
+$submitted = !empty($postdata->sesskey) && confirm_sesskey($postdata->sesskey);
+if ($submitted && $widget->validate()) {
     $widget->save($postdata);
     redirect($PAGE->url);
 }
