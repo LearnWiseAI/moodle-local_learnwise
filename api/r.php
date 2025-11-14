@@ -32,6 +32,7 @@ use local_learnwise\external\courses;
 use local_learnwise\external\course_modules;
 use local_learnwise\external\forum\discussions;
 use local_learnwise\external\forums;
+use local_learnwise\external\modules;
 use local_learnwise\external\notifications;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
@@ -185,6 +186,13 @@ try {
                         }
                     }
                 }
+            }
+        } else if ($nextroute === modules::$route) {
+            modules::$withcompletion = !empty(baseapi::$my);
+            $nextroute = array_shift($urlparts);
+            if (is_number($nextroute)) {
+                modules::set_id($nextroute);
+                $callback = modules::class;
             }
         }
     }

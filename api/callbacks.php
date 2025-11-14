@@ -30,6 +30,7 @@ use local_learnwise\external\courses;
 use local_learnwise\external\course_modules;
 use local_learnwise\external\forum\discussions;
 use local_learnwise\external\forums;
+use local_learnwise\external\modules;
 use local_learnwise\external\notifications;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
@@ -101,6 +102,9 @@ $callbacks = [
     ],
     users::class => [
         'description' => 'Get user info',
+    ],
+    modules::class => [
+        'description' => 'Get module details',
     ],
 ];
 
