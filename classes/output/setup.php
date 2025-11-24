@@ -65,6 +65,7 @@ class setup implements renderable, templatable {
         $this->formvalues->evironment = $env;
         $this->formvalues->region = !empty($config->region) ? $config->region : constants::REGION;
         $this->formvalues->ltiAssistantId = !empty($config->ltiassistantid) ? $config->ltiassistantid : '';
+        $this->formvalues->aiAssessmentStatus = !empty($config->aiassessment);
     }
 
     /**
@@ -135,6 +136,10 @@ class setup implements renderable, templatable {
                     return in_array($value, constants::region_options());
                 },
                 new lang_string('region', $plugin),
+            ],
+            'aiAssessmentStatus' => [
+                PARAM_BOOL,
+                new lang_string('aiassessment', $plugin),
             ],
         ];
         if ($this->showltisetup()) {
@@ -255,6 +260,7 @@ class setup implements renderable, templatable {
                 $form->update_from_formdata($formdata);
             }
         }
+        set_config('aiassessment', $postdata->aiAssessmentStatus, $plugin);
     }
 
     /**

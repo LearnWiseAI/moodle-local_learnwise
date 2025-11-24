@@ -26,7 +26,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['accesstoken'] = 'Access Token';
+$string['aiassessment'] = 'Ai assessment';
+$string['aiassessment_desc'] = 'This allows the assistant to assist in assignment grading';
 $string['apidisabled'] = 'API disabled';
+$string['assessmenthost'] = 'Host';
 $string['assistantid'] = 'Assistant ID';
 $string['cleanuptokentask'] = 'Clean up tokens task';
 $string['clientid'] = 'Client ID';
@@ -38,6 +41,7 @@ $string['coursecontentsintegration_desc'] = 'This allows the assistant to ingest
 $string['coursecontentsintegration_label'] = 'Enable webservice for course content ingestion';
 $string['courseids'] = 'Course IDs';
 $string['courseids_desc'] = 'Enter courseids as comma-separated values (e.g. 2,3,5).';
+$string['enableaiassessment'] = 'Enable AI assessment';
 $string['donotdelete'] = 'DO NOT DELETE';
 $string['enableliveapiintegration'] = 'Enable Live API Integration';
 $string['enablelti'] = 'Enable LTI';

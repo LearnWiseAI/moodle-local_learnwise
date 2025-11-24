@@ -35,4 +35,19 @@ if ($hassiteconfig) {
         false
     );
     $ADMIN->add('server', $setup);
+
+    if (!empty($CFG->learnwisedevmode)) {
+        $settings = new admin_settingpage('local_learnwise', new lang_string('pluginname', constants::COMPONENT));
+        $ADMIN->add('localplugins', $settings);
+
+        $settings->add(
+            new admin_setting_configtext(
+                'local_learnwise/assessmenthost',
+                new lang_string('assessmenthost', constants::COMPONENT),
+                '',
+                '',
+                PARAM_URL
+            )
+        );
+    }
 }

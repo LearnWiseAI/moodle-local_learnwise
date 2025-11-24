@@ -44,6 +44,7 @@
     <input type="hidden" name="ltiStatus" value="{{#ltiStatus}}1{{/ltiStatus}}">
     <input type="hidden" name="webServicesStatus" value="{{#webServicesStatus}}1{{/webServicesStatus}}">
     <input type="hidden" name="liveApiStatus" value="{{#liveApiStatus}}1{{/liveApiStatus}}">
+    <input type="hidden" name="aiAssessmentStatus" value="{{#aiAssessmentStatus}}1{{/aiAssessmentStatus}}">
     <div class="container">
         <h1 class="main-title">{{#str}} integration_listpage, local_learnwise {{/str}}</h1>
 
@@ -337,6 +338,29 @@
                             <div class="d-block invalid-feedback">{{{ . }}}</div>
                         {{/errors.liveApiConfigRedirectURLs}}
                     </div>
+                </div>
+            </div>
+        </div>
+
+         <!-- Live API Integration -->
+        <div class="section">
+            <h2 class="section-title">{{#str}} aiassessment, local_learnwise {{/str}}</h2>
+            <p class="section-description">
+                {{#str}} aiassessment_desc, local_learnwise {{/str}}
+            </p>
+
+            <div class="field-row">
+                <label class="field-label label">{{#str}} enableaiassessment, local_learnwise {{/str}}</label>
+                <div class="field-input toggle-container">
+                    <div class="switch-wrapper">
+                        <div class="switch" id="aiAssessmentSwitch">
+                            <div class="switch-thumb"></div>
+                        </div>
+                        <span class="toggle-status" id="aiAssessmentStatus">{{#str}} statusdisabled, local_learnwise {{/str}}</span>
+                    </div>
+                    {{#errors.aiAssessmentStatus}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.aiAssessmentStatus}}
                 </div>
             </div>
         </div>

@@ -153,6 +153,44 @@ class assignments extends baseapi {
             } else if (has_capability('mod/assign:grade', $context) && static::is_singleoperation()) {
                 $gradingmanager = get_grading_manager($assignment->get_context(), 'mod_assign', 'submissions');
                 $gradingmethod = $gradingmanager->get_active_method();
+                if ($gradingmethod === 'rubric') {
+                    $controller = $gradingmanager->get_controller($gradingmethod);
+                    // phpcs:ignore moodle.Commenting.InlineComment.TypeHintingMatch
+                    /** @var \gradingform_rubric_controller $controller */
+                    if ($controller->is_form_available()) {
+                        $definition = $controller->get_definition();
+                        $possiblepoints = 0;
+                        foreach ($definition->rubric_criteria as $rubriccriteria) {
+                            $rubric = [
+                                'id' => $rubriccriteria['id'],
+                                'points' => 0,
+                                'description' => $rubriccriteria['description'],
+                                'ratings' => [],
+                            ];
+                            foreach ($rubriccriteria['levels'] as $level) {
+                                $rubric['ratings'][] = [
+                                    'id' => $level['id'],
+                                    'points' => $level['score'],
+                                    'description' => $level['definition'],
+                                ];
+                            }
+                            $rubric['points'] = max(array_column($rubric['ratings'], 'points'));
+                            $possiblepoints += $rubric['points'];
+                            $assignmentinfo['rubric'][] = $rubric;
+                        }
+                        $assignmentinfo['rubric_settings'] = [
+                            'id' => $definition->id,
+                            'title' => $definition->name,
+                            'points_possible' => $possiblepoints,
+                        ];
+                    }
+                } else if (is_null($gradingmethod)) {
+                    $assignmentinfo['rubric_settings'] = [
+                        'id' => 0,
+                        'title' => get_string('gradingmethodnone', 'core_grading'),
+                        'points_possible' => $assignment->get_instance()->grade,
+                    ];
+                }
             }
 
             if (static::is_singleoperation()) {
@@ -182,7 +220,23 @@ class assignments extends baseapi {
         if (!empty(baseapi::$my)) {
             $structure->keys['submitted'] = new external_value(PARAM_TEXT, 'submitted assignment or not');
         }
-
+        if (static::is_singleoperation()) {
+            $structure->keys['rubric'] = new external_multiple_structure(new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'id'),
+                'points' => new external_value(PARAM_FLOAT, 'points'),
+                'description' => new external_value(PARAM_RAW, 'description'),
+                'ratings' => new external_multiple_structure(new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'id'),
+                    'points' => new external_value(PARAM_FLOAT, 'points'),
+                    'description' => new external_value(PARAM_TEXT, 'description'),
+                ])),
+            ]), 'rubric', VALUE_OPTIONAL);
+            $structure->keys['rubric_settings'] = new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'id'),
+                'title' => new external_value(PARAM_TEXT, 'name'),
+                'points_possible' => new external_value(PARAM_FLOAT, 'points'),
+            ]);
+        }
         return $structure;
     }
 

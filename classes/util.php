@@ -357,4 +357,20 @@ class util {
 
         return $user;
     }
+
+    /**
+     * Returns the URL for the assessment host based on the LTI tool URL.
+     * This is used to replace 'chat.' with 'feedback.' in the LTI tool URL.
+     *
+     * @param string|null $env
+     * @return string
+     */
+    public static function get_assessmenthosturl($env = null) {
+        global $CFG;
+        $assessmenthost = get_config(constants::COMPONENT, 'assessmenthost');
+        if (!empty($CFG->learnwisedevmode) && !empty($assessmenthost)) {
+            return $assessmenthost;
+        }
+        return str_replace('chat.', 'feedback.', self::get_ltitoolurl($env));
+    }
 }

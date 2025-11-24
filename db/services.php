@@ -28,6 +28,15 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_learnwise_assign_get_submission' => [
+        'classname'     => 'local_learnwise\external\assign\get_status',
+        'methodname'    => 'execute',
+        'classpath'     => 'mod/assign/externallib.php',
+        'description'   => 'Returns information about an assignment submission status',
+        'type'          => 'read',
+        'capabilities'  => 'mod/assign:view, mod/assign:grade',
+        'ajax'          => true,
+    ],
 ];
 
 $services = [

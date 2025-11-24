@@ -23,6 +23,7 @@
  */
 
 use local_learnwise\constants;
+use local_learnwise\external\assign\grade;
 use local_learnwise\external\assign\submissions;
 use local_learnwise\external\assignments;
 use local_learnwise\external\baseapi;
@@ -34,6 +35,7 @@ use local_learnwise\external\forums;
 use local_learnwise\external\notifications;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
+use local_learnwise\external\users;
 use local_learnwise\local\OAuth2\Request;
 use local_learnwise\local\OAuth2\Response;
 use local_learnwise\server;
@@ -91,6 +93,12 @@ try {
             } else {
                 $nextroute = array_shift($urlparts);
             }
+        } else if ($nextroute === users::$route) {
+            $nextroute = array_shift($urlparts);
+            if (is_numeric($nextroute)) {
+                $params['userid'] = $nextroute;
+                $callback = users::class;
+            }
         }
         if ($nextroute === notifications::$route) {
             $callback = notifications::class;
@@ -117,6 +125,20 @@ try {
                             $nextroute = array_shift($urlparts);
                             if (is_null($nextroute)) {
                                 $callback = assignments::class;
+                            } else if ($nextroute == submissions::$route) {
+                                $nextroute = array_shift($urlparts);
+                                if (is_null($nextroute)) {
+                                    $callback = submissions::class;
+                                } else if (is_number($nextroute)) {
+                                    submissions::set_id((int) $nextroute);
+                                    $nextroute = array_shift($urlparts);
+                                    if (is_null($nextroute)) {
+                                        $callback = submissions::class;
+                                    } else if ($nextroute == grade::$route) {
+                                        $callback = grade::class;
+                                        $params += $request->request;
+                                    }
+                                }
                             }
                         }
                     } else if ($nextroute === course_modules::$route) {

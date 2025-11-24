@@ -22,6 +22,10 @@ use external_multiple_structure;
 use moodle_url;
 use stored_file;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->libdir . '/externallib.php');
+
 /**
  * Class baseapi
  *

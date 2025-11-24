@@ -37,7 +37,7 @@ class hook_callbacks {
         if (during_initial_install() || !isloggedin() || isguestuser()) {
             return false;
         }
-        if (in_array($PAGE->pagelayout, ['maintenance', 'print', 'redirect', 'embedded'])) {
+        if (in_array($PAGE->pagelayout, ['maintenance', 'print', 'redirect'])) {
             // Do not try to show assist UI inside iframe, in maintenance mode,
             // when printing, or during redirects.
             return false;
@@ -98,6 +98,27 @@ var intvalid = setInterval(() => {
 })();
 </script>
 JS;
+        }
+        if ($PAGE->pagelayout === 'embedded') {
+            if ($PAGE->bodyid === 'page-mod-assign-grader' && !empty($settings->aiassessment)) {
+                $templatedata = [
+                    'host' => util::get_assessmenthosturl(),
+                    'feedbacksrc' => util::get_assessmenthosturl(),
+                    'assistantid' => $settings->assistantid,
+                    'courseid' => $PAGE->course->id,
+                    'cmid' => $PAGE->cm->id,
+                    'region' => $settings->region,
+                    'loggedinuser' => [
+                        'id' => $USER->id,
+                        'fullname' => fullname($USER),
+                        'email' => $USER->email,
+                    ],
+                ];
+                $html .= $renderer->render_from_template('local_learnwise/aiassessmentassistant', $templatedata);
+            }
+            if (empty($html)) {
+                return;
+            }
         }
         if (!empty($settings->showassistantwidget) && !empty($settings->assistantid)) {
             $configcourseids = !empty($settings->courseids) ? explode(',', $settings->courseids) : [];

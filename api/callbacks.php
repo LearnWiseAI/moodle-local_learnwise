@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_learnwise\external\assign\grade;
+use local_learnwise\external\assign\submissions;
 use local_learnwise\external\assignments;
 use local_learnwise\external\calenderdetails;
 use local_learnwise\external\courses;
@@ -31,6 +33,7 @@ use local_learnwise\external\forums;
 use local_learnwise\external\notifications;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
+use local_learnwise\external\users;
 use local_learnwise\local\OAuth2\Response;
 
 defined('MOODLE_INTERNAL') || die();
@@ -89,6 +92,15 @@ $callbacks = [
     ],
     scorms::class => [
         'description' => 'Get scorms',
+    ],
+    submissions::class => [
+        'description' => 'Get assign submissions',
+    ],
+    grade::class => [
+        'description' => 'Submit assignment grade',
+    ],
+    users::class => [
+        'description' => 'Get user info',
     ],
 ];
 
