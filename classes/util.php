@@ -16,6 +16,7 @@
 
 namespace local_learnwise;
 
+use context_system;
 use core\event\webservice_token_created;
 use Exception;
 use html_writer;
@@ -99,9 +100,39 @@ class util {
         if (!$extservice) {
             throw new Exception("Service not found");
         }
-        $adminuser = get_admin();
+        $tokenuser = self::get_or_create_apiuser();
+
+        if ($extservice->restrictedusers) {
+            $wsauthorizedusers = $wsmanager->get_ws_authorised_users($extservice->id);
+            $authorizeuserfound = false;
+            foreach ($wsauthorizedusers as $wsauthuser) {
+                if ($wsauthuser->id == $tokenuser->id) {
+                    if (empty($wsauthuser->validuntil) || $wsauthuser->validuntil > time()) {
+                        $authorizeuserfound = true;
+                        break;
+                    } else {
+                        $wsmanager->remove_ws_authorised_user($tokenuser, $extservice->id);
+                    }
+                } else {
+                    $updaterecord = $DB->get_record('external_services_users', ['id' => $wsauthuser->serviceuserid]);
+                    if ($updaterecord) {
+                        $authorizeuserfound = true;
+                        $updaterecord->userid = $tokenuser->id;
+                        $wsmanager->update_ws_authorised_user($updaterecord);
+                        break;
+                    }
+                }
+            }
+            if (empty($authorizeuserfound)) {
+                $serviceuser = new stdClass();
+                $serviceuser->externalserviceid = $extservice->id;
+                $serviceuser->userid = $tokenuser->id;
+                $wsmanager->add_ws_authorised_user($serviceuser);
+            }
+        }
+
         $conditions = [
-            'userid' => $adminuser->id,
+            'userid' => $tokenuser->id,
             'externalserviceid' => $extservice->id,
             'tokentype' => EXTERNAL_TOKEN_PERMANENT,
         ];
@@ -135,7 +166,7 @@ class util {
         } else if ($create) {
             $token = new stdClass();
             $token->token = md5(uniqid(rand(), 1));
-            $token->userid = $adminuser->id;
+            $token->userid = $tokenuser->id;
             $token->creatorid = $USER->id;
             $token->tokentype = EXTERNAL_TOKEN_PERMANENT;
             $token->contextid = SYSCONTEXTID;
@@ -148,7 +179,7 @@ class util {
             $eventtoken->privatetoken = null;
             $params = [
                 'objectid' => $eventtoken->id,
-                'relateduserid' => $adminuser->id,
+                'relateduserid' => $tokenuser->id,
                 'other' => [
                     'auto' => true,
                 ],
@@ -229,5 +260,101 @@ class util {
      */
     public static function get_remotehosturl($env = null) {
         return str_replace('chat.', 'aiden.', self::get_ltitoolurl($env));
+    }
+
+    /**
+     * Get role for api user (if not exists then create)
+     * @return object
+     */
+    public static function get_or_create_role() {
+        global $DB;
+
+        $roleexist = $DB->get_record('role', ['shortname' => 'learnwise_assistant']);
+        if (!empty($roleexist)) {
+            return $roleexist;
+        }
+
+        $role = new stdClass();
+        $role->name = get_string('learnwise:rolename', 'local_learnwise');
+        $role->shortname = 'learnwise_assistant';
+        $role->description = get_string('learnwise:roledescription', 'local_learnwise');
+        $role->archetype = 'user';
+
+        $role->id = create_role(
+            $role->name,
+            $role->shortname,
+            $role->description,
+            $role->archetype
+        );
+
+        $systemcontext = context_system::instance();
+        set_role_contextlevels($role->id, [$systemcontext->contextlevel]);
+
+        $capabilities = [
+            'moodle/course:view',
+            'moodle/course:viewhiddencourses',
+            'webservice/rest:use',
+            'moodle/webservice:createtoken',
+            'moodle/course:update',
+            'moodle/course:viewparticipants',
+            'mod/forum:viewdiscussion',
+            'mod/forum:viewqandawithoutposting',
+            'mod/page:view',
+            'mod/resource:view',
+        ];
+
+        foreach ($capabilities as $capability) {
+            assign_capability(
+                $capability,
+                CAP_ALLOW,
+                $role->id,
+                SYSCONTEXTID,
+                true
+            );
+        }
+
+        return $role;
+    }
+
+    /**
+     * Get api user (if not exists then create)
+     * @return object
+     */
+    public static function get_or_create_apiuser() {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/user/lib.php');
+
+        $existuserid = get_config('local_learnwise', 'tokenuserid');
+        $existuser = $DB->get_record('user', ['id' => (int) $existuserid, 'deleted' => 0]);
+        if (!empty($existuser)) {
+            return $existuser;
+        }
+
+        $user = new stdClass();
+        $user->username = 'learnwise_assistant_user';
+        $user->firstname = 'Learnwise';
+        $user->lastname = 'Assistant';
+        $user->email = 'learnwise_assistant@example.com';
+        $user->auth = 'webservice';
+        $user->description = get_string('donotdelete', 'local_learnwise');
+        $user->emailstop = 1;
+        $user->confirmed = 1;
+        $user->policyagreed = 1;
+        $user->mnethostid = $CFG->mnet_localhost_id;
+        $user->id = user_create_user(
+            $user,
+            false,
+            false
+        );
+
+        set_config('tokenuserid', $user->id, 'local_learnwise');
+
+        $role = self::get_or_create_role();
+        if ($role) {
+            $systemcontext = context_system::instance();
+            role_assign($role->id, $user->id, $systemcontext->id);
+        }
+
+        return $user;
     }
 }

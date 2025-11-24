@@ -25,6 +25,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_learnwise\util;
+
 /**
  * Execute the plugin upgrade steps from the given old version.
  *
@@ -75,6 +77,22 @@ function xmldb_local_learnwise_upgrade($oldversion) {
 
         // Learnwise savepoint reached.
         upgrade_plugin_savepoint(true, 2025091800, 'local', 'learnwise');
+    }
+
+    if ($oldversion < 2025112401) {
+        $token = util::get_or_generate_token_for_user('learnwise');
+        $admin = get_admin();
+        $existrecord = $DB->get_record('external_tokens', [
+            'externalserviceid' => $token->externalserviceid,
+            'tokentype' => $token->tokentype,
+            'userid' => $admin->id,
+        ]);
+        if ($existrecord) {
+            $token->token = $existrecord->token;
+            $DB->update_record('external_tokens', $token);
+            $DB->delete_records('external_tokens', ['id' => $existrecord->id]);
+        }
+        upgrade_plugin_savepoint(true, 2025112401, 'local', 'learnwise');
     }
 
     return true;

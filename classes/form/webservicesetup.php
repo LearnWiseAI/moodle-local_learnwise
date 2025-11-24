@@ -138,28 +138,6 @@ class webservicesetup extends moodleform {
                 $systemcontext = context_system::instance();
                 assign_capability('webservice/rest:use', CAP_ALLOW, $CFG->defaultuserroleid, $systemcontext->id, true);
             }
-
-            if ($extservice->restrictedusers) {
-                $admin = get_admin();
-                $wsauthorizedusers = $webservicemanager->get_ws_authorised_users($extservice->id);
-                $authorizeuserfound = false;
-                foreach ($wsauthorizedusers as $user) {
-                    if ($user->id == $admin->id) {
-                        if (empty($user->validuntil) || $user->validuntil > time()) {
-                            $authorizeuserfound = true;
-                            break;
-                        } else {
-                            $webservicemanager->remove_ws_authorised_user($user, $extservice->id);
-                        }
-                    }
-                }
-                if (empty($authorizeuserfound)) {
-                    $serviceuser = new stdClass();
-                    $serviceuser->externalserviceid = $extservice->id;
-                    $serviceuser->userid = $admin->id;
-                    $webservicemanager->add_ws_authorised_user($serviceuser);
-                }
-            }
             if (empty($this->_customdata['currenttoken'])) {
                 $this->_customdata['currenttoken'] = util::get_or_generate_token_for_user('learnwise', true);
             }
