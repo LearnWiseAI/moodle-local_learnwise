@@ -34,6 +34,26 @@ use webservice;
  */
 class util {
     /**
+     * @var array Array of capabilities
+     */
+    const ROLECAPS = [
+        'moodle/course:view',
+        'moodle/course:viewhiddencourses',
+        'webservice/rest:use',
+        'moodle/webservice:createtoken',
+        'moodle/course:update',
+        'moodle/course:viewparticipants',
+        'mod/forum:viewdiscussion',
+        'mod/forum:viewqandawithoutposting',
+        'mod/page:view',
+        'mod/resource:view',
+        'moodle/course:ignoreavailabilityrestrictions',
+        'mod/assign:view',
+        'mod/quiz:view',
+        'mod/assign:grade'
+    ];
+
+    /**
      * Returns the component name for the current class.
      * If the COMPONENT constant is not defined, it will use the first part of the class name.
      *
@@ -292,20 +312,7 @@ class util {
         $systemcontext = context_system::instance();
         set_role_contextlevels($role->id, [$systemcontext->contextlevel]);
 
-        $capabilities = [
-            'moodle/course:view',
-            'moodle/course:viewhiddencourses',
-            'webservice/rest:use',
-            'moodle/webservice:createtoken',
-            'moodle/course:update',
-            'moodle/course:viewparticipants',
-            'mod/forum:viewdiscussion',
-            'mod/forum:viewqandawithoutposting',
-            'mod/page:view',
-            'mod/resource:view',
-        ];
-
-        foreach ($capabilities as $capability) {
+        foreach (util::ROLECAPS as $capability) {
             assign_capability(
                 $capability,
                 CAP_ALLOW,
