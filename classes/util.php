@@ -334,7 +334,7 @@ class util {
         $user->username = 'learnwise_assistant_user';
         $user->firstname = 'Learnwise';
         $user->lastname = 'Assistant';
-        $user->email = 'learnwise_assistant@example.com';
+        $user->email = 'noreply@learnwise.ai';
         $user->auth = 'webservice';
         $user->description = get_string('donotdelete', 'local_learnwise');
         $user->emailstop = 1;
