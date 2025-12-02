@@ -97,7 +97,7 @@ function xmldb_local_learnwise_upgrade($oldversion) {
 
     if ($oldversion < 2026012301) {
         $role = util::get_or_create_role();
-        foreach(util::ROLECAPS as $capability)  {
+        foreach (util::ROLECAPS as $capability) {
             assign_capability(
                 $capability,
                 CAP_ALLOW,
