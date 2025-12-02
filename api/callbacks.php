@@ -109,21 +109,11 @@ $callbacks = [
 ];
 
 foreach ($callbacks as $classname => $info) {
-    if (!isset($info['component'])) {
-        $info['component'] = 'local_learnwise';
-    }
-    if (!isset($info['loginrequired'])) {
-        $info['loginrequired'] = false;
-    }
-    if (!isset($info['type'])) {
-        $info['type'] = 'read';
-    }
-    if (!isset($info['methodname'])) {
-        $info['methodname'] = 'execute';
-    }
-    if (!isset($info['classname'])) {
-        $info['classname'] = $classname;
-    }
+    $info['component'] = 'local_learnwise';
+    $info['loginrequired'] = false;
+    $info['type'] = 'read';
+    $info['methodname'] = 'execute';
+    $info['classname'] = $classname;
     $callbacks[$classname] = $info;
 }
 

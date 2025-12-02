@@ -1,0 +1,5 @@
+RewriteEngine On
+
+# Make sure the Authorization header is passed to the backend
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule ^(.*)$ - [E=HTTP_AUTHORIZATION:%1]

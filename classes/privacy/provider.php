@@ -217,7 +217,7 @@ class provider implements
      */
     public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
-        if (!$contextlist) {
+        if (count($contextlist) === 0) {
             return;
         }
         $subcontext = [get_string('pluginname', 'local_learnwise')];
