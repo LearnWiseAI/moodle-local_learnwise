@@ -75,7 +75,7 @@ class setup implements renderable, templatable {
      * @return void
      */
     public function update_formvalues(stdClass $postdata) {
-        foreach ($this->formvalues as $prop => $notused) {
+        foreach ((array) $this->formvalues as $prop => $notused) {
             if (isset($postdata->{$prop})) {
                 $this->formvalues->{$prop} = $postdata->{$prop};
             }

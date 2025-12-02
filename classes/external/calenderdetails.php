@@ -50,7 +50,7 @@ class calenderdetails extends baseapi {
      */
     public static function execute_parameters() {
         return new external_function_parameters([
-            'courseid' => new external_value(PARAM_INT, 'Course being viewed', VALUE_DEFAULT, SITEID, NULL_NOT_ALLOWED),
+            'courseid' => new external_value(PARAM_INT, 'Course being viewed', VALUE_DEFAULT, get_site()->id, NULL_NOT_ALLOWED),
             'categoryid' => new external_value(PARAM_INT, 'Category being viewed', VALUE_DEFAULT, null, NULL_ALLOWED),
         ]);
     }
@@ -72,8 +72,9 @@ class calenderdetails extends baseapi {
         static::validate_context($context);
 
         $calendar = \calendar_information::create(time(), $params['courseid'], $params['categoryid']);
-        if ($params['courseid'] > SITEID && in_array(SITEID, $calendar->courses)) {
-            $calendar->courses = array_diff($calendar->courses, [SITEID]);
+        $sitecourseid = get_site()->id;
+        if ($params['courseid'] > $sitecourseid && in_array($sitecourseid, $calendar->courses)) {
+            $calendar->courses = array_diff($calendar->courses, [$sitecourseid]);
         }
 
         $data = self::calendar_get_events($calendar);
@@ -84,7 +85,7 @@ class calenderdetails extends baseapi {
     /**
      * Summary of single_structure
      *
-     * @return array
+     * @return \external_single_structure
      */
     public static function single_structure() {
         return calendar_event_exporter::get_read_structure();
@@ -159,6 +160,7 @@ class calenderdetails extends baseapi {
             return $param;
         }, [$calendar->users, $calendar->groups, $calendar->courses, $calendar->categories]);
 
+        $sitecourseid = get_site()->id;
         $vault = container::get_event_vault();
         $events = $vault->get_events(
             $tstart,
@@ -175,14 +177,14 @@ class calenderdetails extends baseapi {
             $categoryparam,
             true,
             true,
-            function (event_interface $event) use ($calendar) {
+            function (event_interface $event) use ($calendar, $sitecourseid) {
                 if ($proxy = $event->get_category()) {
                     $category = $proxy->get_proxied_instance();
 
                     return $category->is_uservisible();
                 }
 
-                if ($calendar->courseid > SITEID && $event->get_course()->get('id') != $calendar->courseid) {
+                if ($calendar->courseid > $sitecourseid && $event->get_course()->get('id') != $calendar->courseid) {
                     return false;
                 }
 

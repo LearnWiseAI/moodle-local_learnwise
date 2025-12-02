@@ -1,0 +1,27 @@
+includes:
+    - ../../vendor/micaherne/phpstan-moodle/extension.neon
+parameters:
+    level: 5
+    excludePaths:
+        - classes/local/OAuth2/*
+    moodle:
+        rootDirectory: %currentWorkingDirectory%
+    ignoreErrors:
+        -
+            path: token.php
+            message: '#^Call to an undefined method local_learnwise\\local\\OAuth2\\ResponseInterface::send\(\)#'
+        -
+            path: settings.php
+            message: '#^Variable \$hassiteconfig might not be defined.#'
+        -
+            path: classes/external/calenderdetails.php
+            identifiers:
+                - identical.alwaysFalse
+                - function.alreadyNarrowedType
+        #-
+        #    path: classes/external/assignments.php
+        #    message: '#^Parameter \#2 \$section of function get_section_name expects int|stdClass, section_info given#'
+        -
+            path: api/callbacks.php
+            message: '#^Parameter \#1 \$function of static method core_external\\external_api::call_external_function\(\) expects string, stdClass given#'
+
