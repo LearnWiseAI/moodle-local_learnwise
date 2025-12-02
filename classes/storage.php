@@ -87,7 +87,7 @@ class storage implements
                 'access_token' => $token->token,
                 'client_id' => $client->uniqid,
                 'user_id' => $token->userid,
-                'expires' => $token->validuntil > 0 ? $token->validuntil: time() + 5,
+                'expires' => $token->validuntil > 0 ? $token->validuntil : time() + 5,
                 'scope' => $this->getDefaultScope(),
             ];
         }

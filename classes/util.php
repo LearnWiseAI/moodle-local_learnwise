@@ -50,7 +50,7 @@ class util {
         'moodle/course:ignoreavailabilityrestrictions',
         'mod/assign:view',
         'mod/quiz:view',
-        'mod/assign:grade'
+        'mod/assign:grade',
     ];
 
     /**
@@ -312,7 +312,7 @@ class util {
         $systemcontext = context_system::instance();
         set_role_contextlevels($role->id, [$systemcontext->contextlevel]);
 
-        foreach (util::ROLECAPS as $capability) {
+        foreach (self::ROLECAPS as $capability) {
             assign_capability(
                 $capability,
                 CAP_ALLOW,
