@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['accesstoken'] = 'Access Token';
-$string['aiassessment'] = 'Ai assessment';
+$string['aiassessment'] = 'Ai Assessment';
 $string['aiassessment_desc'] = 'This allows the assistant to assist in assignment grading';
 $string['apidisabled'] = 'API disabled';
 $string['assessmenthost'] = 'Host';

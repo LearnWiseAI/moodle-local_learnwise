@@ -78,7 +78,14 @@ To pull live Moodle data (user role,  assignments, etc.):
 
 ![Learnwise-API](https://github.com/LearnWiseAI/moodle-local_learnwise/raw/main/pix/learnwise-api.png)
 
-## 5. Launch the Assistant in Moodle Courses
+## 5. AI Assessment (Optional)
+
+This allows the assistant to assist in assignment grading
+
+![AI-Assessment](https://github.com/LearnWiseAI/moodle-local_learnwise/raw/main/pix/ai-assessment.png)
+
+
+## 6. Launch the Assistant in Moodle Courses
 
 1. In Moodle, navigate to any course where you want to add the assistant.
 2. Choose **Add an activity or resource**
