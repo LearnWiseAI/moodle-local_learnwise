@@ -185,13 +185,13 @@ try {
                     }
                 }
             }
-        } else if ($nextroute === modules::$route) {
-            modules::$withcompletion = !empty(baseapi::$my);
-            $nextroute = array_shift($urlparts);
-            if (is_number($nextroute)) {
-                modules::set_id((int) $nextroute);
-                $callback = modules::class;
-            }
+        }
+    } else if ($nextroute === modules::$route) {
+        modules::$withcompletion = !empty(baseapi::$my);
+        $nextroute = array_shift($urlparts);
+        if (is_number($nextroute)) {
+            modules::set_id((int) $nextroute);
+            $callback = modules::class;
         }
     }
     if (isset($callbacks[$callback])) {

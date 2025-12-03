@@ -46,7 +46,7 @@ try {
         $response->send();
         die;
     }
-
+    /* @phpstan-ignore method.notFound */
     $server->handleTokenRequest($request, $response)->send();
 } catch (Exception $e) {
     // phpcs:ignore moodle.security.outputnotprotected.exception -- This is an API endpoint, we need to return the error.
