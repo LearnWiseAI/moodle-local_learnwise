@@ -142,16 +142,19 @@ class calenderdetails extends baseapi {
 
         $filteredparams = array_map(function ($param) {
             // If parameter is true, return null.
+            /* @phpstan-ignore identical.alwaysFalse */
             if ($param === true) {
                 return null;
             }
 
             // If parameter is false, return an empty array.
+            /* @phpstan-ignore identical.alwaysFalse */
             if ($param === false) {
                 return [];
             }
 
             // If the parameter is a scalar value, enclose it in an array.
+            /* @phpstan-ignore function.alreadyNarrowedType */
             if (!is_array($param)) {
                 return [$param];
             }

@@ -121,7 +121,8 @@ class courses extends baseapi {
      */
     public static function single_structure() {
         $modulestructure = course_modules::execute_returns();
-        $modulestructure->required = (bool) VALUE_OPTIONAL;
+        /* @phpstan-ignore assign.propertyType */
+        $modulestructure->required = VALUE_OPTIONAL;
         $structure = new external_single_structure([
             'id' => new external_value(PARAM_INT, 'id of course'),
             'name' => new external_value(PARAM_TEXT, 'name of course'),

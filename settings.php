@@ -26,6 +26,7 @@ use local_learnwise\constants;
 
 defined('MOODLE_INTERNAL') || die();
 
+/* @phpstan-ignore variable.undefined */
 if ($hassiteconfig) {
     $setup = new admin_externalpage(
         'local_learnwise_setup',

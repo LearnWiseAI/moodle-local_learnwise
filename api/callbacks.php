@@ -55,6 +55,7 @@ if (!function_exists('local_learnwise_call_external_function')) {
             $externalfunctioninfo->parameters_desc,
             $params
         );
+        /* @phpstan-ignore argument.type */
         $data = core_external::call_external_function($wsfunction, $params);
 
         if ($data['error']) {
