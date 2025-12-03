@@ -1,0 +1,8 @@
+includes:
+    - ../../vendor/micaherne/phpstan-moodle/extension.neon
+parameters:
+    level: 5
+    excludePaths:
+        - classes/local/OAuth2/*
+    moodle:
+        rootDirectory: %currentWorkingDirectory%

@@ -56,7 +56,7 @@ class storage implements
      *
      * @param string $clientid
      * @param string $userid
-     * @return object
+     * @return stdClass
      */
     public function get_userauth(string $clientid, string $userid): stdClass {
         $client = $this->db->get_record('local_learnwise_clients', ['uniqid' => $clientid]);
@@ -111,9 +111,6 @@ class storage implements
         $params = ['token' => $oauthtoken];
         $record = $this->db->get_record('local_learnwise_accesstoken', $params);
         $userauth = $this->get_userauth($clientid, $userid);
-        if (!$userauth) {
-            return false;
-        }
         if (!$record) {
             $record = (object) $params;
             $record->authid = $userauth->id;
@@ -231,9 +228,9 @@ class storage implements
      * @return bool
      */
     public function isPublicClient($clientid) {
-        $client = $this->getClientDetails($clientid, true);
+        $client = $this->getClientDetails($clientid);
         if ($client) {
-            return empty($client->secret);
+            return empty($client['client_secret']);
         }
         return false;
     }
@@ -241,15 +238,11 @@ class storage implements
     /**
      * Summary of getClientDetails
      * @param mixed $clientid
-     * @param mixed $asrecord
      * @return array|false
      */
-    public function getClientDetails($clientid, $asrecord = false) {
+    public function getClientDetails($clientid) {
         $client = $this->db->get_record('local_learnwise_clients', ['uniqid' => $clientid]);
         if (!empty($client)) {
-            if ($asrecord) {
-                return $client;
-            }
             return [
                 'client_id' => $client->uniqid,
                 'client_secret' => $client->secret,
@@ -267,7 +260,7 @@ class storage implements
      */
     public function getClientScope($clientid) {
         if (!$clientdetails = $this->getClientDetails($clientid)) {
-            return false;
+            return null;
         }
         if (!empty($clientdetails['scope'])) {
             return $clientdetails['scope'];

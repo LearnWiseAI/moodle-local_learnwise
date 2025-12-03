@@ -44,7 +44,7 @@ class constants extends util {
     public static function get_redirecturl() {
         $redirecturls = get_config(static::component(), 'redirecturl');
         $redirecturls = array_map('trim', explode(PHP_EOL, $redirecturls));
-        $redirecturls = array_filter($redirecturls, 'trim');
+        $redirecturls = array_filter($redirecturls);
         return join(' ', $redirecturls);
     }
 

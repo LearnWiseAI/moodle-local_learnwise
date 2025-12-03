@@ -150,7 +150,7 @@ class assistantinput extends moodleform {
             $ltidata = new stdClass();
             $ltidata->tab = '';
             $ltidata->typeid = 0;
-            $ltidata->course = SITEID;
+            $ltidata->course = get_site()->id;
             $ltidata->oldicon = $ltidata->lti_icon = $ltidata->lti_secureicon = '';
             $ltidata->lti_typename = 'Learnwise';
             $ltidata->lti_toolurl = $this->_customdata['toolurl'];

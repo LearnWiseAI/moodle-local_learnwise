@@ -35,12 +35,12 @@ class hook_callbacks {
     public static function before_standard_top_of_body_html_generation($hook = null) {
         global $PAGE, $OUTPUT, $USER, $COURSE;
         if (during_initial_install() || !isloggedin() || isguestuser()) {
-            return false;
+            return;
         }
         if (in_array($PAGE->pagelayout, ['maintenance', 'print', 'redirect'])) {
             // Do not try to show assist UI inside iframe, in maintenance mode,
             // when printing, or during redirects.
-            return false;
+            return;
         }
         $renderer = $OUTPUT;
         if (!empty($hook)) {
@@ -123,9 +123,10 @@ JS;
         if (!empty($settings->showassistantwidget) && !empty($settings->assistantid)) {
             $configcourseids = !empty($settings->courseids) ? explode(',', $settings->courseids) : [];
             if (empty($configcourseids) || in_array($PAGE->course->id, $configcourseids)) {
+                $sitecourseid = get_site()->id;
                 $html .= $renderer->render_from_template('local_learnwise/assistantwidget', [
                     'assistantid' => $settings->assistantid,
-                    'courseid' => $COURSE->id > SITEID ? $COURSE->id : null,
+                    'courseid' => $COURSE->id > $sitecourseid ? $COURSE->id : null,
                     'userid' => $USER->id,
                     'userfullname' => fullname($USER),
                     'useremail' => $USER->email,

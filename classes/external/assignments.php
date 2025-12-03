@@ -145,7 +145,7 @@ class assignments extends baseapi {
                     'intro',
                     null
                 );
-                $assignmentinfo['description'] = content_to_text($intro, FORMAT_MARKDOWN);
+                $assignmentinfo['description'] = content_to_text($intro, (int) FORMAT_MARKDOWN);
             }
 
             if (!empty(baseapi::$my)) {

@@ -40,7 +40,7 @@ class timestampvalue extends \external_value {
         return new timestampvalue(
             PARAM_TEXT,
             $extenalvalue->desc,
-            $extenalvalue->required,
+            (int) $extenalvalue->required,
             $extenalvalue->default,
             $extenalvalue->allownull
         );

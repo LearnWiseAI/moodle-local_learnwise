@@ -37,7 +37,7 @@ abstract class baseapi extends external_api {
     /**
      * The name of the API.
      *
-     * @var string
+     * @var bool
      */
     public static $my = null;
 
@@ -132,8 +132,8 @@ abstract class baseapi extends external_api {
     /**
      * Converts a Unix timestamp to an ISO 8601 formatted date string.
      *
-     * @param int $unixstamp The Unix timestamp to convert.
-     * @return string The formatted date string in ISO 8601 format, or the original value if invalid.
+     * @param int|string $unixstamp The Unix timestamp to convert.
+     * @return int|string The formatted date string in ISO 8601 format, or the original value if invalid.
      */
     public static function converttimestamp($unixstamp) {
         $valid = is_numeric($unixstamp) && (int)$unixstamp == $unixstamp

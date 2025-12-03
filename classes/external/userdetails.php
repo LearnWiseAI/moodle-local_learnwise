@@ -57,7 +57,7 @@ class userdetails extends baseapi {
      * Returns the description of the execute function.
      *
      * @param int $userid ID of user
-     * @return \external_description
+     * @return array|null
      */
     public static function execute($userid) {
         global $CFG, $USER;
@@ -93,7 +93,7 @@ class userdetails extends baseapi {
     /**
      * Returns the structure of a single user.
      *
-     * @return \external_single_structure
+     * @return \external_description
      */
     public static function single_structure() {
         return core_user_external::user_description();

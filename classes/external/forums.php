@@ -53,7 +53,7 @@ class forums extends baseapi {
      * Returns the description of the execute function.
      *
      * @param int $courseid ID of course
-     * @return external_description
+     * @return array
      */
     public static function execute($courseid) {
         global $CFG, $USER;
