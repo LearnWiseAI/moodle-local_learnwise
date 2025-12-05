@@ -21,6 +21,7 @@ use context_course;
 use context_module;
 use external_multiple_structure;
 use external_single_structure;
+use external_util;
 use external_value;
 
 /**
@@ -53,7 +54,8 @@ class assignments extends baseapi {
      * @return array
      */
     public static function execute($courseid) {
-        global $CFG, $USER;
+        global $CFG, $PAGE, $USER;
+        require_once($CFG->dirroot . '/lib/externallib.php');
         require_once($CFG->dirroot . '/course/lib.php');
         require_once($CFG->dirroot . '/mod/assign/lib.php');
         require_once($CFG->dirroot . '/mod/assign/locallib.php');
@@ -146,6 +148,18 @@ class assignments extends baseapi {
                     null
                 );
                 $assignmentinfo['description'] = content_to_text($intro, (int) FORMAT_MARKDOWN);
+                $assignmentinfo['additionalfiles'] = array_map(
+                    function ($file) {
+                        return $file['fileurl'];
+                    },
+                    external_util::get_area_files($context->id, 'mod_assign', ASSIGN_INTROATTACHMENT_FILEAREA, 0)
+                );
+            }
+
+            if ($CFG->branch >= 400) {
+                $assign = $assignment->get_instance();
+                $renderer = $PAGE->get_renderer('mod_assign');
+                $assignmentinfo['instructions'] = $renderer->format_activity_text($assign, $cm->id);
             }
 
             if (!empty(baseapi::$my)) {
@@ -216,6 +230,12 @@ class assignments extends baseapi {
             'opendate' => new external_value(PARAM_INT, 'open date in unix timestamp if applied'),
             'closedate' => new external_value(PARAM_INT, 'close date in unix timestamp if applied'),
             'course_id' => new external_value(PARAM_INT, 'course id'),
+            'instructions' => new external_value(PARAM_RAW, 'Instructions of assignment', VALUE_OPTIONAL),
+            'additionalfiles' => new external_multiple_structure(
+                new external_value(PARAM_URL, 'Additional file url'),
+                'URL of additional files',
+                VALUE_OPTIONAL
+            ),
         ]);
         if (!empty(baseapi::$my)) {
             $structure->keys['submitted'] = new external_value(PARAM_TEXT, 'submitted assignment or not');
