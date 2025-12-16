@@ -104,7 +104,7 @@ JS;
                 $templatedata = [
                     'host' => util::get_assessmenthosturl(),
                     'feedbacksrc' => util::get_assessmenthosturl(),
-                    'assistantid' => $settings->assistantid,
+                    'assistantid' => $settings->aiassessmentassistantid,
                     'courseid' => $PAGE->course->id,
                     'cmid' => $PAGE->cm->id,
                     'region' => $settings->region,

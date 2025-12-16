@@ -349,14 +349,38 @@
                 {{#str}} aiassessment_desc, local_learnwise {{/str}}
             </p>
 
+            <!-- Assistant ID -->
+            <div class="field-row">
+                <div class="field-label">
+                    <label for="aiAssessmentAssistantId" class="label">{{#str}} assistantid, local_learnwise {{/str}}</label>
+                    <div class="label-hint">local_learnwise | aiassessmentassistantid</div>
+                </div>
+                <div class="field-input">
+                    <input
+                        type="text"
+                        id="aiAssessmentAssistantId"
+                        name="aiAssessmentAssistantId"
+                        class="input"
+                        placeholder="{{#str}} enterassistantid, local_learnwise {{/str}}"
+                        value="{{{aiAssessmentAssistantId}}}"
+                    >
+                    {{#errors.aiAssessmentAssistantId}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.aiAssessmentAssistantId}}
+                </div>
+            </div>
+
             <div class="field-row">
                 <label class="field-label label">{{#str}} enableaiassessment, local_learnwise {{/str}}</label>
                 <div class="field-input toggle-container">
-                    <div class="switch-wrapper">
+                    <div class="switch-wrapper" id="aiAssessmentSwitchWrapper">
                         <div class="switch" id="aiAssessmentSwitch">
                             <div class="switch-thumb"></div>
                         </div>
                         <span class="toggle-status" id="aiAssessmentStatus">{{#str}} statusdisabled, local_learnwise {{/str}}</span>
+                    </div>
+                    <div class="tooltip" id="aiAssessmentTooltip">
+                        {{#str}} enableaiassessment_tooltip, local_learnwise {{/str}}
                     </div>
                     {{#errors.aiAssessmentStatus}}
                         <div class="d-block invalid-feedback">{{{ . }}}</div>
