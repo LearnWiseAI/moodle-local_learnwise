@@ -48,6 +48,7 @@ define(
         liveApiEnabled: false,
         aiAssessmentEnabled: false,
         courseIds: "",
+        aiAssessmentAssistantId: "",
     };
 
     /**
@@ -82,6 +83,9 @@ define(
         confirmLtiRemoval: document.getElementById("confirmLtiRemoval"),
 
         aiAssessmentSwitch: document.getElementById("aiAssessmentSwitch"),
+        aiAssessmentAssistantId: document.getElementById("aiAssessmentAssistantId"),
+        aiAssessmentSwitchWrapper: document.getElementById("aiAssessmentSwitchWrapper"),
+        aiAssessmentTooltip: document.getElementById("aiAssessmentTooltip"),
         aiAssessmentStatus: document.getElementById("aiAssessmentStatus"),
         courseIds: document.getElementById("courseIds"),
     };
@@ -93,6 +97,10 @@ define(
 
     if (elements.ltiAssistantId) {
         state.ltiAssistantId = elements.ltiAssistantId.value;
+    }
+
+    if (elements.aiAssessmentAssistantId) {
+        state.aiAssessmentAssistantId = elements.aiAssessmentAssistantId.value;
     }
 
     if (elements.floatingButtonStatus) {
@@ -139,6 +147,14 @@ define(
             elements.ltiAssistantId.addEventListener("input", function(e) {
                 state.ltiAssistantId = e.target.value;
                 updateLtiSwitch();
+            });
+        }
+
+        // AI Assessment assistant ID input
+        if (elements.aiAssessmentAssistantId) {
+            elements.aiAssessmentAssistantId.addEventListener("input", function(e) {
+                state.aiAssessmentAssistantId = e.target.value;
+                updateAiAssessmentSwitch();
             });
         }
 
@@ -246,6 +262,18 @@ define(
      */
     function canEnableFloatingButton() {
         return state.floatingButtonAssistantId.trim().length > 0;
+    }
+
+    /**
+     * Checks if Aiassessment integration can be enabled based on current state.
+     * Requires a valid Aiassessment assistant ID to be present.
+     *
+     * @function canEnableAiassessment
+     * @private
+     * @returns {boolean} True if LTI can be enabled, false otherwise
+     */
+    function canEnableAiassessment() {
+        return state.aiAssessmentAssistantId.trim().length > 0;
     }
 
     /**
@@ -377,22 +405,41 @@ define(
      * Updates the ai assessment switch UI and configuration.
      * Toggles ai assessment functionality, updates status display
      *
-     * @function updateWebServicesSwitch
+     * @function updateAiAssessmentSwitch
      * @private
      */
     function updateAiAssessmentSwitch() {
-        if (state.aiAssessmentEnabled) {
-            elements.aiAssessmentSwitch.classList.add("active");
-            Str.get_string('statusenabled', 'local_learnwise').then(function(str) {
-                elements.aiAssessmentStatus.textContent = str;
-                return null;
-            }).catch(Notification.exception);
+         if (!elements.aiAssessmentAssistantId) {
+            return;
+        }
+        var canEnable = canEnableAiassessment();
+        if (canEnable) {
+            elements.aiAssessmentSwitch.classList.remove("disabled");
+            elements.aiAssessmentSwitchWrapper.style.cursor = "pointer";
+            elements.aiAssessmentTooltip.style.display = "none";
+
+            if (state.aiAssessmentEnabled) {
+                elements.aiAssessmentSwitch.classList.add("active");
+                Str.get_string('statusenabled', 'local_learnwise').then(function(str) {
+                    elements.aiAssessmentStatus.textContent = str;
+                    return null;
+                }).catch(Notification.exception);
+            } else {
+                elements.aiAssessmentSwitch.classList.remove("active");
+                Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
+                    elements.aiAssessmentStatus.textContent = str;
+                    return null;
+                }).catch(Notification.exception);
+            }
         } else {
             elements.aiAssessmentSwitch.classList.remove("active");
+            elements.aiAssessmentSwitch.classList.add("disabled");
+            elements.aiAssessmentSwitchWrapper.style.cursor = "not-allowed";
             Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
                 elements.aiAssessmentStatus.textContent = str;
                 return null;
             }).catch(Notification.exception);
+            state.aiAssessmentEnabled = false;
         }
 
         elements.form.elements.aiAssessmentStatus.value = state.aiAssessmentEnabled ? 1 : 0;
