@@ -219,8 +219,7 @@ class assignments extends baseapi {
         ]);
         if (!empty(baseapi::$my)) {
             $structure->keys['submitted'] = new external_value(PARAM_TEXT, 'submitted assignment or not');
-        }
-        if (static::is_singleoperation()) {
+        } else if (static::is_singleoperation()) {
             $structure->keys['rubric'] = new external_multiple_structure(new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'id'),
                 'points' => new external_value(PARAM_FLOAT, 'points'),
@@ -235,7 +234,7 @@ class assignments extends baseapi {
                 'id' => new external_value(PARAM_INT, 'id'),
                 'title' => new external_value(PARAM_TEXT, 'name'),
                 'points_possible' => new external_value(PARAM_FLOAT, 'points'),
-            ]);
+            ], 'rubric settings', VALUE_OPTIONAL);
         }
         return $structure;
     }
