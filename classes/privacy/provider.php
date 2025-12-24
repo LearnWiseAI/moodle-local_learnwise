@@ -181,7 +181,9 @@ class provider implements
         if ($context->contextlevel == CONTEXT_USER) {
             $userids = $userlist->get_userids();
             if (!empty($userids)) {
-                [$sql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'userid');
+                $filteredparams = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'userid');
+                $sql = $filteredparams[0];
+                $params = $filteredparams[1];
                 self::delete_user_data($sql, $params);
             }
         }

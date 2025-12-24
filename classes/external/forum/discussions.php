@@ -59,14 +59,14 @@ class discussions extends baseapi {
      * @return array
      */
     public static function execute($courseid, $forumid) {
-        global $CFG, $USER;
+        global $CFG, $DB, $USER;
         require_once($CFG->dirroot . '/mod/forum/lib.php');
         $params = static::validate_parameters(static::execute_parameters(), [
             'courseid' => $courseid,
             'forumid' => $forumid,
         ]);
 
-        $cm = get_coursemodule_from_id('forum', $params['forumid'], $params['courseid']);
+        $cm = get_coursemodule_from_id('forum', $params['forumid'], $params['courseid'], false, MUST_EXIST);
 
         $context = context_course::instance($params['courseid']);
         if (static::is_singleoperation()) {
@@ -77,43 +77,31 @@ class discussions extends baseapi {
             require_capability('mod/forum:viewdiscussion', $context);
         }
 
-        $vaultfactory = \mod_forum\local\container::get_vault_factory();
-        $forumvault = $vaultfactory->get_forum_vault();
-        $forum = $forumvault->get_from_id($cm->instance);
+        $forum = $DB->get_record('forum', ['id' => $cm->instance], '*', MUST_EXIST);
 
         $discussions = [];
-        $alldiscussions = mod_forum_get_discussion_summaries($forum, $USER, 0, -1);
-        foreach ($alldiscussions as $discussionsummary) {
-            $discussion = $discussionsummary->get_discussion();
-            if (self::skip_record($discussion->get_id())) {
+        $alldiscussions = forum_get_discussions($cm, "", true, -1, -1, true, -1, 0, FORUM_POSTS_ALL_USER_GROUPS);
+        foreach ($alldiscussions as $discussion) {
+            $discussion->id = $discussion->discussion;
+            if (self::skip_record($discussion->id)) {
                 continue;
             }
             $resultdiscussion = [];
-            $resultdiscussion['id'] = $discussion->get_id();
-            $resultdiscussion['name'] = $discussion->get_name();
+            $resultdiscussion['id'] = $discussion->id;
+            $resultdiscussion['name'] = $discussion->name;
             if (self::is_singleoperation()) {
-                $postvault = $vaultfactory->get_post_vault();
-                $canviewprivatereplay = false;
-                $managerfactory = \mod_forum\local\container::get_manager_factory();
-                if (!empty(baseapi::$my)) {
-                    $capabilitymanager = $managerfactory->get_capability_manager($forum);
-                    $canviewprivatereplay = $capabilitymanager->can_view_any_private_reply($USER);
-                }
-                $posts = $postvault->get_from_discussion_id(
-                    $USER,
-                    $discussion->get_id(),
-                    $canviewprivatereplay,
-                    "created DESC"
-                );
                 $resultdiscussion['posts'] = [];
-                foreach ($posts as $post) {
-                    $resultpost = [];
-                    $resultpost['id'] = $post->get_id();
-                    $resultpost['subject'] = $post->get_subject();
-                    $resultpost['message'] = strip_tags($post->get_message());
-                    $resultpost['parentid'] = $post->get_parent_id();
-                    $resultpost['timecreated'] = $post->get_time_created();
-                    $resultdiscussion['posts'][] = $resultpost;
+                $allposts = forum_get_all_discussion_posts($discussion->id, "created DESC");
+                foreach ($allposts as $post) {
+                    if (forum_user_can_see_post($forum, $discussion, $post, null, $cm, false)) {
+                        $resultpost = [];
+                        $resultpost['id'] = $post->id;
+                        $resultpost['subject'] = $post->subject;
+                        $resultpost['message'] = strip_tags($post->message);
+                        $resultpost['parentid'] = $post->parent;
+                        $resultpost['timecreated'] = $post->created;
+                        $resultdiscussion['posts'][] = $resultpost;
+                    }
                 }
 
                 return $resultdiscussion;

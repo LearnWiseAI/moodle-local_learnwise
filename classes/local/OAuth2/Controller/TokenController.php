@@ -54,7 +54,7 @@ class TokenController implements TokenControllerInterface
      * @param ScopeInterface               $scopeUtil
      * @throws InvalidArgumentException
      */
-    public function __construct(AccessTokenInterface $accessToken, ClientInterface $clientStorage, array $grantTypes = array(), ?ClientAssertionTypeInterface $clientAssertionType = null, ?ScopeInterface $scopeUtil = null)
+    public function __construct(AccessTokenInterface $accessToken, ClientInterface $clientStorage, array $grantTypes = array(), ClientAssertionTypeInterface $clientAssertionType = null, ScopeInterface $scopeUtil = null)
     {
         if (is_null($clientAssertionType)) {
             foreach ($grantTypes as $grantType) {
@@ -82,7 +82,7 @@ class TokenController implements TokenControllerInterface
      * @param RequestInterface  $request  - Request object to grant access token
      * @param ResponseInterface $response - Response object
      */
-    public function handleTokenRequest(RequestInterface $request, ResponseInterface $response)
+    public function handleTokenRequest(RequestInterface $request, ResponseInterface $response = null)
     {
         if ($token = $this->grantAccessToken($request, $response)) {
             // @see http://tools.ietf.org/html/rfc6749#section-5.1
@@ -116,7 +116,7 @@ class TokenController implements TokenControllerInterface
      *
      * @ingroup oauth2_section_4
      */
-    public function grantAccessToken(RequestInterface $request, ResponseInterface $response)
+    public function grantAccessToken(RequestInterface $request, ResponseInterface $response = null)
     {
         if (strtolower($request->server('REQUEST_METHOD')) === 'options') {
             $response->addHttpHeaders(array('Allow' => 'POST, OPTIONS'));

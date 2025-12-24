@@ -67,7 +67,9 @@ class submissions extends baseapi {
         $params = static::validate_parameters(static::execute_parameters(), [
             'assignmentid' => $assignmentid,
         ]);
-        [$course, $cm] = get_course_and_cm_from_cmid($params['assignmentid'], 'assign', 0);
+        $filteredparams = get_course_and_cm_from_cmid($params['assignmentid'], 'assign', 0);
+        $course = $filteredparams[0];
+        $cm = $filteredparams[1];
         $context = context_module::instance($cm->id);
         self::validate_context($context);
 

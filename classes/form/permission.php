@@ -100,4 +100,23 @@ class permission extends moodleform {
         }
         return $DB->get_record('local_learnwise_clients', ['uniqid' => $clientid]);
     }
+
+    /**
+     * Checks if a parameter was passed in the previous form submission
+     *
+     * @param string $name the name of the page parameter we want
+     * @param mixed  $default the default value to return if nothing is found
+     * @param string $type expected type of parameter
+     * @return mixed
+     */
+    public function optional_param($name, $default, $type) {
+        if (method_exists(moodleform::class, 'optional_param')) {
+            return parent::optional_param($name, $default, $type);
+        }
+        if (isset($this->_ajaxformdata[$name])) {
+            return clean_param($this->_ajaxformdata[$name], $type);
+        } else {
+            return optional_param($name, $default, $type);
+        }
+    }
 }

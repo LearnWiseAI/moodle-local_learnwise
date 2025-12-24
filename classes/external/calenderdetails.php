@@ -97,7 +97,7 @@ class calenderdetails extends baseapi {
      * @param int|null $lookahead How many days to look for events
      * @return \stdClass
      */
-    public static function calendar_get_events(\calendar_information $calendar, ?int $lookahead = null) {
+    public static function calendar_get_events(\calendar_information $calendar, int $lookahead = null) {
         global $PAGE, $CFG;
 
         $renderer = $PAGE->get_renderer('core_calendar');
@@ -139,7 +139,7 @@ class calenderdetails extends baseapi {
         $date->modify('-1 second');
         $tend = $date->getTimestamp();
 
-        [$userparam, $groupparam, $courseparam, $categoryparam] = array_map(function ($param) {
+        $filteredparams = array_map(function ($param) {
             // If parameter is true, return null.
             if ($param === true) {
                 return null;
@@ -158,6 +158,10 @@ class calenderdetails extends baseapi {
             // No normalisation required.
             return $param;
         }, [$calendar->users, $calendar->groups, $calendar->courses, $calendar->categories]);
+        $userparam = $filteredparams[0];
+        $groupparam = $filteredparams[1];
+        $courseparam = $filteredparams[2];
+        $categoryparam = $filteredparams[3];
 
         $vault = container::get_event_vault();
         $events = $vault->get_events(

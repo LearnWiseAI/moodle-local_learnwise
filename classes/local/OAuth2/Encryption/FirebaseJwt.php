@@ -30,7 +30,7 @@ class FirebaseJwt implements EncryptionInterface
             if (!$allowedAlgorithms) {
                 $tks = \explode('.', $jwt);
                 if (\count($tks) === 3) {
-                    [$headb64] = $tks;
+                    list($headb64) = $tks;
                     $headerRaw = JWT::urlsafeB64Decode($headb64);
                     if (($header = JWT::jsonDecode($headerRaw))) {
                         $key = new Key($key, $header->alg);

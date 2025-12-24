@@ -26,5 +26,5 @@ interface UserInfoControllerInterface
      * @param RequestInterface $request
      * @param ResponseInterface $response
      */
-    public function handleUserInfoRequest(RequestInterface $request, ResponseInterface $response);
+    public function handleUserInfoRequest(RequestInterface $request, ResponseInterface $response = null);
 }

@@ -113,7 +113,7 @@ foreach ($callbacks as $classname => $info) {
         $info['component'] = 'local_learnwise';
     }
     if (!isset($info['loginrequired'])) {
-        $info['loginrequired'] = true;
+        $info['loginrequired'] = false;
     }
     if (!isset($info['type'])) {
         $info['type'] = 'read';

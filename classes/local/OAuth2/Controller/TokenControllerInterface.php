@@ -23,7 +23,7 @@ interface TokenControllerInterface
      * @param RequestInterface $request   - The current http request
      * @param ResponseInterface $response - An instance of OAuth2\ResponseInterface to contain the response data
      */
-    public function handleTokenRequest(RequestInterface $request, ResponseInterface $response);
+    public function handleTokenRequest(RequestInterface $request, ResponseInterface $response = null);
 
     /**
      * Grant or deny a requested access token.
@@ -35,5 +35,5 @@ interface TokenControllerInterface
      *
      * @return mixed
      */
-    public function grantAccessToken(RequestInterface $request, ResponseInterface $response);
+    public function grantAccessToken(RequestInterface $request, ResponseInterface $response = null);
 }

@@ -41,7 +41,7 @@ use local_learnwise\local\OAuth2\Request;
 use local_learnwise\local\OAuth2\Response;
 use local_learnwise\server;
 
-define('WS_SERVER', true);
+define('WS_SERVER', false);
 define('AJAX_SCRIPT', true);
 //phpcs:ignore moodle.Files.RequireLogin.Missing
 require('../../../config.php');

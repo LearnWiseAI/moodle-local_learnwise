@@ -59,7 +59,9 @@ class get_status extends baseapi {
             ]
         );
 
-        [$assign, $course, $cm, $context] = grade::validate_assignment($params['assignid']);
+        $filteredparams = grade::validate_assignment($params['assignid']);
+        $assign = $filteredparams[0];
+        $context = $filteredparams[3];
 
         require_capability('mod/assign:grade', $context);
 

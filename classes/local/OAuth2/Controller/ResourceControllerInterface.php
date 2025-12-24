@@ -37,5 +37,5 @@ interface ResourceControllerInterface
      * @param ResponseInterface $response - Response object
      * @return mixed
      */
-    public function getAccessTokenData(RequestInterface $request, ResponseInterface $response);
+    public function getAccessTokenData(RequestInterface $request, ResponseInterface $response = null);
 }

@@ -23,6 +23,7 @@ use context_user;
 use core_course_category;
 use external_single_structure;
 use external_value;
+use local_learnwise_course_category;
 use moodle_url;
 
 /**
@@ -70,7 +71,7 @@ class courses extends baseapi {
         if (!empty(baseapi::$my)) {
             $courses = enrol_get_all_users_courses($USER->id, true);
         } else {
-            $category = core_course_category::user_top();
+            $category = local_learnwise_course_category::user_top();
             $courses = $category->get_courses(['recursive' => true, 'sort' => ['fullname' => 1]]);
         }
         foreach ($courses as $course) {

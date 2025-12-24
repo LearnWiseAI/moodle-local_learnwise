@@ -100,7 +100,10 @@ class grade extends baseapi {
         );
 
         $cm = $DB->get_record('course_modules', ['id' => $params['assignment_id']], '*', MUST_EXIST);
-        [$assignment, $course, $cm, $context] = self::validate_assignment($cm->instance);
+        $filteredparams = self::validate_assignment($cm->instance);
+        $assignment = $filteredparams[0];
+        $cm = $filteredparams[2];
+        $context = $filteredparams[3];
 
         $grade = $assignment->get_user_grade($params['user_id'], true);
         $originalgrade = $grade->grade;
@@ -216,7 +219,9 @@ class grade extends baseapi {
         global $DB;
 
         $assign = $DB->get_record('assign', ['id' => $assignid], 'id', MUST_EXIST);
-        [$course, $cm] = get_course_and_cm_from_instance($assign, 'assign');
+        $filteredparams = get_course_and_cm_from_instance($assign, 'assign');
+        $course = $filteredparams[0];
+        $cm = $filteredparams[1];
 
         $context = context_module::instance($cm->id);
         self::validate_context($context);

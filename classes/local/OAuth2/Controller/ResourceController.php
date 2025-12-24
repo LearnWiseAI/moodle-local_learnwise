@@ -47,7 +47,7 @@ class ResourceController implements ResourceControllerInterface
      * @param array                $config
      * @param ScopeInterface       $scopeUtil
      */
-    public function __construct(TokenTypeInterface $tokenType, AccessTokenInterface $tokenStorage, $config = array(), ?ScopeInterface $scopeUtil = null)
+    public function __construct(TokenTypeInterface $tokenType, AccessTokenInterface $tokenStorage, $config = array(), ScopeInterface $scopeUtil = null)
     {
         $this->tokenType = $tokenType;
         $this->tokenStorage = $tokenStorage;
@@ -112,7 +112,7 @@ class ResourceController implements ResourceControllerInterface
      * @param ResponseInterface $response
      * @return array|null
      */
-    public function getAccessTokenData(RequestInterface $request, ResponseInterface $response)
+    public function getAccessTokenData(RequestInterface $request, ResponseInterface $response = null)
     {
         // Get the token parameter
         if ($token_param = $this->tokenType->getAccessTokenParameter($request, $response)) {
