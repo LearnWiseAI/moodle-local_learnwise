@@ -26,6 +26,7 @@ use local_learnwise\constants;
 use local_learnwise\local\OAuth2\Request;
 use local_learnwise\local\OAuth2\Response;
 use local_learnwise\server;
+use local_learnwise\util;
 
 define('NO_MOODLE_COOKIES', true);
 
@@ -39,7 +40,7 @@ try {
     $server = server::get_instance();
 
     $request = Request::createFromGlobals();
-    $response = new Response();
+    $response = util::make_response();
 
     if (!get_config('local_learnwise', 'liveapi')) {
         $response->setError(500, get_string('toolnotconfigured', constants::COMPONENT));

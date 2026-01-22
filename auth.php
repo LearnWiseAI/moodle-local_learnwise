@@ -26,6 +26,7 @@ use local_learnwise\constants;
 use local_learnwise\form\permission;
 use local_learnwise\local\OAuth2;
 use local_learnwise\server;
+use local_learnwise\util;
 
 //phpcs:ignore moodle.Files.RequireLogin.Missing
 require('../../config.php');
@@ -62,7 +63,7 @@ if (isloggedin() && !isguestuser()) {
     $server = server::get_instance();
 
     $request = OAuth2\Request::createFromGlobals();
-    $response = new OAuth2\Response();
+    $response = util::make_response();
 
     if (!get_config('local_learnwise', 'liveapi')) {
         $response->setError(500, get_string('toolnotconfigured', constants::COMPONENT));

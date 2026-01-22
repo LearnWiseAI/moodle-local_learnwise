@@ -18,8 +18,10 @@ namespace local_learnwise;
 
 use context_system;
 use core\event\webservice_token_created;
+use core_plugin_manager;
 use Exception;
 use html_writer;
+use local_learnwise\local\OAuth2\Response;
 use stdClass;
 use webservice;
 
@@ -372,5 +374,33 @@ class util {
             return $assessmenthost;
         }
         return str_replace('chat.', 'feedback.', self::get_ltitoolurl($env));
+    }
+
+    /**
+     * Returns installed plugin version
+     *
+     * @param string|null $component The plugin component
+     * @return \core\plugininfo\base
+     */
+    public static function get_plugin_versioninfo($component = null) {
+        if (empty($component)) {
+            $component = static::component();
+        }
+        $pluginmanager = core_plugin_manager::instance();
+        return $pluginmanager->get_plugin_info($component);
+    }
+
+    /**
+     * Factory method to prepare response
+     *
+     * @param array $headers Headers in <key, value> pair
+     * @return Response Response with version header
+     */
+    public static function make_response($headers = []) {
+        $headers = (array) $headers;
+        $headers['X-version'] = static::get_plugin_versioninfo()->release;
+        $response = new Response();
+        $response->setHttpHeaders($headers);
+        return $response;
     }
 }
