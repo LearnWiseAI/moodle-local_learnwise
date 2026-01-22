@@ -38,8 +38,8 @@ use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
 use local_learnwise\external\users;
 use local_learnwise\local\OAuth2\Request;
-use local_learnwise\local\OAuth2\Response;
 use local_learnwise\server;
+use local_learnwise\util;
 
 define('WS_SERVER', false);
 define('AJAX_SCRIPT', true);
@@ -58,8 +58,9 @@ $callbacks = require('callbacks.php');
 try {
     $server = server::get_instance();
     $request = Request::createFromGlobals();
-    $response = new Response();
-    $response->addHttpHeaders(['Cache-Control' => 'no-store, no-cache, must-revalidate']);
+    $response = util::make_response([
+        'Cache-Control' => 'no-store, no-cache, must-revalidate',
+    ]);
 
     if (!get_config('local_learnwise', 'liveapi')) {
         $response->setError(500, get_string('apidisabled', constants::COMPONENT));

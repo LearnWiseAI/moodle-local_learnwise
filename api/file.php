@@ -24,8 +24,8 @@
 
 use local_learnwise\constants;
 use local_learnwise\local\OAuth2\Request;
-use local_learnwise\local\OAuth2\Response;
 use local_learnwise\server;
+use local_learnwise\util;
 
 define('NO_DEBUG_DISPLAY', true);
 define('WS_SERVER', true);
@@ -36,8 +36,9 @@ require_once($CFG->libdir . '/externallib.php');
 
 $server = server::get_instance();
 $request = Request::createFromGlobals();
-$response = new Response();
-$response->addHttpHeaders(['Cache-Control' => 'no-store, no-cache, must-revalidate']);
+$response = util::make_response([
+    'Cache-Control' => 'no-store, no-cache, must-revalidate',
+]);
 
 if (!get_config('local_learnwise', 'liveapi')) {
     $response->setError(500, get_string('apidisabled', constants::COMPONENT));
