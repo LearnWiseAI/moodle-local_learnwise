@@ -87,114 +87,112 @@ try {
     $callback = null;
     $params = [];
     $nextroute = array_shift($urlparts);
-    if (is_null($callback)) {
-        if ($nextroute === userdetails::$route) {
-            baseapi::$my = true;
-            if (!$urlparts) {
-                $callback = userdetails::class;
-            } else {
-                $nextroute = array_shift($urlparts);
-            }
-        } else if ($nextroute === users::$route) {
+    if ($nextroute === userdetails::$route) {
+        baseapi::$my = true;
+        if (!$urlparts) {
+            $callback = userdetails::class;
+        } else {
             $nextroute = array_shift($urlparts);
-            if (is_numeric($nextroute)) {
-                $params['userid'] = $nextroute;
-                $callback = users::class;
-            }
         }
-        if ($nextroute === notifications::$route) {
-            $callback = notifications::class;
-        } else if ($nextroute === calenderdetails::$route) {
-            $callback = calenderdetails::class;
-        } else if ($nextroute === courses::$route) {
+    } else if ($nextroute === users::$route) {
+        $nextroute = array_shift($urlparts);
+        if (is_numeric($nextroute)) {
+            $params['userid'] = $nextroute;
+            $callback = users::class;
+        }
+    }
+    if ($nextroute === notifications::$route) {
+        $callback = notifications::class;
+    } else if ($nextroute === calenderdetails::$route) {
+        $callback = calenderdetails::class;
+    } else if ($nextroute === courses::$route) {
+        $nextroute = array_shift($urlparts);
+        if (is_null($nextroute)) {
+            $callback = courses::class;
+        } else if (is_numeric($nextroute)) {
+            courses::set_id((int) $nextroute);
             $nextroute = array_shift($urlparts);
             if (is_null($nextroute)) {
                 $callback = courses::class;
-            } else if (is_numeric($nextroute)) {
-                courses::set_id($nextroute);
-                $nextroute = array_shift($urlparts);
-                if (is_null($nextroute)) {
-                    $callback = courses::class;
-                } else {
-                    $params['courseid'] = courses::get_id();
-                    if ($nextroute === assignments::$route) {
+            } else {
+                $params['courseid'] = courses::get_id();
+                if ($nextroute === assignments::$route) {
+                    $nextroute = array_shift($urlparts);
+                    if (is_null($nextroute)) {
+                        $callback = assignments::class;
+                    } else if (is_number($nextroute)) {
+                        assignments::set_id((int) $nextroute);
+                        $params['assignmentid'] = assignments::get_id();
                         $nextroute = array_shift($urlparts);
                         if (is_null($nextroute)) {
                             $callback = assignments::class;
-                        } else if (is_number($nextroute)) {
-                            assignments::set_id($nextroute);
-                            $params['assignmentid'] = assignments::get_id();
+                        } else if ($nextroute == submissions::$route) {
                             $nextroute = array_shift($urlparts);
                             if (is_null($nextroute)) {
-                                $callback = assignments::class;
-                            } else if ($nextroute == submissions::$route) {
+                                $callback = submissions::class;
+                            } else if (is_number($nextroute)) {
+                                submissions::set_id((int) $nextroute);
                                 $nextroute = array_shift($urlparts);
                                 if (is_null($nextroute)) {
                                     $callback = submissions::class;
-                                } else if (is_number($nextroute)) {
-                                    submissions::set_id((int) $nextroute);
-                                    $nextroute = array_shift($urlparts);
-                                    if (is_null($nextroute)) {
-                                        $callback = submissions::class;
-                                    } else if ($nextroute == grade::$route) {
-                                        $callback = grade::class;
-                                        $params += $request->request;
-                                    }
+                                } else if ($nextroute == grade::$route) {
+                                    $callback = grade::class;
+                                    $params += $request->request;
                                 }
                             }
                         }
-                    } else if ($nextroute === course_modules::$route) {
-                        course_modules::$withcompletion = !empty(baseapi::$my);
-                        $nextroute = array_shift($urlparts);
-                        if (is_null($nextroute)) {
-                            $callback = course_modules::class;
-                        } else if (is_number($nextroute)) {
-                            course_modules::set_id($nextroute);
-                            $callback = course_modules::class;
-                        }
-                    } else if ($nextroute === calenderdetails::$route) {
-                        $callback = calenderdetails::class;
-                    } else if ($nextroute === forums::$route) {
+                    }
+                } else if ($nextroute === course_modules::$route) {
+                    course_modules::$withcompletion = !empty(baseapi::$my);
+                    $nextroute = array_shift($urlparts);
+                    if (is_null($nextroute)) {
+                        $callback = course_modules::class;
+                    } else if (is_number($nextroute)) {
+                        course_modules::set_id((int) $nextroute);
+                        $callback = course_modules::class;
+                    }
+                } else if ($nextroute === calenderdetails::$route) {
+                    $callback = calenderdetails::class;
+                } else if ($nextroute === forums::$route) {
+                    $nextroute = array_shift($urlparts);
+                    if (is_null($nextroute)) {
+                        $callback = forums::class;
+                    } else if (is_number($nextroute)) {
+                        forums::set_id((int) $nextroute);
+                        $params['forumid'] = forums::get_id();
                         $nextroute = array_shift($urlparts);
                         if (is_null($nextroute)) {
                             $callback = forums::class;
-                        } else if (is_number($nextroute)) {
-                            forums::set_id($nextroute);
-                            $params['forumid'] = forums::get_id();
+                        } else if ($nextroute == discussions::$route) {
                             $nextroute = array_shift($urlparts);
                             if (is_null($nextroute)) {
-                                $callback = forums::class;
-                            } else if ($nextroute == discussions::$route) {
-                                $nextroute = array_shift($urlparts);
-                                if (is_null($nextroute)) {
-                                    $callback = discussions::class;
-                                } else if (is_number($nextroute)) {
-                                    discussions::set_id($nextroute);
-                                    $callback = discussions::class;
-                                }
+                                $callback = discussions::class;
+                            } else if (is_number($nextroute)) {
+                                discussions::set_id((int) $nextroute);
+                                $callback = discussions::class;
                             }
                         }
-                    } else if ($nextroute === scorms::$route) {
+                    }
+                } else if ($nextroute === scorms::$route) {
+                    $nextroute = array_shift($urlparts);
+                    if (is_null($nextroute)) {
+                        $callback = scorms::class;
+                    } else if (is_number($nextroute)) {
+                        scorms::set_id((int) $nextroute);
                         $nextroute = array_shift($urlparts);
                         if (is_null($nextroute)) {
                             $callback = scorms::class;
-                        } else if (is_number($nextroute)) {
-                            scorms::set_id($nextroute);
-                            $nextroute = array_shift($urlparts);
-                            if (is_null($nextroute)) {
-                                $callback = scorms::class;
-                            }
                         }
                     }
                 }
             }
-        } else if ($nextroute === modules::$route) {
-            modules::$withcompletion = !empty(baseapi::$my);
-            $nextroute = array_shift($urlparts);
-            if (is_number($nextroute)) {
-                modules::set_id($nextroute);
-                $callback = modules::class;
-            }
+        }
+    } else if ($nextroute === modules::$route) {
+        modules::$withcompletion = !empty(baseapi::$my);
+        $nextroute = array_shift($urlparts);
+        if (is_number($nextroute)) {
+            modules::set_id((int) $nextroute);
+            $callback = modules::class;
         }
     }
     if (isset($callbacks[$callback])) {

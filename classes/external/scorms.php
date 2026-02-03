@@ -39,7 +39,7 @@ class scorms extends baseapi {
     /**
      * Returns the parameters for the execute function.
      *
-     * @return external_function_parameters
+     * @return \external_function_parameters
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -51,7 +51,7 @@ class scorms extends baseapi {
      * Returns the description of the execute function.
      *
      * @param int $courseid ID of course
-     * @return external_description
+     * @return array
      */
     public static function execute($courseid) {
         global $USER;
@@ -75,7 +75,7 @@ class scorms extends baseapi {
                     'name' => $scorm['name'],
                     'type' => $scorm['scormtype'],
                 ];
-                if (static::is_singleoperation($scormdata['id'])) {
+                if (static::is_singleoperation()) {
                     $scormdata['packageurl'] = $scorm['packageurl'];
                     $scormdata['sha1hash'] = $scorm['sha1hash'];
                     return $scormdata;

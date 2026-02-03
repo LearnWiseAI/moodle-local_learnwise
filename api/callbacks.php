@@ -55,6 +55,7 @@ if (!function_exists('local_learnwise_call_external_function')) {
             $externalfunctioninfo->parameters_desc,
             $params
         );
+        /* @phpstan-ignore argument.type */
         $data = core_external::call_external_function($wsfunction, $params);
 
         if ($data['error']) {
@@ -109,21 +110,11 @@ $callbacks = [
 ];
 
 foreach ($callbacks as $classname => $info) {
-    if (!isset($info['component'])) {
-        $info['component'] = 'local_learnwise';
-    }
-    if (!isset($info['loginrequired'])) {
-        $info['loginrequired'] = true;
-    }
-    if (!isset($info['type'])) {
-        $info['type'] = 'read';
-    }
-    if (!isset($info['methodname'])) {
-        $info['methodname'] = 'execute';
-    }
-    if (!isset($info['classname'])) {
-        $info['classname'] = $classname;
-    }
+    $info['component'] = 'local_learnwise';
+    $info['loginrequired'] = true;
+    $info['type'] = 'read';
+    $info['methodname'] = 'execute';
+    $info['classname'] = $classname;
     $callbacks[$classname] = $info;
 }
 
