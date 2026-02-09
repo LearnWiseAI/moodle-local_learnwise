@@ -55,6 +55,7 @@ $services = [
             'mod_forum_get_forum_discussions',
             'mod_resource_get_resources_by_courses',
             'mod_assign_get_assignments',
+            'mod_assign_get_submissions',
         ],
         'enabled' => 1,
         'restrictedusers' => 1,
