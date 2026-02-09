@@ -43,6 +43,7 @@ $string['courseids'] = 'Course IDs';
 $string['courseids_desc'] = 'Enter courseids as comma-separated values (e.g. 2,3,5).';
 $string['donotdelete'] = 'DO NOT DELETE';
 $string['enableaiassessment'] = 'Enable AI assessment';
+$string['enableaiassessment_tooltip'] = 'Please specify Assistant ID to configure AI Aassessment';
 $string['enableliveapiintegration'] = 'Enable Live API Integration';
 $string['enablelti'] = 'Enable LTI';
 $string['enablelti_tooltip'] = 'Please specify Assistant ID to configure LTI';
