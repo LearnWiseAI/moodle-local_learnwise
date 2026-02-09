@@ -95,5 +95,19 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025112401, 'local', 'learnwise');
     }
 
+    if ($oldversion < 2026012301) {
+        $role = util::get_or_create_role();
+        foreach (util::ROLECAPS as $capability) {
+            assign_capability(
+                $capability,
+                CAP_ALLOW,
+                $role->id,
+                SYSCONTEXTID,
+                true
+            );
+        }
+        upgrade_plugin_savepoint(true, 2026012301, 'local', 'learnwise');
+    }
+
     return true;
 }

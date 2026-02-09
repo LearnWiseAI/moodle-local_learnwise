@@ -23,6 +23,7 @@ use local_learnwise\local\OAuth2\Storage\ClientCredentialsInterface;
 use local_learnwise\local\OAuth2\Storage\RefreshTokenInterface;
 use local_learnwise\local\OAuth2\Storage\ScopeInterface;
 use stdClass;
+use webservice;
 
 // phpcs:disable moodle.NamingConventions.ValidFunctionName.LowercaseMethod
 /**
@@ -76,6 +77,20 @@ class storage implements
      * @return array|false
      */
     public function getAccessToken($oauthtoken) {
+        global $CFG;
+        require_once($CFG->dirroot . '/webservice/lib.php');
+        $token = $this->db->get_record('external_tokens', ['token' => $oauthtoken, 'tokentype' => EXTERNAL_TOKEN_PERMANENT]);
+        if ($token) {
+            $client = util::get_or_generate_client();
+            webservice::update_token_lastaccess($token);
+            return [
+                'access_token' => $token->token,
+                'client_id' => $client->uniqid,
+                'user_id' => $token->userid,
+                'expires' => $token->validuntil > 0 ? $token->validuntil : time() + 5,
+                'scope' => $this->getDefaultScope(),
+            ];
+        }
         $token = $this->db->get_record('local_learnwise_accesstoken', ['token' => $oauthtoken]);
         if (!$token) {
             return false;
