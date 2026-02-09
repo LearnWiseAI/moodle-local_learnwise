@@ -82,7 +82,14 @@ class storage implements
         $token = $this->db->get_record('external_tokens', ['token' => $oauthtoken, 'tokentype' => EXTERNAL_TOKEN_PERMANENT]);
         if ($token) {
             $client = util::get_or_generate_client();
-            webservice::update_token_lastaccess($token);
+            if (is_callable([webservice::class, 'update_token_lastaccess'])) {
+                webservice::update_token_lastaccess($token);
+            } else {
+                $time = time();
+                if ($time >= $token->lastaccess + MINSECS) {
+                    $this->db->set_field('external_tokens', 'lastaccess', $time, ['id' => $token->id]);
+                }
+            }
             return [
                 'access_token' => $token->token,
                 'client_id' => $client->uniqid,
