@@ -54,6 +54,7 @@ $services = [
             'mod_resource_get_resources_by_courses',
             'mod_assign_get_assignments',
             'mod_assign_get_submissions',
+            'mod_scorm_get_scorms_by_courses',
         ],
         'enabled' => 1,
         'restrictedusers' => 1,
