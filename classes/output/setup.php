@@ -94,7 +94,7 @@ class setup implements renderable, templatable {
         $plugin = 'local_learnwise';
         $paramtypemap = [
             'floatingButtonAssistantId' => [
-                PARAM_ALPHANUM,
+                PARAM_ALPHANUMEXT,
                 new lang_string('assistantid', $plugin),
             ],
             'courseIds' => [
@@ -144,7 +144,7 @@ class setup implements renderable, templatable {
                 new lang_string('aiassessment', $plugin),
             ],
             'aiAssessmentAssistantId' => [
-                PARAM_ALPHANUM,
+                PARAM_ALPHANUMEXT,
                 new lang_string('assistantid', $plugin),
             ],
         ];
@@ -154,7 +154,7 @@ class setup implements renderable, templatable {
                 new lang_string('enablelti', $plugin),
             ];
             $paramtypemap['ltiAssistantId'] = [
-                PARAM_ALPHANUM,
+                PARAM_ALPHANUMEXT,
                 new lang_string('assistantid', $plugin),
             ];
         }
