@@ -270,7 +270,11 @@ class util {
      * @return string
      */
     public static function get_ltiprefixurl($env = null) {
-        return str_replace('chat.', 'lti.', self::get_ltitoolurl($env));
+        return str_replace(
+            ['chat.', 'lti.sandbox'],
+            ['lti.', 'lti-sbx'],
+            self::get_ltitoolurl($env)
+        );
     }
 
     /**
