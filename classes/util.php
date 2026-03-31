@@ -51,6 +51,7 @@ class util {
         'mod/assign:view',
         'mod/quiz:view',
         'mod/assign:grade',
+        'moodle/user:viewdetails',
     ];
 
     /**
