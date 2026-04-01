@@ -120,7 +120,7 @@ try {
                     $nextroute = array_shift($urlparts);
                     if (is_null($nextroute)) {
                         $callback = assignments::class;
-                    } else if (is_number($nextroute)) {
+                    } else if (is_numeric($nextroute)) {
                         assignments::set_id((int) $nextroute);
                         $params['assignmentid'] = assignments::get_id();
                         $nextroute = array_shift($urlparts);
@@ -130,7 +130,7 @@ try {
                             $nextroute = array_shift($urlparts);
                             if (is_null($nextroute)) {
                                 $callback = submissions::class;
-                            } else if (is_number($nextroute)) {
+                            } else if (is_numeric($nextroute)) {
                                 submissions::set_id((int) $nextroute);
                                 $nextroute = array_shift($urlparts);
                                 if (is_null($nextroute)) {
@@ -147,7 +147,7 @@ try {
                     $nextroute = array_shift($urlparts);
                     if (is_null($nextroute)) {
                         $callback = course_modules::class;
-                    } else if (is_number($nextroute)) {
+                    } else if (is_numeric($nextroute)) {
                         course_modules::set_id((int) $nextroute);
                         $callback = course_modules::class;
                     }
@@ -157,7 +157,7 @@ try {
                     $nextroute = array_shift($urlparts);
                     if (is_null($nextroute)) {
                         $callback = forums::class;
-                    } else if (is_number($nextroute)) {
+                    } else if (is_numeric($nextroute)) {
                         forums::set_id((int) $nextroute);
                         $params['forumid'] = forums::get_id();
                         $nextroute = array_shift($urlparts);
@@ -167,7 +167,7 @@ try {
                             $nextroute = array_shift($urlparts);
                             if (is_null($nextroute)) {
                                 $callback = discussions::class;
-                            } else if (is_number($nextroute)) {
+                            } else if (is_numeric($nextroute)) {
                                 discussions::set_id((int) $nextroute);
                                 $callback = discussions::class;
                             }
@@ -177,7 +177,7 @@ try {
                     $nextroute = array_shift($urlparts);
                     if (is_null($nextroute)) {
                         $callback = scorms::class;
-                    } else if (is_number($nextroute)) {
+                    } else if (is_numeric($nextroute)) {
                         scorms::set_id((int) $nextroute);
                         $nextroute = array_shift($urlparts);
                         if (is_null($nextroute)) {
@@ -190,7 +190,7 @@ try {
     } else if ($nextroute === modules::$route) {
         modules::$withcompletion = !empty(baseapi::$my);
         $nextroute = array_shift($urlparts);
-        if (is_number($nextroute)) {
+        if (is_numeric($nextroute)) {
             modules::set_id((int) $nextroute);
             $callback = modules::class;
         }
