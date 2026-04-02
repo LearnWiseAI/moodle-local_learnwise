@@ -57,6 +57,6 @@ try {
     }
 
     $response = new Response();
-    $response->setError(500, 'An unexpected error occurred: ' . $e->getMessage());
+    $response->setError(500, get_string('error'));
     $response->send();
 }
