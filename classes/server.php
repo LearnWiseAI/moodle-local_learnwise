@@ -44,7 +44,7 @@ class server extends OAuth2Server {
         if (is_null(self::$instance)) {
             $storage = new storage();
             $server = new server($storage, [
-                'enforce_state' => false,
+                'enforce_state' => true,
                 'access_lifetime' => HOURSECS,
                 'refresh_token_lifetime' => WEEKSECS,
             ]);
