@@ -108,6 +108,14 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2026033100, 'local', 'learnwise');
     }
+    if ($oldversion < 2026040200) {
+        $table = new xmldb_table('local_learnwise_authcode');
+        $field = new xmldb_field('redirecturi', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'code');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026040200, 'local', 'learnwise');
+    }
 
     return true;
 }
