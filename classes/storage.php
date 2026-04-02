@@ -172,17 +172,11 @@ class storage implements
         if (!$client) {
             return false;
         }
-        $configredirecturl = constants::get_redirecturl();
-        $redirecturi = optional_param('redirect_uri', false, PARAM_URL);
-        $configredirecturls = preg_split('/\s+/', $configredirecturl);
-        if (!in_array($redirecturi, $configredirecturls)) {
-            $redirecturi = '';
-        }
         return [
             'authorization_code' => $authcode->code,
             'client_id' => $client->uniqid,
             'user_id' => $userauth->userid,
-            'redirect_uri' => $redirecturi,
+            'redirect_uri' => $authcode->redirecturi,
             'expires' => $authcode->timeexpiry,
             'scope' => $this->getDefaultScope(),
             'id_token' => $authcode->token,
@@ -217,6 +211,7 @@ class storage implements
         $record = new stdClass();
         $record->authid = $userauth->id;
         $record->code = $code;
+        $record->redirecturi = $redirecturi;
         $record->timeexpiry = $expires;
         if ($id = $this->db->get_field('local_learnwise_authcode', 'id', ['code' => $code])) {
             $record->id = $id;
