@@ -151,7 +151,7 @@ class discussions extends baseapi {
         $structure = new external_single_structure([
             'id' => new external_value(PARAM_INT, 'discussion post id'),
             'subject' => new external_value(PARAM_TEXT, 'post subject'),
-            'message' => new external_value(PARAM_RAW, 'post message'),
+            'message' => new external_value(PARAM_TEXT, 'post message'),
             'parentid' => new external_value(PARAM_INT, 'post parent id'),
             'timecreated' => new external_value(PARAM_INT, 'posted time in unix format'),
         ]);
