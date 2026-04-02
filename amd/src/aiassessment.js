@@ -23,39 +23,67 @@
 define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notification) {
     return {
         setup: false,
+        initializing: false,
+        pollHandle: null,
+        pollAttempts: 0,
+        maxPollAttempts: 20,
         init: function() {
             var self = this;
             var $document = $(document);
             $document.on('finish-loading-user', function() {
-                var $userInfo = $document.find('[data-region="user-info"]');
-                var instanceId = $userInfo.attr('data-assignmentid');
-                var userid = $userInfo.attr('data-userid');
-                if (!userid) {
-                    var gradenavpanel = $userInfo.closest('[data-region="grading-navigation-panel"]');
-                    userid = gradenavpanel.data('first-userid');
-                }
-                if (self.setup) {
-                    self.redirectUserGrading(userid);
-                    return;
-                }
-                Ajax.call([{
-                    methodname: 'local_learnwise_assign_get_submission',
-                    args: {
-                        assignid: instanceId,
-                        userid: userid
-                    }
-                }])[0].then(function(response) {
-                    self.setup = true;
-                    document.dispatchEvent(new CustomEvent('initLearnWiseAssessment', {
-                        detail: response,
-                    }));
-                    return null;
-                }).catch(Notification.exception);
+                self.initializeAssessment();
             }).on('user-changed', function(e, userid) {
                 if (self.setup) {
                     e.stopPropagation();
                     self.redirectUserGrading(userid);
                 }
+            });
+
+            // Some Moodle versions/themes can miss or race the finish-loading-user event.
+            // Trigger immediately and retry briefly while grading panel is still mounting.
+            self.initializeAssessment();
+            self.pollHandle = setInterval(function() {
+                if (self.setup || self.pollAttempts >= self.maxPollAttempts) {
+                    clearInterval(self.pollHandle);
+                    return;
+                }
+                self.pollAttempts++;
+                self.initializeAssessment();
+            }, 500);
+        },
+        initializeAssessment: function() {
+            var self = this;
+            var $document = $(document);
+            var $userInfo = $document.find('[data-region="user-info"]');
+            var instanceId = $userInfo.attr('data-assignmentid');
+            var userid = $userInfo.attr('data-userid');
+            if (!userid) {
+                var gradenavpanel = $userInfo.closest('[data-region="grading-navigation-panel"]');
+                userid = gradenavpanel.data('first-userid');
+            }
+            if (!instanceId || !userid || self.setup || self.initializing) {
+                return;
+            }
+            self.initializing = true;
+            Ajax.call([{
+                methodname: 'local_learnwise_assign_get_submission',
+                args: {
+                    assignid: instanceId,
+                    userid: userid
+                }
+            }])[0].then(function(response) {
+                self.setup = true;
+                self.initializing = false;
+                if (self.pollHandle) {
+                    clearInterval(self.pollHandle);
+                }
+                document.dispatchEvent(new CustomEvent('initLearnWiseAssessment', {
+                    detail: response,
+                }));
+                return null;
+            }).catch(function(error) {
+                self.initializing = false;
+                Notification.exception(error);
             });
         },
         redirectUserGrading: function(userid) {
