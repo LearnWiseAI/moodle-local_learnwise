@@ -54,6 +54,7 @@ class grade extends baseapi {
             'course_id' => new external_value(PARAM_INT, 'Course ID'),
             'assignment_id' => new external_value(PARAM_INT, 'Assignment ID'),
             'user_id' => new external_value(PARAM_INT, 'User ID'),
+            'advancedgradinginstanceid' => new external_value(PARAM_INT, 'Advanced grading instance ID', VALUE_OPTIONAL),
             'rubric_assessment' => new external_single_structure([
                 'submission_grade' => new external_value(PARAM_FLOAT, 'Submission Grade'),
                 'rubric_assessments' => new external_single_structure([
@@ -95,6 +96,7 @@ class grade extends baseapi {
                 'course_id' => $courseid,
                 'assignment_id' => $assignmentid,
                 'user_id' => $userid,
+                'advancedgradinginstanceid' => optional_param('advancedgradinginstanceid', null, PARAM_INT),
                 'rubric_assessment' => $rubricassessment,
             ]
         );
@@ -119,7 +121,7 @@ class grade extends baseapi {
                 if ($gradingdisabled && $itemid) {
                     $gradinginstance = $controller->get_current_instance($USER->id, $itemid);
                 } else if (!$gradingdisabled) {
-                    $instanceid = optional_param('advancedgradinginstanceid', null, PARAM_INT);
+                    $instanceid = $params['advancedgradinginstanceid'] ?? null;
                     $gradinginstance = $controller->get_or_create_instance(
                         $instanceid,
                         $USER->id,
