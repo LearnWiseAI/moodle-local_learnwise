@@ -79,7 +79,15 @@ class storage implements
     public function getAccessToken($oauthtoken) {
         global $CFG;
         require_once($CFG->dirroot . '/webservice/lib.php');
-        $token = $this->db->get_record('external_tokens', ['token' => $oauthtoken, 'tokentype' => EXTERNAL_TOKEN_PERMANENT]);
+        $extservice = $this->db->get_record('external_services', ['shortname' => 'learnwise'], 'id');
+        $token = false;
+        if ($extservice) {
+            $token = $this->db->get_record('external_tokens', [
+                'token' => $oauthtoken,
+                'tokentype' => EXTERNAL_TOKEN_PERMANENT,
+                'externalserviceid' => $extservice->id,
+            ]);
+        }
         if ($token) {
             $client = util::get_or_generate_client();
             webservice::update_token_lastaccess($token);
