@@ -24,6 +24,7 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="fkclientid" TYPE="foreign" FIELDS="clientid" REFTABLE="local_learnwise_clients" REFFIELDS="id"/>
         <KEY NAME="fkuserid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="uniqclientuser" TYPE="unique" FIELDS="clientid,userid"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="local_learnwise_authcode" COMMENT="Stores auth code related to user authorization">
@@ -37,6 +38,7 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="fkauthid" TYPE="foreign" FIELDS="authid" REFTABLE="local_learnwise_userauth" REFFIELDS="id"/>
+        <KEY NAME="uniqcode" TYPE="unique" FIELDS="code"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="local_learnwise_accesstoken" COMMENT="Stores access token for users">
@@ -49,6 +51,7 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="fkauthid" TYPE="foreign" FIELDS="authid" REFTABLE="local_learnwise_userauth" REFFIELDS="id"/>
+        <KEY NAME="uniqtoken" TYPE="unique" FIELDS="token"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="local_learnwise_refreshtoken" COMMENT="Stores refresh token related to user auth">
@@ -61,6 +64,7 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="fkauthid" TYPE="foreign" FIELDS="authid" REFTABLE="local_learnwise_userauth" REFFIELDS="id"/>
+        <KEY NAME="uniqrefreshtoken" TYPE="unique" FIELDS="token"/>
       </KEYS>
     </TABLE>
   </TABLES>
