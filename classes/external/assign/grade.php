@@ -113,6 +113,7 @@ class grade extends baseapi {
         $assignment = $filteredparams[0];
         $cm = $filteredparams[2];
         $context = $filteredparams[3];
+        require_capability('mod/assign:grade', $context);
 
         $grade = $assignment->get_user_grade($params['user_id'], true);
         $originalgrade = $grade->grade;
