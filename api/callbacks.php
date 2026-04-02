@@ -116,7 +116,7 @@ $callbacks = [
 foreach ($callbacks as $classname => $info) {
     $info['component'] = 'local_learnwise';
     $info['loginrequired'] = false;
-    $info['type'] = 'read';
+    $info['type'] = $classname === grade::class ? 'write' : 'read';
     $info['methodname'] = 'execute';
     $info['classname'] = $classname;
     $callbacks[$classname] = $info;
