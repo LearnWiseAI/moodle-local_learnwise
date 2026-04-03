@@ -65,7 +65,12 @@ class storage implements
         $record = $this->db->get_record('local_learnwise_userauth', $params);
         if (!$record) {
             $record = (object) $params;
-            $record->id = $this->db->insert_record('local_learnwise_userauth', $record);
+            try {
+                $record->id = $this->db->insert_record('local_learnwise_userauth', $record);
+            } catch (\dml_write_exception $e) {
+                // A concurrent request may have inserted this row first.
+                $record = $this->db->get_record('local_learnwise_userauth', $params, '*', MUST_EXIST);
+            }
         }
         return $record;
     }

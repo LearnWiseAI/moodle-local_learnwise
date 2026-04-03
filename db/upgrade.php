@@ -108,6 +108,33 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2026033100, 'local', 'learnwise');
     }
+    if ($oldversion < 2026040201) {
+        $table = new xmldb_table('local_learnwise_userauth');
+        $index = new xmldb_index('uniqclientuser', XMLDB_INDEX_UNIQUE, ['clientid', 'userid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('local_learnwise_authcode');
+        $index = new xmldb_index('uniqcode', XMLDB_INDEX_UNIQUE, ['code']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('local_learnwise_accesstoken');
+        $index = new xmldb_index('uniqtoken', XMLDB_INDEX_UNIQUE, ['token']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('local_learnwise_refreshtoken');
+        $index = new xmldb_index('uniqrefreshtoken', XMLDB_INDEX_UNIQUE, ['token']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026040201, 'local', 'learnwise');
+    }
 
     return true;
 }
