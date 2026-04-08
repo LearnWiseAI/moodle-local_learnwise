@@ -30,6 +30,59 @@
  * @return bool
  */
 function xmldb_local_learnwise_install() {
+    global $CFG, $DB;
     local_learnwise\util::get_or_generate_client();
+
+    $services = [];
+    include(dirname(__FILE__) . '/services.php');
+
+    if (!empty($services)) {
+        $servicekey = array_keys($services)[0];
+        $service = (object) $services[$servicekey];
+        $servicerecord = $DB->get_record('external_services', ['shortname' => $service->shortname]);
+        if (empty($servicerecord)) {
+            $servicerecord = $DB->get_record('external_services', ['name' => $servicekey]);
+        }
+        $currentcomponent = local_learnwise\util::component();
+
+        // Check if manually created service exists.
+        // If found then upgrade it to become component service.
+        if (!empty($servicerecord) && (
+            ($servicerecord->component != $currentcomponent) ||
+            ($servicerecord->name != $servicekey)
+        )) {
+            $servicerecord->component = $currentcomponent;
+            $servicerecord->shortname = $service->shortname;
+            $servicerecord->name = $servicekey;
+            $DB->update_record('external_services', $servicerecord);
+
+            if (!empty($servicerecord->enabled)) {
+                set_config('webservices', 1, $currentcomponent);
+
+                // Check if api user already created.
+                // If created then update user and set it to config.
+                $apiuser = $DB->get_record('user', ['username' => 'learnwise_assistant_user', 'deleted' => 0]);
+                if (!empty($apiuser)) {
+                    $apiuser->firstname = 'Learnwise';
+                    $apiuser->lastname = 'Assistant';
+                    $apiuser->email = 'noreply@learnwise.ai';
+                    $apiuser->auth = 'webservice';
+                    $apiuser->description = get_string('donotdelete', $currentcomponent);
+                    $apiuser->emailstop = 1;
+                    $apiuser->confirmed = 1;
+                    $apiuser->policyagreed = 1;
+                    $apiuser->mnethostid = $CFG->mnet_localhost_id;
+                    $DB->update_record('user', $apiuser);
+                    set_config('tokenuserid', $apiuser->id, $currentcomponent);
+                }
+
+                $form = new local_learnwise\form\webservicesetup();
+                $formdata = new stdClass();
+                $formdata->setupwebservicesetup = true;
+                $form->update_from_formdata($formdata);
+            }
+        }
+    }
+
     return true;
 }
