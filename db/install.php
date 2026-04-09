@@ -33,7 +33,7 @@ function xmldb_local_learnwise_install() {
     global $CFG, $DB;
     local_learnwise\util::get_or_generate_client();
 
-    $services = [];
+    // Services variable is populated by the included file below.
     include(dirname(__FILE__) . '/services.php');
 
     if (!empty($services)) {
@@ -47,10 +47,13 @@ function xmldb_local_learnwise_install() {
 
         // Check if manually created service exists.
         // If found then upgrade it to become component service.
-        if (!empty($servicerecord) && (
-            ($servicerecord->component != $currentcomponent) ||
-            ($servicerecord->name != $servicekey)
-        )) {
+        if (
+            !empty($servicerecord) &&
+            (
+                ($servicerecord->component != $currentcomponent) ||
+                ($servicerecord->name != $servicekey)
+            )
+        ) {
             $servicerecord->component = $currentcomponent;
             $servicerecord->shortname = $service->shortname;
             $servicerecord->name = $servicekey;
