@@ -119,7 +119,7 @@ class util {
         global $CFG, $DB, $USER;
         require_once($CFG->dirroot . '/webservice/lib.php');
         $wsmanager = new webservice();
-        $extservice = $wsmanager->get_external_service_by_shortname($service);
+        $extservice = self::find_external_service($wsmanager, $service);
         if (!$extservice) {
             throw new Exception("Service not found");
         }
@@ -214,6 +214,30 @@ class util {
             return false;
         }
         return $token;
+    }
+
+    /**
+     * Resolve a configured service and keep backward compatibility with legacy shortnames.
+     *
+     * @param webservice $wsmanager
+     * @param string $service
+     * @return stdClass|false
+     */
+    public static function find_external_service(webservice $wsmanager, string $service) {
+        $shortnames = [$service];
+        if ($service === constants::COMPONENT) {
+            $shortnames[] = 'learnwise';
+        } else if ($service === 'learnwise') {
+            $shortnames[] = constants::COMPONENT;
+        }
+
+        foreach (array_unique($shortnames) as $shortname) {
+            $extservice = $wsmanager->get_external_service_by_shortname($shortname);
+            if (!empty($extservice)) {
+                return $extservice;
+            }
+        }
+        return false;
     }
 
     /**

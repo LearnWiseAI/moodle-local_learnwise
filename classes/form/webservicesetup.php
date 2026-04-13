@@ -49,7 +49,7 @@ class webservicesetup extends moodleform {
      */
     protected function definition() {
         $mform = $this->_form;
-        $currenttoken = util::get_or_generate_token_for_user('learnwise', false);
+        $currenttoken = util::get_or_generate_token_for_user(constants::COMPONENT, false);
 
         if (!empty($currenttoken)) {
             $this->_customdata['currenttoken'] = $currenttoken;
@@ -114,7 +114,7 @@ class webservicesetup extends moodleform {
             set_config('enablewebservices', true);
             $webservicemanager = new webservice();
 
-            $extservice = $webservicemanager->get_external_service_by_shortname('learnwise');
+            $extservice = util::find_external_service($webservicemanager, constants::COMPONENT);
             if (!$extservice) {
                 throw new Exception("Service not found");
             }
@@ -139,12 +139,12 @@ class webservicesetup extends moodleform {
                 assign_capability('webservice/rest:use', CAP_ALLOW, $CFG->defaultuserroleid, $systemcontext->id, true);
             }
             if (empty($this->_customdata['currenttoken'])) {
-                $this->_customdata['currenttoken'] = util::get_or_generate_token_for_user('learnwise', true);
+                $this->_customdata['currenttoken'] = util::get_or_generate_token_for_user(constants::COMPONENT, true);
             }
             return true;
         } else if (!empty($formdata->removewebservicesetup)) {
             $webservicemanager = new webservice();
-            $extservice = $webservicemanager->get_external_service_by_shortname('learnwise');
+            $extservice = util::find_external_service($webservicemanager, constants::COMPONENT);
             if (!$extservice) {
                 throw new Exception("Service not found");
             }
@@ -152,7 +152,7 @@ class webservicesetup extends moodleform {
                 $extservice->enabled = 0;
                 $webservicemanager->update_external_service($extservice);
             }
-            $currenttoken = util::get_or_generate_token_for_user('learnwise', false);
+            $currenttoken = util::get_or_generate_token_for_user(constants::COMPONENT, false);
             if (!empty($currenttoken)) {
                 $webservicemanager->delete_user_ws_token($currenttoken->id);
             }
