@@ -40,7 +40,8 @@ $functions = [
 ];
 
 $services = [
-    'Learnwise Service' => [
+    'learnwise_service' => [
+        'name' => 'Learnwise Service',
         'functions' => [
             'core_webservice_get_site_info',
             'core_course_get_courses',
@@ -58,7 +59,7 @@ $services = [
         ],
         'enabled' => 1,
         'restrictedusers' => 1,
-        'shortname' => 'learnwise',
+        'shortname' => 'local_learnwise',
         'downloadfiles' => 1,
         'uploadfiles' => 0,
     ],

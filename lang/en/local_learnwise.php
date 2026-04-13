@@ -60,6 +60,7 @@ $string['floatingbuttonconfig'] = 'Floating Button Configuration';
 $string['floatingbuttonconfigdesc'] = 'This allows showing the Learnwise assistant as a floating chat button that opens a small frame on the bottom of the screen.';
 $string['gradingdisabled'] = 'Grading disabled';
 $string['integration_listpage'] = 'Learnwise Integration';
+$string['learnwise_service'] = 'Learnwise Service';
 $string['learnwise:roledescription'] = 'Role for Learnwise AI Assistant integration';
 $string['learnwise:rolename'] = 'Learnwise Assistant';
 $string['liveapiintegration'] = 'Live API Integration';
