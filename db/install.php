@@ -57,6 +57,7 @@ function xmldb_local_learnwise_install() {
             $servicerecord->component = $currentcomponent;
             $servicerecord->shortname = $service->shortname;
             $servicerecord->name = $servicekey;
+            $servicerecord->enabled = 1;
             $DB->update_record('external_services', $servicerecord);
 
             if (!empty($servicerecord->enabled)) {
