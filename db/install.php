@@ -39,9 +39,18 @@ function xmldb_local_learnwise_install() {
     if (!empty($services)) {
         $servicekey = array_keys($services)[0];
         $service = (object) $services[$servicekey];
+        $servicename = !empty($service->name) ? $service->name : $servicekey;
         $servicerecord = $DB->get_record('external_services', ['shortname' => $service->shortname]);
         if (empty($servicerecord)) {
-            $servicerecord = $DB->get_record('external_services', ['name' => $servicekey]);
+            // Backward compatibility with older releases.
+            $servicerecord = $DB->get_record('external_services', ['shortname' => 'learnwise']);
+        }
+        if (empty($servicerecord)) {
+            $servicerecord = $DB->get_record('external_services', ['name' => $servicename]);
+        }
+        if (empty($servicerecord)) {
+            // Backward compatibility with older releases.
+            $servicerecord = $DB->get_record('external_services', ['name' => 'Learnwise Service']);
         }
         $currentcomponent = local_learnwise\util::component();
 
@@ -56,7 +65,7 @@ function xmldb_local_learnwise_install() {
         ) {
             $servicerecord->component = $currentcomponent;
             $servicerecord->shortname = $service->shortname;
-            $servicerecord->name = $servicekey;
+            $servicerecord->name = $servicename;
             $DB->update_record('external_services', $servicerecord);
 
             if (!empty($servicerecord->enabled)) {

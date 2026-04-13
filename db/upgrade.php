@@ -40,7 +40,7 @@ function xmldb_local_learnwise_upgrade($oldversion) {
     if ($oldversion < 2025091700) {
         require_once($CFG->dirroot . '/webservice/lib.php');
         $webservicemanager = new webservice();
-        $extservice = $webservicemanager->get_external_service_by_shortname('learnwise');
+        $extservice = util::find_external_service($webservicemanager, \local_learnwise\constants::COMPONENT);
         if (!empty($extservice) && !empty($extservice->restrictedusers)) {
             $admin = get_admin();
             $wsauthorizedusers = $webservicemanager->get_ws_authorised_users($extservice->id);
@@ -80,7 +80,7 @@ function xmldb_local_learnwise_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025112401) {
-        $token = util::get_or_generate_token_for_user('learnwise');
+        $token = util::get_or_generate_token_for_user(\local_learnwise\constants::COMPONENT);
         $admin = get_admin();
         $existrecord = $DB->get_record('external_tokens', [
             'externalserviceid' => $token->externalserviceid,
