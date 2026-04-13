@@ -194,7 +194,7 @@ class setup implements renderable, templatable {
      * @return stdClass Data to be used by the template.
      */
     public function export_for_template(renderer_base $output) {
-        $env = $this->formvalues->evironment;
+        $env = $this->formvalues->environment;
         $data = clone($this->formvalues);
         $data->showltisetup = $this->showltisetup();
         $data->showtoast = $this->showtoast();
