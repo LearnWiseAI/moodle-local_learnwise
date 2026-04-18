@@ -56,10 +56,18 @@ class hook_callbacks {
 <script>
 (function() {
 var iframe, iframeclone, iframeheight = innerHeight, iframeid = 'contentframe';
+var attempts = 0;
+var maxAttempts = 100;
 var intvalid = setInterval(() => {
+    attempts += 1;
+    if (attempts > maxAttempts) {
+        clearInterval(intvalid);
+        return;
+    }
     if (document.readyState != 'complete') {
         iframe = iframe || document.querySelector('iframe#' + iframeid);
-        if (iframe && iframe.getAttribute('allow').indexOf('.learnwise.') === -1) {
+        var iframeallow = iframe ? iframe.getAttribute('allow') : '';
+        if (iframe && (!iframeallow || iframeallow.indexOf('.learnwise.') === -1)) {
             iframe = undefined;
         }
         if (iframe) {
@@ -94,7 +102,7 @@ var intvalid = setInterval(() => {
         }
         clearInterval(intvalid);
     }
-}, 1);
+}, 100);
 })();
 </script>
 JS;
