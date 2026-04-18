@@ -101,6 +101,7 @@ class grade extends baseapi {
 
         $cm = $DB->get_record('course_modules', ['id' => $params['assignment_id']], '*', MUST_EXIST);
         [$assignment, $course, $cm, $context] = self::validate_assignment($cm->instance);
+        require_capability('mod/assign:grade', $context);
 
         $grade = $assignment->get_user_grade($params['user_id'], true);
         $originalgrade = $grade->grade;
