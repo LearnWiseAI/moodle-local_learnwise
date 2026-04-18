@@ -188,7 +188,7 @@ class util {
             $token = array_pop($tokens);
         } else if ($create) {
             $token = new stdClass();
-            $token->token = md5(uniqid((string) rand(), true));
+            $token->token = bin2hex(random_bytes(32));
             $token->userid = $tokenuser->id;
             $token->creatorid = $USER->id;
             $token->tokentype = EXTERNAL_TOKEN_PERMANENT;
