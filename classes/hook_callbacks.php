@@ -116,9 +116,6 @@ JS;
                 ];
                 $html .= $renderer->render_from_template('local_learnwise/aiassessmentassistant', $templatedata);
             }
-            if (empty($html)) {
-                return;
-            }
         }
         if (!empty($settings->showassistantwidget) && !empty($settings->assistantid)) {
             $configcourseids = !empty($settings->courseids) ? explode(',', $settings->courseids) : [];
