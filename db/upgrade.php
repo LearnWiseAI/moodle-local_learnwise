@@ -95,7 +95,7 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025112401, 'local', 'learnwise');
     }
 
-    if ($oldversion < 2026033100) {
+    if ($oldversion < 2026042900) {
         $role = util::get_or_create_role();
         foreach (util::ROLECAPS as $capability) {
             assign_capability(
@@ -106,7 +106,7 @@ function xmldb_local_learnwise_upgrade($oldversion) {
                 true
             );
         }
-        upgrade_plugin_savepoint(true, 2026033100, 'local', 'learnwise');
+        upgrade_plugin_savepoint(true, 2026042900, 'local', 'learnwise');
     }
 
     return true;
