@@ -52,6 +52,7 @@ class util {
         'mod/quiz:view',
         'mod/assign:grade',
         'moodle/user:viewdetails',
+        'mod/assign:manageallocations',
     ];
 
     /**
