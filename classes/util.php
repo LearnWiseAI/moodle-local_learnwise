@@ -53,6 +53,7 @@ class util {
         'mod/assign:grade',
         'moodle/user:viewdetails',
         'mod/assign:manageallocations',
+        'mod/book:read',
     ];
 
     /**
