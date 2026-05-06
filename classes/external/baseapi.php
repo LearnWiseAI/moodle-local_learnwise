@@ -197,6 +197,15 @@ abstract class baseapi extends external_api {
     }
 
     /**
+     * Checks if api called from native endpoint
+     * @return bool
+     */
+    public static function called_native_endpoint() {
+        global $ME;
+        return strpos($ME, '/webservice/') !== false;
+    }
+
+    /**
      * Returns the structure for a single operation.
      *
      * This method must be implemented by subclasses to define the structure of the API response.

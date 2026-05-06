@@ -25,6 +25,7 @@
 use local_learnwise\external\assign\grade;
 use local_learnwise\external\assign\submissions;
 use local_learnwise\external\assignments;
+use local_learnwise\external\books;
 use local_learnwise\external\calenderdetails;
 use local_learnwise\external\courses;
 use local_learnwise\external\course_modules;
@@ -106,6 +107,9 @@ $callbacks = [
     ],
     modules::class => [
         'description' => 'Get module details',
+    ],
+    books::class => [
+        'description' => 'Get books',
     ],
 ];
 
