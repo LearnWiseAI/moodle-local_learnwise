@@ -208,6 +208,6 @@ try {
         error_log('OAuth error: ' . $e->getMessage());
     }
 
-    $response->setError(500, 'An unexpected error occurred: ' . $e->getMessage());
+    $response->setError(500, get_string('error'));
     $response->send();
 }
