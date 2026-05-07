@@ -74,6 +74,7 @@ class grade extends baseapi {
                 ], 'Rubric Assessments', VALUE_OPTIONAL),
                 'general_feedback' => new external_value(PARAM_TEXT, 'General Feedback', VALUE_OPTIONAL),
             ]),
+            'advancedgradinginstanceid' => new external_value(PARAM_INT, 'needed if user grade record not found', VALUE_DEFAULT),
         ]);
     }
 
@@ -84,10 +85,11 @@ class grade extends baseapi {
      * @param int $assignmentid
      * @param int $userid
      * @param array $rubricassessment
+     * @param int|null $advancedgradinginstanceid
      * @throws \moodle_exception
      * @return array
      */
-    public static function execute($courseid, $assignmentid, $userid, $rubricassessment) {
+    public static function execute($courseid, $assignmentid, $userid, $rubricassessment, $advancedgradinginstanceid = null) {
         global $DB, $USER;
         $params = self::validate_parameters(
             self::execute_parameters(),
@@ -96,6 +98,7 @@ class grade extends baseapi {
                 'assignment_id' => $assignmentid,
                 'user_id' => $userid,
                 'rubric_assessment' => $rubricassessment,
+                'advancedgradinginstanceid' => $advancedgradinginstanceid,
             ]
         );
 
@@ -119,9 +122,8 @@ class grade extends baseapi {
                 if ($gradingdisabled && $itemid) {
                     $gradinginstance = $controller->get_current_instance($USER->id, $itemid);
                 } else if (!$gradingdisabled) {
-                    $instanceid = optional_param('advancedgradinginstanceid', null, PARAM_INT);
                     $gradinginstance = $controller->get_or_create_instance(
-                        $instanceid,
+                        $params['advancedgradinginstanceid'],
                         $USER->id,
                         $itemid
                     );
