@@ -54,7 +54,6 @@ class grade extends baseapi {
             'course_id' => new external_value(PARAM_INT, 'Course ID'),
             'assignment_id' => new external_value(PARAM_INT, 'Assignment ID'),
             'user_id' => new external_value(PARAM_INT, 'User ID'),
-            'advancedgradinginstanceid' => new external_value(PARAM_INT, 'Advanced grading instance ID', VALUE_OPTIONAL),
             'rubric_assessment' => new external_single_structure([
                 'submission_grade' => new external_value(PARAM_FLOAT, 'Submission Grade'),
                 'rubric_assessments' => new external_single_structure([
@@ -84,6 +83,7 @@ class grade extends baseapi {
                 ], 'Rubric Assessments', VALUE_OPTIONAL),
                 'general_feedback' => new external_value(PARAM_TEXT, 'General Feedback', VALUE_OPTIONAL),
             ]),
+            'advancedgradinginstanceid' => new external_value(PARAM_INT, 'needed if user grade record not found', VALUE_DEFAULT),
         ]);
     }
 
@@ -94,10 +94,11 @@ class grade extends baseapi {
      * @param int $assignmentid
      * @param int $userid
      * @param array $rubricassessment
+     * @param int|null $advancedgradinginstanceid
      * @throws \moodle_exception
      * @return array
      */
-    public static function execute($courseid, $assignmentid, $userid, $rubricassessment) {
+    public static function execute($courseid, $assignmentid, $userid, $rubricassessment, $advancedgradinginstanceid = null) {
         global $DB, $USER;
         $params = self::validate_parameters(
             self::execute_parameters(),
@@ -105,8 +106,8 @@ class grade extends baseapi {
                 'course_id' => $courseid,
                 'assignment_id' => $assignmentid,
                 'user_id' => $userid,
-                'advancedgradinginstanceid' => optional_param('advancedgradinginstanceid', null, PARAM_INT),
                 'rubric_assessment' => $rubricassessment,
+                'advancedgradinginstanceid' => $advancedgradinginstanceid,
             ]
         );
 
@@ -131,9 +132,8 @@ class grade extends baseapi {
                 if ($gradingdisabled && $itemid) {
                     $gradinginstance = $controller->get_current_instance($USER->id, $itemid);
                 } else if (!$gradingdisabled) {
-                    $instanceid = $params['advancedgradinginstanceid'] ?? null;
                     $gradinginstance = $controller->get_or_create_instance(
-                        $instanceid,
+                        $params['advancedgradinginstanceid'],
                         $USER->id,
                         $itemid
                     );
