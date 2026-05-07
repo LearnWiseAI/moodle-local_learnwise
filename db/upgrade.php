@@ -110,24 +110,32 @@ function xmldb_local_learnwise_upgrade($oldversion) {
     }
     if ($oldversion < 2026040201) {
         $table = new xmldb_table('local_learnwise_userauth');
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
+        // @phpstan-ignore argument.type
         $index = new xmldb_index('uniqclientuser', XMLDB_INDEX_UNIQUE, ['clientid', 'userid']);
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
 
         $table = new xmldb_table('local_learnwise_authcode');
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
+        // @phpstan-ignore argument.type
         $index = new xmldb_index('uniqcode', XMLDB_INDEX_UNIQUE, ['code']);
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
 
         $table = new xmldb_table('local_learnwise_accesstoken');
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
+        // @phpstan-ignore argument.type
         $index = new xmldb_index('uniqtoken', XMLDB_INDEX_UNIQUE, ['token']);
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
 
         $table = new xmldb_table('local_learnwise_refreshtoken');
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
+        // @phpstan-ignore argument.type
         $index = new xmldb_index('uniqrefreshtoken', XMLDB_INDEX_UNIQUE, ['token']);
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
