@@ -57,6 +57,11 @@ class util {
     ];
 
     /**
+     * @var array Array of regions that has region prefixed urls.
+     */
+    const LTIPREFIXEDREGIONS = ['ca', 'au'];
+
+    /**
      * Returns the component name for the current class.
      * If the COMPONENT constant is not defined, it will use the first part of the class name.
      *
@@ -297,11 +302,22 @@ class util {
      * @return string
      */
     public static function get_ltiprefixurl($env = null) {
-        return str_replace(
+        $ltiurl = str_replace(
             ['chat.', 'lti.sandbox'],
             ['lti.', 'lti-sbx'],
             self::get_ltitoolurl($env)
         );
+        $region = get_config('local_learnwise', 'region');
+        if (empty($region)) {
+            $region = constants::REGION;
+        }
+        if (!self::valid_env($env)) {
+            $env = self::get_env();
+        }
+        if ($env === constants::ENVIRONMENTS[0] && in_array($region, self::LTIPREFIXEDREGIONS)) {
+            $ltiurl = str_replace('lti.', "lti-{$region}.", $ltiurl);
+        }
+        return $ltiurl;
     }
 
     /**
