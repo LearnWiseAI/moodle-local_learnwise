@@ -59,6 +59,7 @@ class constants extends util {
             'eu',
             'uk',
             'us',
+            'au',
         ];
     }
 }
