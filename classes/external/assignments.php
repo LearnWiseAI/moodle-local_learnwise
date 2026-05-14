@@ -167,10 +167,10 @@ class assignments extends baseapi {
             } else if (has_capability('mod/assign:grade', $context) && static::is_singleoperation()) {
                 $gradingmanager = get_grading_manager($assignment->get_context(), 'mod_assign', 'submissions');
                 $gradingmethod = $gradingmanager->get_active_method();
-                if ($gradingmethod === 'rubric') {
+                if ($gradingmethod === 'rubric' || $gradingmethod === 'rubric_ranges') {
                     $controller = $gradingmanager->get_controller($gradingmethod);
                     // phpcs:ignore moodle.Commenting.InlineComment.TypeHintingMatch
-                    /** @var \gradingform_rubric_controller $controller */
+                    /** @var \gradingform_rubric_controller|\gradingform_rubric_ranges_controller $controller */
                     if ($controller->is_form_available()) {
                         $definition = $controller->get_definition();
                         $possiblepoints = 0;
@@ -180,6 +180,7 @@ class assignments extends baseapi {
                                 'points' => 0,
                                 'description' => $rubriccriteria['description'],
                                 'ratings' => [],
+                                'criterion_use_range' => !empty($rubriccriteria['isranged']),
                             ];
                             foreach ($rubriccriteria['levels'] as $level) {
                                 $rubric['ratings'][] = [
@@ -197,6 +198,24 @@ class assignments extends baseapi {
                             'title' => $definition->name,
                             'points_possible' => $possiblepoints,
                         ];
+                    }
+                } else if ($gradingmethod === 'guide') {
+                    $controller = $gradingmanager->get_controller($gradingmethod);
+                    // phpcs:ignore moodle.Commenting.InlineComment.TypeHintingMatch
+                    /** @var \gradingform_guide_controller $controller */
+                    if ($controller->is_form_available()) {
+                        $definition = $controller->get_definition();
+                        if (!empty($definition->guide_criteria)) {
+                            foreach ($definition->guide_criteria as $guidecriteria) {
+                                $guide = [
+                                    'id' => $guidecriteria['id'],
+                                    'points' => $guidecriteria['maxscore'],
+                                    'description' => $guidecriteria['shortname'],
+                                    'instructions' => $guidecriteria['descriptionmarkers'],
+                                ];
+                                $assignmentinfo['guide'][] = $guide;
+                            }
+                        }
                     }
                 } else if (is_null($gradingmethod)) {
                     $assignmentinfo['rubric_settings'] = [
@@ -244,12 +263,20 @@ class assignments extends baseapi {
                 'id' => new external_value(PARAM_INT, 'id'),
                 'points' => new external_value(PARAM_FLOAT, 'points'),
                 'description' => new external_value(PARAM_RAW, 'description'),
+                'criterion_use_range' => new external_value(PARAM_BOOL, 'uses ranges'),
                 'ratings' => new external_multiple_structure(new external_single_structure([
                     'id' => new external_value(PARAM_INT, 'id'),
                     'points' => new external_value(PARAM_FLOAT, 'points'),
                     'description' => new external_value(PARAM_TEXT, 'description'),
                 ])),
             ]), 'rubric', VALUE_OPTIONAL);
+            $structure->keys['guide'] = new external_multiple_structure(new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'id'),
+                'points' => new external_value(PARAM_FLOAT, 'Max Score'),
+                'description' => new external_value(PARAM_TEXT, 'Short Name'),
+                'instructions' => new external_value(PARAM_RAW, 'Description Markers'),
+                'criterion_use_range' => new external_value(PARAM_BOOL, 'uses ranges', VALUE_DEFAULT, true),
+            ], 'section'), 'guide', VALUE_OPTIONAL);
             $structure->keys['rubric_settings'] = new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'id'),
                 'title' => new external_value(PARAM_TEXT, 'name'),

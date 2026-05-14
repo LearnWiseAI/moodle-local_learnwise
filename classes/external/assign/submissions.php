@@ -186,10 +186,10 @@ class submissions extends baseapi {
             $gradingmanager = get_grading_manager($assign->get_context(), 'mod_assign', 'submissions');
             $gradingmethod = $gradingmanager->get_active_method();
             $gradingdisabled = $assign->grading_disabled($submission->userid);
-            if ($gradingmethod === 'rubric' && !$gradingdisabled) {
+            if (($gradingmethod === 'rubric' || $gradingmethod === 'rubric_ranges') && !$gradingdisabled) {
                 $controller = $gradingmanager->get_controller($gradingmethod);
                 // phpcs:ignore moodle.Commenting.InlineComment.TypeHintingMatch
-                /** @var \gradingform_rubric_controller $controller */
+                /** @var \gradingform_rubric_controller|\gradingform_rubric_ranges_controller $controller */
                 if ($controller->is_form_available()) {
                     $gradinginstance = $controller->get_or_create_instance(0, $USER->id, $grade->id);
                     // phpcs:ignore moodle.Commenting.InlineComment.TypeHintingMatch
@@ -203,16 +203,40 @@ class submissions extends baseapi {
                                 'comments' => $criteriagrade['remark'],
                                 'points' => 0,
                             ];
-                            foreach ($definition->rubric_criteria as $crit) {
-                                if ($crit['id'] == $criteriagrade['criterionid']) {
-                                    foreach ($crit['levels'] as $level) {
-                                        if ($level['id'] == $criteriagrade['levelid']) {
-                                            $rubricassessment['points'] = $level['score'];
+                            if ($gradingmethod === 'rubric') {
+                                foreach ($definition->rubric_criteria as $crit) {
+                                    if ($crit['id'] == $criteriagrade['criterionid']) {
+                                        foreach ($crit['levels'] as $level) {
+                                            if ($level['id'] == $criteriagrade['levelid']) {
+                                                $rubricassessment['points'] = $level['score'];
+                                            }
                                         }
                                     }
                                 }
+                            } else if ($gradingmethod === 'rubric_ranges') {
+                                $rubricassessment['points'] = $criteriagrade['grade'];
                             }
                             $submission->rubric_assessment[] = $rubricassessment;
+                        }
+                    }
+                }
+            } else if ($gradingmethod === 'guide' && !$gradingdisabled) {
+                $controller = $gradingmanager->get_controller($gradingmethod);
+                 // phpcs:ignore moodle.Commenting.InlineComment.TypeHintingMatch
+                 /** @var \gradingform_guide_controller $controller */
+                if ($controller->is_form_available()) {
+                    $gradinginstance = $controller->get_or_create_instance(0, $USER->id, $grade->id);
+                    // phpcs:ignore moodle.Commenting.InlineComment.TypeHintingMatch
+                    /** @var \gradingform_guide_instance $gradinginstance */
+                    $definition = $controller->get_definition();
+                    $guidefillings = $gradinginstance->get_guide_filling();
+                    if (!empty($guidefillings['criteria'])) {
+                        foreach ($guidefillings['criteria'] as $criteriagrade) {
+                            $submission->guide_assessment[] = [
+                                'rating_id' => $criteriagrade['criterionid'],
+                                'comments' => $criteriagrade['remark'],
+                                'points' => $criteriagrade['score'],
+                            ];
                         }
                     }
                 }
@@ -256,6 +280,15 @@ class submissions extends baseapi {
                 VALUE_OPTIONAL
             );
             $singlestructure->keys['rubric_assessment'] = new external_multiple_structure(
+                new external_single_structure([
+                    'rating_id' => new external_value(PARAM_INT, 'rating id'),
+                    'comments' => new external_value(PARAM_RAW, 'comments'),
+                    'points' => new external_value(PARAM_FLOAT, 'points'),
+                ]),
+                'comments',
+                VALUE_OPTIONAL
+            );
+            $singlestructure->keys['guide_assessment'] = new external_multiple_structure(
                 new external_single_structure([
                     'rating_id' => new external_value(PARAM_INT, 'rating id'),
                     'comments' => new external_value(PARAM_RAW, 'comments'),

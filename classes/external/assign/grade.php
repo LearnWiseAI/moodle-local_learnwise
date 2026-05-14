@@ -71,6 +71,15 @@ class grade extends baseapi {
                         'Rubric Feedback Array',
                         VALUE_OPTIONAL
                     ),
+                    'guide_feedback_array' => new external_multiple_structure(
+                        new external_single_structure([
+                            'rubric_section_id' => new external_value(PARAM_INT, 'Guide Level ID'),
+                            'content' => new external_value(PARAM_TEXT, 'Guide Remarks', VALUE_OPTIONAL),
+                            'graded_score' => new external_value(PARAM_FLOAT, 'Guide score'),
+                        ]),
+                        'Guide Feedback Array',
+                        VALUE_OPTIONAL
+                    ),
                 ], 'Rubric Assessments', VALUE_OPTIONAL),
                 'general_feedback' => new external_value(PARAM_TEXT, 'General Feedback', VALUE_OPTIONAL),
             ]),
@@ -140,12 +149,24 @@ class grade extends baseapi {
         if (!$gradingdisabled && $gradinginstance) {
             $criteria = [];
             if (!empty($rubricassessment->rubric_assessments)) {
-                foreach ($rubricassessment->rubric_assessments['rubric_feedback_array'] as $feedback) {
-                    $content = !empty($feedback['content']) ? $feedback['content'] : null;
-                    $criteria[$feedback['rubric_section_id']] = [
-                        'levelid' => $feedback['graded_lms_rubric_rating_id'],
-                        'remark' => $content,
-                    ];
+                if (isset($rubricassessment->rubric_assessments['rubric_feedback_array'])) {
+                    foreach ($rubricassessment->rubric_assessments['rubric_feedback_array'] as $feedback) {
+                        $content = !empty($feedback['content']) ? $feedback['content'] : null;
+                        $criteria[$feedback['rubric_section_id']] = [
+                            'levelid' => $feedback['graded_lms_rubric_rating_id'],
+                            'remark' => $content,
+                            'grade' => !empty($feedback['graded_score']) ? $feedback['graded_score'] : 0,
+                        ];
+                    }
+                }
+                if (isset($rubricassessment->rubric_assessments['guide_feedback_array'])) {
+                    foreach ($rubricassessment->rubric_assessments['guide_feedback_array'] as $feedback) {
+                        $content = !empty($feedback['content']) ? $feedback['content'] : null;
+                        $criteria[$feedback['rubric_section_id']] = [
+                            'remark' => $content,
+                            'score' => !empty($feedback['graded_score']) ? $feedback['graded_score'] : 0,
+                        ];
+                    }
                 }
             }
             if (!empty($criteria)) {
