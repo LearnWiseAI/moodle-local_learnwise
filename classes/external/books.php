@@ -126,7 +126,7 @@ class books extends baseapi {
                 $bookcm->intro,
                 'pluginfile.php',
                 $context->id,
-                'mod_assign',
+                'mod_book',
                 'intro',
                 null
             );
