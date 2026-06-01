@@ -18,8 +18,6 @@ namespace local_learnwise;
 
 use local_learnwise\local\OAuth2\Response as oauth2_response;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Plugin response wrapper.
  *
@@ -43,12 +41,7 @@ class api_response extends oauth2_response {
         $this->emptyarrayresponse = $emptyarrayresponse;
     }
 
-    /**
-     * Returns the JSON body for the response.
-     *
-     * @param string $format Response format
-     * @return string
-     */
+    #[\Override]
     public function getResponseBody($format = 'json') {
         if ($format === 'json' && $this->emptyarrayresponse && $this->getParameters() === []) {
             return '[]';
