@@ -22,7 +22,6 @@ use core_plugin_manager;
 use Exception;
 use external_util;
 use html_writer;
-use local_learnwise\local\OAuth2\Response;
 use stdClass;
 use webservice;
 
@@ -449,12 +448,12 @@ class util {
      * Factory method to prepare response
      *
      * @param array $headers Headers in <key, value> pair
-     * @return Response Response with version header
+     * @return api_response Response with version header
      */
     public static function make_response($headers = []) {
         $headers = (array) $headers;
         $headers['X-version'] = static::get_plugin_versioninfo()->release;
-        $response = new Response();
+        $response = new api_response();
         $response->setHttpHeaders($headers);
         return $response;
     }
