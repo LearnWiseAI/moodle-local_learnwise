@@ -23,6 +23,7 @@ use external_multiple_structure;
 use external_single_structure;
 use external_util;
 use external_value;
+use local_learnwise\util;
 
 /**
  * Class getassignments
@@ -54,11 +55,16 @@ class assignments extends baseapi {
      * @return array
      */
     public static function execute($courseid) {
-        global $CFG, $PAGE, $USER;
+        global $CFG, $USER;
         require_once($CFG->dirroot . '/lib/externallib.php');
         require_once($CFG->dirroot . '/course/lib.php');
         require_once($CFG->dirroot . '/mod/assign/lib.php');
         require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
+        if (!defined('ASSIGN_ACTIVITYATTACHMENT_FILEAREA')) {
+            define('ASSIGN_ACTIVITYATTACHMENT_FILEAREA', 'activityattachment');
+        }
+
         $params = static::validate_parameters(static::execute_parameters(), [
             'courseid' => $courseid,
         ]);
@@ -154,12 +160,33 @@ class assignments extends baseapi {
                     },
                     external_util::get_area_files($context->id, 'mod_assign', ASSIGN_INTROATTACHMENT_FILEAREA, 0)
                 );
+                $assignmentinfo['descriptionfiles'] = util::extract_pluginfile_urls_from_text(
+                    $activity->intro,
+                    $context->id,
+                    'mod_assign',
+                    'intro',
+                    null
+                );
             }
 
             if ($CFG->branch >= 400) {
                 $assign = $assignment->get_instance();
-                $renderer = $PAGE->get_renderer('mod_assign');
-                $assignmentinfo['instructions'] = $renderer->format_activity_text($assign, $cm->id);
+                $instructions = file_rewrite_pluginfile_urls(
+                    $assign->activity,
+                    'pluginfile.php',
+                    $context->id,
+                    'mod_assign',
+                    ASSIGN_ACTIVITYATTACHMENT_FILEAREA,
+                    0
+                );
+                $assignmentinfo['instructions'] = content_to_text($instructions, (int) FORMAT_MARKDOWN);
+                $assignmentinfo['instructionfiles'] = util::extract_pluginfile_urls_from_text(
+                    $assign->activity,
+                    $context->id,
+                    'mod_assign',
+                    ASSIGN_ACTIVITYATTACHMENT_FILEAREA,
+                    0
+                );
             }
 
             if (!empty(baseapi::$my)) {
@@ -234,6 +261,16 @@ class assignments extends baseapi {
             'additionalfiles' => new external_multiple_structure(
                 new external_value(PARAM_URL, 'Additional file url'),
                 'URL of additional files',
+                VALUE_OPTIONAL
+            ),
+            'descriptionfiles' => new external_multiple_structure(
+                new external_value(PARAM_URL, 'Description file url'),
+                'URL of description files',
+                VALUE_OPTIONAL
+            ),
+            'instructionfiles' => new external_multiple_structure(
+                new external_value(PARAM_URL, 'Instruction file url'),
+                'URL of instruction files',
                 VALUE_OPTIONAL
             ),
         ]);
