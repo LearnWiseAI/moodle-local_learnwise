@@ -215,7 +215,7 @@ class submissions extends baseapi {
                                         }
                                     }
                                 }
-                            } else if ($gradingmethod === 'rubric_ranges') {
+                            } else {
                                 $rubricassessment['points'] = $criteriagrade['grade'];
                             }
                             $submission->rubric_assessment[] = $rubricassessment;
