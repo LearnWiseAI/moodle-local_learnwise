@@ -6,24 +6,39 @@ jobs:
   test:
     runs-on: ubuntu-22.04
 
+    env:
+      PLUGIN_PATH: "local/learnwise"
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: 'postgres'
+          POSTGRES_HOST_AUTH_METHOD: 'trust'
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+
     strategy:
       fail-fast: false
       matrix:
         include:
-          - php: '8.2'
-            moodle-branch: 'MOODLE_405_STABLE'
           - php: '8.3'
             moodle-branch: 'MOODLE_405_STABLE'
-          - php: '8.4'
+            extensions: xmlrpc-beta
+          - php: '8.2'
             moodle-branch: 'MOODLE_500_STABLE'
+          - php: '8.3'
+            moodle-branch: 'MOODLE_501_STABLE'
+          - php: '8.4'
+            moodle-branch: 'MOODLE_502_STABLE'
 
     steps:
-      - name: Setup moodle-branch
+
+      - name: Check out repository code
         uses: actions/checkout@v4
         with:
-          repository: 'moodle/moodle'
-          ref: ${{ matrix.moodle-branch }}
-          path: .
+          path: plugin
 
       - name: Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
@@ -46,27 +61,36 @@ jobs:
       - name: Install moodle-plugin-ci
         run: |
           moodle-plugin-ci add-plugin catalyst/moodle-gradingform_rubric_ranges
+          moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
         env:
-          DB: ${{ matrix.database }}
+          DB: pgsql
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
           # Uncomment this to run Behat tests using the Moodle App.
           # MOODLE_APP: 'true'
 
-      - name: Check out repository code
-        uses: actions/checkout@v4
-        with:
-          path: ./local/learnwise
+      - name: Setup moodle packages
+        run: |
+          cp config-dist.php config.php
+          composer install
+        working-directory: moodle
+
+      - name: Setup Plugin Path
+        run: |
+          if [ -d "public" ]; then
+            echo "Directory exists! Updating path..."
+            echo "PLUGIN_PATH=public/${{ env.PLUGIN_PATH }}" >> $GITHUB_ENV
+          fi
+          echo "Plugin path: $PLUGIN_PATH"        
+        working-directory: moodle
 
       - name: Install PHPStan
         run: |
-          composer require --dev micaherne/phpstan-moodle
-
-      - name: Copy config
-        run: |
-          cp config-dist.php config.php
+          composer require --dev micaherne/phpstan-moodle          
+        working-directory: moodle
 
       - name: Run PHPStan on local/learnwise
         run: |
-
+          echo "Plugin path: $PLUGIN_PATH"
           # Run PHPStan on the local/learnwise directory
-          vendor/bin/phpstan analyse local/learnwise -c local/learnwise/phpstan.neon
+          vendor/bin/phpstan analyse $PLUGIN_PATH -c $PLUGIN_PATH/phpstan.neon          
+        working-directory: moodle
