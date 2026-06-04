@@ -20,6 +20,7 @@ use context_system;
 use core\event\webservice_token_created;
 use core_plugin_manager;
 use Exception;
+use external_util;
 use html_writer;
 use local_learnwise\local\OAuth2\Response;
 use stdClass;
@@ -456,5 +457,37 @@ class util {
         $response = new Response();
         $response->setHttpHeaders($headers);
         return $response;
+    }
+
+    /**
+     * Utility method to extract pluginfile urls
+     *
+     * @param string $text Text from which urls extracted
+     * @param int $contextid file contextid
+     * @param string $component file component
+     * @param string $filearea file area
+     * @param int|null $itemid file item id
+     * @return array Urls extracted
+     */
+    public static function extract_pluginfile_urls_from_text($text, $contextid, $component, $filearea, $itemid) {
+        global $CFG;
+        require_once($CFG->libdir . '/externallib.php');
+        require_once($CFG->libdir . '/filelib.php');
+        $text = file_rewrite_pluginfile_urls(
+            $text,
+            'pluginfile.php',
+            $contextid,
+            $component,
+            $filearea,
+            $itemid
+        );
+        return array_filter(array_map(
+            function ($file) use ($text) {
+                $fileurl = str_replace('/intro/0/', '/intro/', $file['fileurl']);
+                $fileurl = str_replace('/webservice/pluginfile.php/', '/pluginfile.php/', $fileurl);
+                return (strpos($text, $fileurl) !== false) ? $fileurl : null;
+            },
+            external_util::get_area_files($contextid, $component, $filearea, $itemid ? $itemid : 0)
+        ));
     }
 }
