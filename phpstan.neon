@@ -1,5 +1,5 @@
 includes:
-    - ../../vendor/micaherne/phpstan-moodle/extension.neon
+    - %currentWorkingDirectory%/vendor/micaherne/phpstan-moodle/extension.neon
 parameters:
     level: 5
     excludePaths:
