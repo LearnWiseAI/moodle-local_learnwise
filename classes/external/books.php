@@ -20,9 +20,8 @@ use context_course;
 use context_module;
 use external_multiple_structure;
 use external_single_structure;
-use external_util;
 use external_value;
-use moodle_url;
+use local_learnwise\util;
 use stdClass;
 
 /**
@@ -131,6 +130,13 @@ class books extends baseapi {
                 null
             );
             $bookinfo['description'] = content_to_text($intro, (int) FORMAT_MARKDOWN);
+            $bookinfo['descriptionfiles'] = util::extract_pluginfile_urls_from_text(
+                $bookcm->intro,
+                $context->id,
+                'mod_book',
+                'intro',
+                null
+            );
 
             if (static::is_singleoperation()) {
                 $bookchapters = [];
@@ -222,6 +228,11 @@ class books extends baseapi {
             'id' => new external_value(PARAM_INT, 'course module id of book'),
             'name' => new external_value(PARAM_TEXT, 'name of book'),
             'description' => new external_value(PARAM_TEXT, 'Description of book'),
+            'descriptionfiles' => new external_multiple_structure(
+                new external_value(PARAM_URL, 'Description file url'),
+                'URL of description files',
+                VALUE_OPTIONAL
+            ),
             'sectionname' => new external_value(PARAM_TEXT, 'name of section that book belongs to'),
             'revision' => new external_value(PARAM_INT, 'book revision'),
             'course_id' => new external_value(PARAM_INT, 'course id'),
