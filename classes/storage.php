@@ -79,7 +79,7 @@ class storage implements
     public function getAccessToken($oauthtoken) {
         global $CFG;
         require_once($CFG->dirroot . '/webservice/lib.php');
-        $extservice = $this->db->get_record('external_services', ['shortname' => 'learnwise'], 'id');
+        $extservice = $this->db->get_record('external_services', ['shortname' => 'local_learnwise'], 'id');
         $token = false;
         if ($extservice) {
             $token = $this->db->get_record('external_tokens', [
