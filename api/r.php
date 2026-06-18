@@ -27,6 +27,7 @@ use local_learnwise\external\assign\grade;
 use local_learnwise\external\assign\submissions;
 use local_learnwise\external\assignments;
 use local_learnwise\external\baseapi;
+use local_learnwise\external\books;
 use local_learnwise\external\calenderdetails;
 use local_learnwise\external\courses;
 use local_learnwise\external\course_modules;
@@ -184,6 +185,17 @@ try {
                             $callback = scorms::class;
                         }
                     }
+                } else if ($nextroute === books::$route) {
+                    $nextroute = array_shift($urlparts);
+                    if (is_null($nextroute)) {
+                        $callback = books::class;
+                    } else if (is_numeric($nextroute)) {
+                        books::set_id((int) $nextroute);
+                        $nextroute = array_shift($urlparts);
+                        if (is_null($nextroute)) {
+                            $callback = books::class;
+                        }
+                    }
                 }
             }
         }
@@ -208,6 +220,6 @@ try {
         error_log('OAuth error: ' . $e->getMessage());
     }
 
-    $response->setError(500, 'An unexpected error occurred: ' . $e->getMessage());
+    $response->setError(500, get_string('error'));
     $response->send();
 }

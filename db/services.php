@@ -37,10 +37,18 @@ $functions = [
         'capabilities'  => 'mod/assign:view, mod/assign:grade',
         'ajax'          => true,
     ],
+    'local_learnwise_get_books' => [
+        'classname'     => 'local_learnwise\external\books',
+        'methodname'    => 'execute',
+        'description'   => 'Returns information about an book',
+        'type'          => 'read',
+        'capabilities'  => 'mod/book:read',
+    ],
 ];
 
 $services = [
-    'Learnwise Service' => [
+    'learnwise_service' => [
+        'name' => 'Learnwise Service',
         'functions' => [
             'core_webservice_get_site_info',
             'core_course_get_courses',
@@ -55,10 +63,11 @@ $services = [
             'mod_assign_get_assignments',
             'mod_assign_get_submissions',
             'mod_scorm_get_scorms_by_courses',
+            'local_learnwise_get_books',
         ],
         'enabled' => 1,
         'restrictedusers' => 1,
-        'shortname' => 'learnwise',
+        'shortname' => 'local_learnwise',
         'downloadfiles' => 1,
         'uploadfiles' => 0,
     ],

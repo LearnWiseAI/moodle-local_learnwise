@@ -71,9 +71,19 @@ class grade extends baseapi {
                         'Rubric Feedback Array',
                         VALUE_OPTIONAL
                     ),
+                    'guide_feedback_array' => new external_multiple_structure(
+                        new external_single_structure([
+                            'rubric_section_id' => new external_value(PARAM_INT, 'Guide Level ID'),
+                            'content' => new external_value(PARAM_TEXT, 'Guide Remarks', VALUE_OPTIONAL),
+                            'graded_score' => new external_value(PARAM_FLOAT, 'Guide score'),
+                        ]),
+                        'Guide Feedback Array',
+                        VALUE_OPTIONAL
+                    ),
                 ], 'Rubric Assessments', VALUE_OPTIONAL),
                 'general_feedback' => new external_value(PARAM_TEXT, 'General Feedback', VALUE_OPTIONAL),
             ]),
+            'advancedgradinginstanceid' => new external_value(PARAM_INT, 'needed if user grade record not found', VALUE_DEFAULT),
         ]);
     }
 
@@ -84,10 +94,11 @@ class grade extends baseapi {
      * @param int $assignmentid
      * @param int $userid
      * @param array $rubricassessment
+     * @param int|null $advancedgradinginstanceid
      * @throws \moodle_exception
      * @return array
      */
-    public static function execute($courseid, $assignmentid, $userid, $rubricassessment) {
+    public static function execute($courseid, $assignmentid, $userid, $rubricassessment, $advancedgradinginstanceid = null) {
         global $DB, $USER;
         $params = self::validate_parameters(
             self::execute_parameters(),
@@ -96,11 +107,13 @@ class grade extends baseapi {
                 'assignment_id' => $assignmentid,
                 'user_id' => $userid,
                 'rubric_assessment' => $rubricassessment,
+                'advancedgradinginstanceid' => $advancedgradinginstanceid,
             ]
         );
 
         $cm = $DB->get_record('course_modules', ['id' => $params['assignment_id']], '*', MUST_EXIST);
         [$assignment, $course, $cm, $context] = self::validate_assignment($cm->instance);
+        require_capability('mod/assign:grade', $context);
 
         $grade = $assignment->get_user_grade($params['user_id'], true);
         $originalgrade = $grade->grade;
@@ -119,9 +132,8 @@ class grade extends baseapi {
                 if ($gradingdisabled && $itemid) {
                     $gradinginstance = $controller->get_current_instance($USER->id, $itemid);
                 } else if (!$gradingdisabled) {
-                    $instanceid = optional_param('advancedgradinginstanceid', null, PARAM_INT);
                     $gradinginstance = $controller->get_or_create_instance(
-                        $instanceid,
+                        $params['advancedgradinginstanceid'],
                         $USER->id,
                         $itemid
                     );
@@ -140,12 +152,24 @@ class grade extends baseapi {
         if (!$gradingdisabled && $gradinginstance) {
             $criteria = [];
             if (!empty($rubricassessment->rubric_assessments)) {
-                foreach ($rubricassessment->rubric_assessments['rubric_feedback_array'] as $feedback) {
-                    $content = !empty($feedback['content']) ? $feedback['content'] : null;
-                    $criteria[$feedback['rubric_section_id']] = [
-                        'levelid' => $feedback['graded_lms_rubric_rating_id'],
-                        'remark' => $content,
-                    ];
+                if (isset($rubricassessment->rubric_assessments['rubric_feedback_array'])) {
+                    foreach ($rubricassessment->rubric_assessments['rubric_feedback_array'] as $feedback) {
+                        $content = !empty($feedback['content']) ? $feedback['content'] : null;
+                        $criteria[$feedback['rubric_section_id']] = [
+                            'levelid' => $feedback['graded_lms_rubric_rating_id'],
+                            'remark' => $content,
+                            'grade' => !empty($feedback['graded_score']) ? $feedback['graded_score'] : 0,
+                        ];
+                    }
+                }
+                if (isset($rubricassessment->rubric_assessments['guide_feedback_array'])) {
+                    foreach ($rubricassessment->rubric_assessments['guide_feedback_array'] as $feedback) {
+                        $content = !empty($feedback['content']) ? $feedback['content'] : null;
+                        $criteria[$feedback['rubric_section_id']] = [
+                            'remark' => $content,
+                            'score' => !empty($feedback['graded_score']) ? $feedback['graded_score'] : 0,
+                        ];
+                    }
                 }
             }
             if (!empty($criteria)) {

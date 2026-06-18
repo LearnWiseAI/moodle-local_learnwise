@@ -62,6 +62,7 @@ $string['gradingdisabled'] = 'Grading disabled';
 $string['integration_listpage'] = 'Learnwise Integration';
 $string['learnwise:roledescription'] = 'Role for Learnwise AI Assistant integration';
 $string['learnwise:rolename'] = 'Learnwise Assistant';
+$string['learnwise_service'] = 'Learnwise Service';
 $string['liveapiintegration'] = 'Live API Integration';
 $string['liveapiintegration_desc'] = 'This allows the assistant to dynamically query the Moodle API to get up-to-date information that is user-specific for answering user queries.';
 $string['lticonfig'] = 'LTI Configuration';

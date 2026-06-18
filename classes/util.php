@@ -20,8 +20,8 @@ use context_system;
 use core\event\webservice_token_created;
 use core_plugin_manager;
 use Exception;
+use external_util;
 use html_writer;
-use local_learnwise\local\OAuth2\Response;
 use stdClass;
 use webservice;
 
@@ -52,7 +52,14 @@ class util {
         'mod/quiz:view',
         'mod/assign:grade',
         'moodle/user:viewdetails',
+        'mod/assign:manageallocations',
+        'mod/book:read',
     ];
+
+    /**
+     * @var array Array of regions that has region prefixed urls.
+     */
+    const LTIPREFIXEDREGIONS = ['ca', 'au'];
 
     /**
      * Returns the component name for the current class.
@@ -119,7 +126,7 @@ class util {
         global $CFG, $DB, $USER;
         require_once($CFG->dirroot . '/webservice/lib.php');
         $wsmanager = new webservice();
-        $extservice = $wsmanager->get_external_service_by_shortname($service);
+        $extservice = self::find_external_service($wsmanager, $service);
         if (!$extservice) {
             throw new Exception("Service not found");
         }
@@ -188,7 +195,7 @@ class util {
             $token = array_pop($tokens);
         } else if ($create) {
             $token = new stdClass();
-            $token->token = md5(uniqid((string) rand(), true));
+            $token->token = bin2hex(random_bytes(32));
             $token->userid = $tokenuser->id;
             $token->creatorid = $USER->id;
             $token->tokentype = EXTERNAL_TOKEN_PERMANENT;
@@ -214,6 +221,30 @@ class util {
             return false;
         }
         return $token;
+    }
+
+    /**
+     * Resolve a configured service and keep backward compatibility with legacy shortnames.
+     *
+     * @param webservice $wsmanager
+     * @param string $service
+     * @return stdClass|false
+     */
+    public static function find_external_service(webservice $wsmanager, string $service) {
+        $shortnames = [$service];
+        if ($service === constants::COMPONENT) {
+            $shortnames[] = 'learnwise';
+        } else if ($service === 'learnwise') {
+            $shortnames[] = constants::COMPONENT;
+        }
+
+        foreach (array_unique($shortnames) as $shortname) {
+            $extservice = $wsmanager->get_external_service_by_shortname($shortname);
+            if (!empty($extservice)) {
+                return $extservice;
+            }
+        }
+        return false;
     }
 
     /**
@@ -271,11 +302,22 @@ class util {
      * @return string
      */
     public static function get_ltiprefixurl($env = null) {
-        return str_replace(
+        $ltiurl = str_replace(
             ['chat.', 'lti.sandbox'],
             ['lti.', 'lti-sbx'],
             self::get_ltitoolurl($env)
         );
+        $region = get_config('local_learnwise', 'region');
+        if (empty($region)) {
+            $region = constants::REGION;
+        }
+        if (!self::valid_env($env)) {
+            $env = self::get_env();
+        }
+        if ($env === constants::ENVIRONMENTS[0] && in_array($region, self::LTIPREFIXEDREGIONS)) {
+            $ltiurl = str_replace('lti.', "lti-{$region}.", $ltiurl);
+        }
+        return $ltiurl;
     }
 
     /**
@@ -406,13 +448,45 @@ class util {
      * Factory method to prepare response
      *
      * @param array $headers Headers in <key, value> pair
-     * @return Response Response with version header
+     * @return api_response Response with version header
      */
     public static function make_response($headers = []) {
         $headers = (array) $headers;
         $headers['X-version'] = static::get_plugin_versioninfo()->release;
-        $response = new Response();
+        $response = new api_response();
         $response->setHttpHeaders($headers);
         return $response;
+    }
+
+    /**
+     * Utility method to extract pluginfile urls
+     *
+     * @param string $text Text from which urls extracted
+     * @param int $contextid file contextid
+     * @param string $component file component
+     * @param string $filearea file area
+     * @param int|null $itemid file item id
+     * @return array Urls extracted
+     */
+    public static function extract_pluginfile_urls_from_text($text, $contextid, $component, $filearea, $itemid) {
+        global $CFG;
+        require_once($CFG->libdir . '/externallib.php');
+        require_once($CFG->libdir . '/filelib.php');
+        $text = file_rewrite_pluginfile_urls(
+            $text,
+            'pluginfile.php',
+            $contextid,
+            $component,
+            $filearea,
+            $itemid
+        );
+        return array_filter(array_map(
+            function ($file) use ($text) {
+                $fileurl = str_replace('/intro/0/', '/intro/', $file['fileurl']);
+                $fileurl = str_replace('/webservice/pluginfile.php/', '/pluginfile.php/', $fileurl);
+                return (strpos($text, $fileurl) !== false) ? $fileurl : null;
+            },
+            external_util::get_area_files($contextid, $component, $filearea, $itemid ? $itemid : 0)
+        ));
     }
 }

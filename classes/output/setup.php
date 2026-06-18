@@ -62,7 +62,7 @@ class setup implements renderable, templatable {
         $this->formvalues->ltiStatus = !empty($config->ltisetup);
         $this->formvalues->webServicesStatus = !empty($config->webservices);
         $this->formvalues->liveApiStatus = !empty($config->liveapi);
-        $this->formvalues->evironment = $env;
+        $this->formvalues->environment = $env;
         $this->formvalues->region = !empty($config->region) ? $config->region : constants::REGION;
         $this->formvalues->ltiAssistantId = !empty($config->ltiassistantid) ? $config->ltiassistantid : '';
         $this->formvalues->aiAssessmentStatus = !empty($config->aiassessment);
@@ -194,7 +194,7 @@ class setup implements renderable, templatable {
      * @return stdClass Data to be used by the template.
      */
     public function export_for_template(renderer_base $output) {
-        $env = $this->formvalues->evironment;
+        $env = $this->formvalues->environment;
         $data = clone($this->formvalues);
         $data->showltisetup = $this->showltisetup();
         $data->showtoast = $this->showtoast();

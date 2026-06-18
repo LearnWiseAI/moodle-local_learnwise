@@ -16,50 +16,36 @@
 
 namespace local_learnwise;
 
+use local_learnwise\local\OAuth2\Response as oauth2_response;
+
 /**
- * Class constants
+ * Plugin response wrapper.
  *
  * @package    local_learnwise
  * @copyright  2025 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class constants extends util {
-    /** @var string */
-    const COMPONENT = 'local_learnwise';
-
-    /** @var string */
-    const SCOPE = 'webservice';
-
-    /** @var array */
-    const ENVIRONMENTS = ['production', 'development', 'sandbox'];
-
-    /** @var string */
-    const REGION = 'eu';
+class api_response extends oauth2_response {
+    /**
+     * @var bool Whether an empty JSON response should be encoded as an array.
+     */
+    private $emptyarrayresponse = false;
 
     /**
-     * Returns the URL to redirect the user to.
+     * Preserve list response shape when Moodle returns an empty external_multiple_structure.
      *
-     * @return string The redirect URL.
+     * @param bool $emptyarrayresponse Whether empty parameters should encode as []
+     * @return void
      */
-    public static function get_redirecturl() {
-        $redirecturls = get_config(static::component(), 'redirecturl');
-        $redirecturls = array_map('trim', explode(PHP_EOL, $redirecturls));
-        $redirecturls = array_filter($redirecturls);
-        return join(' ', $redirecturls);
+    public function set_empty_array_response(bool $emptyarrayresponse = true) {
+        $this->emptyarrayresponse = $emptyarrayresponse;
     }
 
-    /**
-     * List of regions
-     *
-     * @return string[]
-     */
-    public static function region_options() {
-        return [
-            'ca',
-            'eu',
-            'uk',
-            'us',
-            'au',
-        ];
+    #[\Override]
+    public function getResponseBody($format = 'json') {
+        if ($format === 'json' && $this->emptyarrayresponse && $this->getParameters() === []) {
+            return '[]';
+        }
+        return parent::getResponseBody($format);
     }
 }

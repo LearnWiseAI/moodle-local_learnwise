@@ -25,6 +25,7 @@
 use local_learnwise\external\assign\grade;
 use local_learnwise\external\assign\submissions;
 use local_learnwise\external\assignments;
+use local_learnwise\external\books;
 use local_learnwise\external\calenderdetails;
 use local_learnwise\external\courses;
 use local_learnwise\external\course_modules;
@@ -35,6 +36,7 @@ use local_learnwise\external\notifications;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
 use local_learnwise\external\users;
+use local_learnwise\api_response;
 use local_learnwise\local\OAuth2\Response;
 
 defined('MOODLE_INTERNAL') || die();
@@ -62,6 +64,13 @@ if (!function_exists('local_learnwise_call_external_function')) {
             $exception = $data['exception'];
             $response->setError(500, $exception->message, $exception->debuginfo);
         } else {
+            if (
+                $data['data'] === []
+                && $externalfunctioninfo->returns_desc instanceof external_multiple_structure
+                && $response instanceof api_response
+            ) {
+                $response->set_empty_array_response();
+            }
             $response->setParameters($data['data']);
         }
     }
@@ -107,12 +116,15 @@ $callbacks = [
     modules::class => [
         'description' => 'Get module details',
     ],
+    books::class => [
+        'description' => 'Get books',
+    ],
 ];
 
 foreach ($callbacks as $classname => $info) {
     $info['component'] = 'local_learnwise';
     $info['loginrequired'] = true;
-    $info['type'] = 'read';
+    $info['type'] = $classname === grade::class ? 'write' : 'read';
     $info['methodname'] = 'execute';
     $info['classname'] = $classname;
     $callbacks[$classname] = $info;
