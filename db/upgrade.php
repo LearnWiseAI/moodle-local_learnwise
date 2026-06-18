@@ -108,7 +108,7 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2026042901, 'local', 'learnwise');
     }
-    if ($oldversion < 2026040201) {
+    if ($oldversion < 2026060501) {
         $table = new xmldb_table('local_learnwise_userauth');
         // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
         // @phpstan-ignore argument.type
@@ -141,7 +141,7 @@ function xmldb_local_learnwise_upgrade($oldversion) {
             $dbman->add_index($table, $index);
         }
 
-        upgrade_plugin_savepoint(true, 2026040201, 'local', 'learnwise');
+        upgrade_plugin_savepoint(true, 2026060501, 'local', 'learnwise');
     }
 
     return true;
