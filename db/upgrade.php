@@ -84,6 +84,8 @@ function xmldb_local_learnwise_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025112401) {
+        $component = constants::COMPONENT;
+        update_capabilities($component);
         $token = util::get_or_generate_token_for_user(\local_learnwise\constants::COMPONENT);
         $admin = get_admin();
         $existrecord = $DB->get_record('external_tokens', [

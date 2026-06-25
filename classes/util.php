@@ -360,9 +360,14 @@ class util {
         global $CFG, $DB;
         require_once($CFG->dirroot . '/user/lib.php');
 
+        $role = self::get_or_create_role();
+        $systemcontext = context_system::instance();
         $existuserid = get_config('local_learnwise', 'tokenuserid');
         $existuser = $DB->get_record('user', ['id' => (int) $existuserid, 'deleted' => 0]);
         if (!empty($existuser)) {
+            if ($role && !user_has_role_assignment($existuser->id, $role->id, $systemcontext->id)) {
+                role_assign($role->id, $existuser->id, $systemcontext->id);
+            }
             return $existuser;
         }
 
@@ -385,7 +390,6 @@ class util {
 
         set_config('tokenuserid', $user->id, 'local_learnwise');
 
-        $role = self::get_or_create_role();
         if ($role) {
             $systemcontext = context_system::instance();
             role_assign($role->id, $user->id, $systemcontext->id);
