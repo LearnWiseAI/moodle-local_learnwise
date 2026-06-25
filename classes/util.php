@@ -21,7 +21,6 @@ use core\event\webservice_token_created;
 use core_plugin_manager;
 use Exception;
 use external_util;
-use html_writer;
 use stdClass;
 use webservice;
 
@@ -54,6 +53,7 @@ class util {
         'moodle/user:viewdetails',
         'mod/assign:manageallocations',
         'mod/book:read',
+        'local/learnwise:plugininfo',
     ];
 
     /**
@@ -94,26 +94,6 @@ class util {
         $client->secret = random_string(100);
         $client->id = $DB->insert_record('local_learnwise_clients', $client);
         return $client;
-    }
-
-    /**
-     * returns a copy input field with a button to copy the value.
-     * @param string $value
-     * @return string
-     */
-    public static function generate_copy_input($value) {
-        global $OUTPUT;
-        $copyicon = $OUTPUT->pix_icon('t/copy', get_string('copy', 'core'));
-        $htmlinputid = html_writer::random_id('input-');
-        $out = html_writer::start_div('input-group');
-        $out .= html_writer::empty_tag('input', ['id' => $htmlinputid, 'type' => 'text',
-            'value' => $value, 'readonly' => 'readonly', 'class' => 'form-control']);
-        $out .= html_writer::tag('a', $copyicon, [
-            'class' => 'copy-button clickable input-group-append input-group-text icon-no-margin',
-            'data-clipboard-target' => "#{$htmlinputid}",
-        ]);
-        $out .= html_writer::end_div();
-        return $out;
     }
 
     /**
@@ -488,5 +468,79 @@ class util {
             },
             external_util::get_area_files($contextid, $component, $filearea, $itemid ? $itemid : 0)
         ));
+    }
+
+    /**
+     * Get lti configuration data
+     *
+     * @param int|string $ltitypeid
+     * @return object|null
+     */
+    public static function get_lti_data($ltitypeid) {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/lti/lib.php');
+        require_once($CFG->dirroot . '/mod/lti/locallib.php');
+        $ltityperecord = lti_get_type($ltitypeid);
+        if (!$ltityperecord) {
+            return null;
+        }
+        $ltityperecord->data = get_tool_type_config($ltityperecord);
+        $ltityperecord->assistantid = null;
+        $ltityperecord->config = $config = lti_get_type_config($ltityperecord->id);
+        if (
+            !empty($config['customparameters']) &&
+            preg_match('/assistant_id=(?<assistantid>.*)[\n]?course_id/m', $config['customparameters'], $match)
+        ) {
+            $ltityperecord->assistantid = $match['assistantid'];
+        }
+        $ltityperecord->templatedata = [
+            'id' => $ltityperecord->id,
+            'name' => $ltityperecord->name,
+            'assistantid' => $ltityperecord->assistantid,
+            'data' => [
+                [
+                    'index' => 'tooldetailsplatformid-' . $ltityperecord->id,
+                    'header' => get_string('tooldetailsplatformid', 'lti'),
+                    'value' => $ltityperecord->data['platformid'],
+                ],
+                [
+                    'index' => 'tooldetailsclientid-' . $ltityperecord->id,
+                    'header' => get_string('tooldetailsclientid', 'lti'),
+                    'value' => $ltityperecord->data['clientid'],
+                ],
+                [
+                    'index' => 'tooldetailsdeploymentid-' . $ltityperecord->id,
+                    'header' => get_string('tooldetailsdeploymentid', 'lti'),
+                    'value' => $ltityperecord->id,
+                ],
+                [
+                    'index' => 'tooldetailspublickeyseturl-' . $ltityperecord->id,
+                    'header' => get_string('tooldetailspublickeyseturl', 'lti'),
+                    'value' => $ltityperecord->data['publickeyseturl'],
+                ],
+                [
+                    'index' => 'tooldetailsaccesstokenurl-' . $ltityperecord->id,
+                    'header' => get_string('tooldetailsaccesstokenurl', 'lti'),
+                    'value' => $ltityperecord->data['accesstokenurl'],
+                ],
+                [
+                    'index' => 'tooldetailsauthrequesturl-' . $ltityperecord->id,
+                    'header' => get_string('tooldetailsauthrequesturl', 'lti'),
+                    'value' => $ltityperecord->data['authrequesturl'],
+                ],
+            ],
+        ];
+
+        return $ltityperecord;
+    }
+
+    /**
+     * Check if an array is a PHP list without relying on PHP 8.1 array_is_list().
+     *
+     * @param array $data Data to inspect
+     * @return bool
+     */
+    public static function array_is_list(array $data): bool {
+        return array_keys($data) === range(0, count($data) - 1);
     }
 }

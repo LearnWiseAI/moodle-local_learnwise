@@ -15,18 +15,36 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for Learnwise
+ * Upgrade functions for Learnwise
  *
  * @package    local_learnwise
- * @copyright  2025 LearnWise <help@learnwise.ai>
+ * @copyright  2026 YOUR NAME <your@email.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+use local_learnwise\constants;
+use local_learnwise\util;
 
-$plugin->component    = 'local_learnwise';
-$plugin->release      = '1.3.9b';
-$plugin->version      = 2026060504;
-$plugin->requires     = 2017111309;
-$plugin->supported    = [34, 38];
-$plugin->maturity     = MATURITY_STABLE;
+/**
+ * Sync new defined capabilites to api user
+ *
+ * @return void
+ */
+function local_learnwise_upgrade_sync_role_capabilities() {
+    global $CFG;
+    require_once($CFG->libdir . '/accesslib.php');
+
+    update_capabilities(constants::COMPONENT);
+
+    $role = util::get_or_create_role();
+
+    foreach (util::ROLECAPS as $capability) {
+        assign_capability(
+            $capability,
+            CAP_ALLOW,
+            $role->id,
+            SYSCONTEXTID,
+            true
+        );
+    }
+}

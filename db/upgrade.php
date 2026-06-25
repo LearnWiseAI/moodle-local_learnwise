@@ -25,6 +25,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_learnwise\constants;
 use local_learnwise\util;
 
 /**
@@ -35,6 +36,9 @@ use local_learnwise\util;
  */
 function xmldb_local_learnwise_upgrade($oldversion) {
     global $CFG, $DB;
+
+    require_once($CFG->dirroot . '/local/learnwise/db/upgradelib.php');
+
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2025091700) {
@@ -95,19 +99,6 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025112401, 'local', 'learnwise');
     }
 
-    if ($oldversion < 2026042901) {
-        $role = util::get_or_create_role();
-        foreach (util::ROLECAPS as $capability) {
-            assign_capability(
-                $capability,
-                CAP_ALLOW,
-                $role->id,
-                SYSCONTEXTID,
-                true
-            );
-        }
-        upgrade_plugin_savepoint(true, 2026042901, 'local', 'learnwise');
-    }
     if ($oldversion < 2026060501) {
         $table = new xmldb_table('local_learnwise_userauth');
         // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
@@ -151,6 +142,26 @@ function xmldb_local_learnwise_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2026060502, 'local', 'learnwise');
+    }
+
+    if ($oldversion < 2026060503) {
+        $component = constants::COMPONENT;
+        $typeid = get_config($component, 'ltitypeid');
+        unset_config('ltiassistantid', $component);
+        unset_config('ltitypeid', $component);
+        unset_config('lticlientid', $component);
+        unset_config('ltisetup', $component);
+
+        if ($typeid) {
+            set_config('ltitypeids', $typeid, $component);
+        }
+
+        upgrade_plugin_savepoint(true, 2026060503, 'local', 'learnwise');
+    }
+
+    if ($oldversion < 2026060504) {
+        local_learnwise_upgrade_sync_role_capabilities();
+        upgrade_plugin_savepoint(true, 2026060504, 'local', 'learnwise');
     }
 
     return true;

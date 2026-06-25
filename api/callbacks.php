@@ -22,6 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_learnwise\constants;
 use local_learnwise\external\assign\grade;
 use local_learnwise\external\assign\submissions;
 use local_learnwise\external\assignments;
@@ -61,8 +62,7 @@ if (!function_exists('local_learnwise_call_external_function')) {
         $data = core_external::call_external_function($wsfunction, $params);
 
         if ($data['error']) {
-            $exception = $data['exception'];
-            $response->setError(500, $exception->message, $exception->debuginfo);
+            $response->setError(404, get_string('error'));
         } else {
             if (
                 $data['data'] === []
@@ -70,6 +70,11 @@ if (!function_exists('local_learnwise_call_external_function')) {
                 && $response instanceof api_response
             ) {
                 $response->set_empty_array_response();
+            }
+            if ($externalfunctioninfo->returns_desc instanceof external_value) {
+                $data['data'] = [
+                    'structuredresponse' => $data['data'],
+                ];
             }
             $response->setParameters($data['data']);
         }
@@ -122,7 +127,7 @@ $callbacks = [
 ];
 
 foreach ($callbacks as $classname => $info) {
-    $info['component'] = 'local_learnwise';
+    $info['component'] = constants::COMPONENT;
     $info['loginrequired'] = false;
     $info['type'] = $classname === grade::class ? 'write' : 'read';
     $info['methodname'] = 'execute';

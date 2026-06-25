@@ -206,6 +206,27 @@ abstract class baseapi extends external_api {
     }
 
     /**
+     * Prepare params for function call
+     *
+     * @param mixed $params
+     * @return mixed
+     *
+     */
+    public static function prepare_input_params($params) {
+        return static::clean_returnvalue(
+            static::execute_parameters(),
+            $params
+        );
+    }
+
+    /**
+     * Returns input parameters definition
+     *
+     * @return \external_function_parameters
+     */
+    abstract public static function execute_parameters();
+
+    /**
      * Returns the structure for a single operation.
      *
      * This method must be implemented by subclasses to define the structure of the API response.

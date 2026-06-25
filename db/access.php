@@ -15,18 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for Learnwise
+ * Capability definitions for Learnwise
+ *
+ * Documentation: {@link https://moodledev.io/docs/apis/subsystems/access}
  *
  * @package    local_learnwise
- * @copyright  2025 LearnWise <help@learnwise.ai>
+ * @category   access
+ * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component    = 'local_learnwise';
-$plugin->release      = '1.3.9b';
-$plugin->version      = 2026060504;
-$plugin->requires     = 2017111309;
-$plugin->supported    = [34, 38];
-$plugin->maturity     = MATURITY_STABLE;
+$capabilities = [
+
+    'local/learnwise:plugininfo' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+        ],
+    ],
+];

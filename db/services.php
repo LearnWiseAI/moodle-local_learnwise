@@ -44,6 +44,31 @@ $functions = [
         'type'          => 'read',
         'capabilities'  => 'mod/book:read',
     ],
+    'local_learnwise_plugininfo' => [
+        'classname'     => 'local_learnwise\external\plugininfo',
+        'methodname'    => 'execute',
+        'description'   => 'Returns information about a plugin setup',
+        'type'          => 'read',
+        'capabilities'  => 'local/learnwise:plugininfo',
+    ],
+
+    'local_learnwise_upsertlti' => [
+        'classname' => 'local_learnwise\external\upsertlti',
+        'methodname'    => 'execute',
+        'description' => 'Add or update lti configuration',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'moodle/site:config',
+    ],
+
+    'local_learnwise_deletelti' => [
+        'classname' => 'local_learnwise\external\deletelti',
+        'methodname' => 'execute',
+        'description' => 'Delete lti configuration',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'moodle/site:config',
+    ],
 ];
 
 $services = [
@@ -66,6 +91,7 @@ $services = [
             'mod_assign_get_submissions',
             'mod_scorm_get_scorms_by_courses',
             'local_learnwise_get_books',
+            'local_learnwise_plugininfo',
         ],
         'enabled' => 1,
         'restrictedusers' => 1,

@@ -20,10 +20,6 @@ defined('MOODLE_INTERNAL') || die();
 
 use context_system;
 use Exception;
-use html_table;
-use html_table_cell;
-use html_table_row;
-use html_writer;
 use local_learnwise\constants;
 use local_learnwise\util;
 use moodleform;
@@ -53,9 +49,6 @@ class webservicesetup extends moodleform {
 
         if (!empty($currenttoken)) {
             $this->_customdata['currenttoken'] = $currenttoken;
-            $htmltable = $this->get_htmltable();
-
-            $mform->addElement('html', html_writer::table($htmltable));
 
             $mform->addElement('submit', 'removewebservicesetup', get_string('removetoken', constants::COMPONENT), [
                 'id' => 'id_removetoken',
@@ -82,25 +75,6 @@ class webservicesetup extends moodleform {
         }
 
         return self::update_from_formdata($formdata);
-    }
-
-
-    /**
-     * Summary of get_htmltable
-     * @return html_table|null
-     */
-    public function get_htmltable() {
-        if (empty($this->_customdata['currenttoken'])) {
-            return null;
-        }
-        $currenttoken = $this->_customdata['currenttoken'];
-        $htmltable = new html_table();
-        $htmltable->data[] = $htmltablerow = new html_table_row();
-        $htmltablerow->cells[] = $htmltablecell = new html_table_cell(get_string('externaltoken', constants::COMPONENT));
-        $htmltablecell->header = true;
-        $htmltablerow->cells[] = $htmltablecell = new html_table_cell();
-        $htmltablecell->text = util::generate_copy_input($currenttoken->token);
-        return $htmltable;
     }
 
     /**
