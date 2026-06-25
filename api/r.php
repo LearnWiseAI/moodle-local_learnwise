@@ -36,6 +36,9 @@ use local_learnwise\external\forums;
 use local_learnwise\external\modules;
 use local_learnwise\external\notifications;
 use local_learnwise\external\plugininfo;
+use local_learnwise\external\quiz\attempts;
+use local_learnwise\external\quiz\reviewattempt;
+use local_learnwise\external\quizzes;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
 use local_learnwise\external\users;
@@ -207,6 +210,32 @@ try {
                         $nextroute = array_shift($urlparts);
                         if (is_null($nextroute)) {
                             $callback = books::class;
+                        }
+                    }
+                } else if ($nextroute === quizzes::$route) {
+                    $nextroute = array_shift($urlparts);
+                    if (is_null($nextroute)) {
+                        $callback = quizzes::class;
+                    } else if (is_numeric($nextroute)) {
+                        quizzes::set_id((int) $nextroute);
+                        $params['quizid'] = quizzes::get_id();
+                        $nextroute = array_shift($urlparts);
+                        if (is_null($nextroute)) {
+                            $callback = quizzes::class;
+                        } else if ($nextroute == attempts::$route) {
+                            $nextroute = array_shift($urlparts);
+                            if (is_null($nextroute)) {
+                                $callback = attempts::class;
+                            } else if (is_numeric($nextroute)) {
+                                attempts::set_id((int) $nextroute);
+                                $params['attemptid'] = attempts::get_id();
+                                $nextroute = array_shift($urlparts);
+                                if (is_null($nextroute)) {
+                                    $callback = attempts::class;
+                                } else if ($nextroute == reviewattempt::$route) {
+                                    $callback = reviewattempt::class;
+                                }
+                            }
                         }
                     }
                 }
