@@ -39,7 +39,7 @@ class ws_proxy {
      * @param \local_learnwise\local\OAuth2\Response $response OAuth2 response object
      * @return void
      */
-    public static function dispatch(array $urlparts, $response): void {
+    public static function dispatch(array $urlparts, $response) {
         // Reconstruct function name: /ws/mod_assign/get_assignments -> mod_assign_get_assignments.
         if (count($urlparts) < 2) {
             $response->setError(400, 'Invalid WS path: expected /ws/<component>/<function>');
@@ -48,7 +48,10 @@ class ws_proxy {
         $component = array_shift($urlparts);
         $component = core_component::normalize_componentname($component);
 
-        if (!in_array($component, array_merge(['core'], core_component::get_component_names()))) {
+        $allcomponents = call_user_func_array('array_merge', core_component::get_component_list());
+        $allcomponents = array_merge(['core'], array_keys($allcomponents));
+
+        if (!in_array($component, $allcomponents)) {
             $response->setError(400, 'Invalid WS component');
             return;
         }

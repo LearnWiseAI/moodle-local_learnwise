@@ -16,6 +16,7 @@
 
 namespace local_learnwise\external\quiz;
 
+use context_module;
 use external_function_parameters;
 use external_multiple_structure;
 use external_single_structure;
@@ -67,6 +68,9 @@ class reviewattempt extends baseapi {
             'attemptid' => $attemptid,
         ]);
         $params['userid'] = $USER->id;
+
+        $context = context_module::instance($params['quizid']);
+        self::validate_context($context);
 
         $attemptobj = quiz_create_attempt_handling_errors($params['attemptid'], $params['quizid']);
         $attemptobj->check_review_capability();

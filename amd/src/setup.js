@@ -23,7 +23,7 @@
  */
 define(
     [
-        `${M.cfg.wwwroot}/local/learnwise/vendorjs/zenorocha/clipboard.min.js`,
+        M.cfg.wwwroot + '/local/learnwise/vendorjs/zenorocha/clipboard.min.js',
         'core/str', 'core/notification', 'core/fragment', 'core/config', 'core/templates',
         'core/ajax', 'local_learnwise/lticonfiguration'
     ],
