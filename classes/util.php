@@ -460,6 +460,7 @@ class util {
             $filearea,
             $itemid
         );
+        $text = str_replace('/webservice/pluginfile.php/', '/pluginfile.php/', $text);
         return array_filter(array_map(
             function ($file) use ($text) {
                 $fileurl = str_replace('/intro/0/', '/intro/', $file['fileurl']);
