@@ -90,6 +90,7 @@ $services = [
             'mod_scorm_get_scorms_by_courses',
             'local_learnwise_get_books',
             'local_learnwise_plugininfo',
+            'core_course_search_courses',
         ],
         'enabled' => 1,
         'restrictedusers' => 1,
