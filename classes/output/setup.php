@@ -19,7 +19,7 @@ namespace local_learnwise\output;
 use invalid_parameter_exception;
 use lang_string;
 use local_learnwise\constants;
-use local_learnwise\form\assistantinput;
+use local_learnwise\external\upsertlti;
 use local_learnwise\form\webservicesetup;
 use local_learnwise\util;
 use renderable;
@@ -46,12 +46,22 @@ class setup implements renderable, templatable {
     protected $formvalues;
 
     /**
+     * @var array
+     */
+    protected $lticonfigs;
+
+    /**
      * Constructor setup
      */
     public function __construct() {
-        $config = get_config('local_learnwise');
+        $config = get_config(constants::COMPONENT);
         $env = constants::get_env();
         $clientcreds = util::get_or_generate_client();
+        $lticonfigids = !empty($config->ltitypeids) ? $config->ltitypeids : '';
+        $lticonfigs = array_map(function ($typeid) {
+            return util::get_lti_data($typeid);
+        }, explode(',', $lticonfigids));
+        $this->lticonfigs = array_filter($lticonfigs);
         $this->formvalues = new stdClass();
         $this->formvalues->floatingButtonAssistantId = !empty($config->assistantid) ? $config->assistantid : '';
         $this->formvalues->courseIds = !empty($config->courseids) ? $config->courseids : '';
@@ -59,12 +69,11 @@ class setup implements renderable, templatable {
         $this->formvalues->liveApiConfigClientSecret = $clientcreds->secret;
         $this->formvalues->liveApiConfigRedirectURLs = !empty($config->redirecturl) ? $config->redirecturl : '';
         $this->formvalues->floatingButtonStatus = !empty($config->showassistantwidget);
-        $this->formvalues->ltiStatus = !empty($config->ltisetup);
         $this->formvalues->webServicesStatus = !empty($config->webservices);
         $this->formvalues->liveApiStatus = !empty($config->liveapi);
+        $this->formvalues->aiOpsStatus = !empty($config->aiops);
         $this->formvalues->environment = $env;
         $this->formvalues->region = !empty($config->region) ? $config->region : constants::REGION;
-        $this->formvalues->ltiAssistantId = !empty($config->ltiassistantid) ? $config->ltiassistantid : '';
         $this->formvalues->aiAssessmentStatus = !empty($config->aiassessment);
         $this->formvalues->aiAssessmentAssistantId = !empty($config->aiassessmentassistantid) ?
             $config->aiassessmentassistantid : '';
@@ -91,7 +100,7 @@ class setup implements renderable, templatable {
      *
      */
     public function validate() {
-        $plugin = 'local_learnwise';
+        $plugin = constants::COMPONENT;
         $paramtypemap = [
             'floatingButtonAssistantId' => [
                 PARAM_ALPHANUMEXT,
@@ -112,6 +121,10 @@ class setup implements renderable, templatable {
             'liveApiStatus' => [
                 PARAM_BOOL,
                 new lang_string('liveapiintegration', $plugin),
+            ],
+            'aiOpsStatus' => [
+                PARAM_BOOL,
+                new lang_string('aiops', $plugin),
             ],
             'liveApiConfigRedirectURLs' => [
                 function ($value) {
@@ -148,16 +161,6 @@ class setup implements renderable, templatable {
                 new lang_string('assistantid', $plugin),
             ],
         ];
-        if ($this->showltisetup()) {
-            $paramtypemap['ltiStatus'] = [
-                PARAM_BOOL,
-                new lang_string('enablelti', $plugin),
-            ];
-            $paramtypemap['ltiAssistantId'] = [
-                PARAM_ALPHANUMEXT,
-                new lang_string('assistantid', $plugin),
-            ];
-        }
         $this->errors = [];
         foreach ($paramtypemap as $key => $paramvalidation) {
             if (isset($this->formvalues->{$key})) {
@@ -209,14 +212,17 @@ class setup implements renderable, templatable {
             ];
         }, constants::region_options());
 
-        if (!$data->showltisetup) {
-            unset($data->ltiAssistantId);
-        }
         if ($data->webServicesStatus) {
             $form = new webservicesetup();
             $data->webServicesConfigHtml = $form->render_widget();
         }
         $data->errors = $this->errors;
+
+        $data->lticonfigs = [];
+        foreach ($this->lticonfigs as $ltityperecord) {
+            $data->lticonfigs[] = $ltityperecord->templatedata;
+        }
+
         return $data;
     }
 
@@ -227,12 +233,14 @@ class setup implements renderable, templatable {
      * @return void
      */
     public function save(stdClass $postdata) {
-        $plugin = 'local_learnwise';
+        $plugin = constants::COMPONENT;
+        $oldconfig = get_config($plugin);
         set_config('assistantid', $postdata->floatingButtonAssistantId, $plugin);
         set_config('courseids', $postdata->courseIds, $plugin);
         set_config('showassistantwidget', $postdata->floatingButtonStatus, $plugin);
         set_config('webservices', $postdata->webServicesStatus, $plugin);
         set_config('liveapi', $postdata->liveApiStatus, $plugin);
+        set_config('aiops', $postdata->aiOpsStatus, $plugin);
         set_config('redirecturl', $postdata->liveApiConfigRedirectURLs, $plugin);
         set_config('environment', $postdata->environment, $plugin);
         if (empty($postdata->floatingButtonRegion)) {
@@ -245,29 +253,16 @@ class setup implements renderable, templatable {
             $formdata->removewebservicesetup = true;
             $form->update_from_formdata($formdata);
         }
-        if ($this->showltisetup()) {
-            set_config('ltisetup', $postdata->ltiStatus, $plugin);
-            set_config('ltiassistantid', $postdata->ltiAssistantId, $plugin);
-            if (empty($postdata->ltiStatus)) {
-                $form = new assistantinput();
-                $formdata = new stdClass();
-                $formdata->removeltisetup = true;
-                if (empty($formdata->assistantid)) {
-                    $formdata->assistantid = '';
-                }
-                $form->update_from_formdata($formdata);
-            } else {
-                $form = new assistantinput();
-                $formdata = new stdClass();
-                $formdata->setupltisetup = true;
-                if (empty($formdata->assistantid)) {
-                    $formdata->assistantid = '';
-                }
-                $form->update_from_formdata($formdata);
-            }
-        }
         set_config('aiassessment', $postdata->aiAssessmentStatus, $plugin);
         set_config('aiassessmentassistantid', $postdata->aiAssessmentAssistantId, $plugin);
+        $shouldupdatelti = $postdata->environment != $oldconfig->environment;
+        $shouldupdatelti = $shouldupdatelti || $postdata->floatingButtonRegion != $oldconfig->region;
+        if ($shouldupdatelti) {
+            foreach ($this->lticonfigs as $ltityperecord) {
+                $params = upsertlti::prepare_input_params(['id' => $ltityperecord->id]);
+                upsertlti::upsert($params);
+            }
+        }
     }
 
     /**

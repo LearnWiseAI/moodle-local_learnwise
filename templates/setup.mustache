@@ -17,33 +17,104 @@
 {{!
     @template local_learnwise/setup
 
-    TODO describe template setup
+    Template for the Learnwise setup page, rendering the configuration form and feature toggles.
 
     Example context (json):
     {
-        "floatingButtonAssistantId": "TEMPID",
-        "liveApiConfigClientId": "kAG1uySlafJOO95",
-        "liveApiConfigClientSecret": "SmMUno551IXyx7Yc1MBSAYl29k3XjwDUCN1ju2LbyCUK1Gy9fE8kMzbzyU7P5Cj4biXBOJEh80MK6mD2dU2fUJKkDjioNQS5OfyF",
-        "liveApiConfigRedirectURLs": "https:\/\/oauth.pstmn.io\/v1\/callback\r\nhttps:\/\/oauth.pstmn.io\/v1\/vscode-callback\r\nhttp:\/\/php72moodle.titlocal\/learnwise\/local\/learnwise\/testintegration.html",
+        "floatingButtonAssistantId": "",
+        "courseIds": "",
+        "liveApiConfigClientId": "Pg7ihCTIIIiJcUq",
+        "liveApiConfigClientSecret": "c0m5FNl8RZfrbQNjnNhTdTx1qb66uvJeZOCwG7JUEG8g9pSstHWdS8iqVg5KKmkK5nNNLMejchoHXRiDSmRxfl8IqVYl1J89x9kM",
+        "liveApiConfigRedirectURLs": "https:\/\/oauth.pstmn.io\/v1\/callback\r\nhttps:\/\/oauth.usebruno.com\/callback\r\nhttp:\/\/127.0.0.1:8765\/callback",
         "floatingButtonStatus": false,
-        "ltiStatus": true,
         "webServicesStatus": true,
         "liveApiStatus": true,
+        "aiOpsStatus": true,
+        "environment": "production",
+        "region": "ca",
+        "aiAssessmentStatus": false,
+        "aiAssessmentAssistantId": "",
         "showltisetup": true,
         "showtoast": true,
-        "envProduction": false,
+        "envProduction": true,
         "envDevelopment": false,
-        "envSandbox": true,
-        "ltiAssistantId": "TEMP2",
-        "webServicesConfigHtml": "<div class=\"field-row\">\n    <div class=\"field-label\">\n        <label class=\"label\">Access Token<\/label>\n        <div class=\"label-hint\">local_learnwise | accesstoken<\/div>\n    <\/div>\n    <div class=\"field-input copy-field\">\n        <input\n            id=\"webserviceaccesstokeninput\"\n            type=\"text\"\n            class=\"input readonly mono small-text\"\n            value=\"c86fdae14c74f1540c83c50dc86504bc\"\n            readonly\n        >\n        <button type=\"button\" class=\"copy-btn\" data-clipboard-target=\"#webserviceaccesstokeninput\">\n            <svg class=\"copy-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">\n                <rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"\/>\n                <path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"\/>\n            <\/svg>\n        <\/button>\n    <\/div>\n<\/div>"
+        "envSandbox": false,
+        "regionOptions": [
+            {
+                "key": "ca",
+                "value": "CA",
+                "selected": true
+            },
+            {
+                "key": "eu",
+                "value": "EU",
+                "selected": false
+            },
+            {
+                "key": "uk",
+                "value": "UK",
+                "selected": false
+            },
+            {
+                "key": "us",
+                "value": "US",
+                "selected": false
+            },
+            {
+                "key": "au",
+                "value": "AU",
+                "selected": false
+            }
+        ],
+        "webServicesConfigHtml": "<div class=\"field-row\">\n    <div class=\"field-label\">\n        <label class=\"label\">Access Token<\/label>\n        <div class=\"label-hint\">local_learnwise | accesstoken<\/div>\n    <\/div>\n    <div class=\"field-input copy-field\">\n        <input\n            id=\"webserviceaccesstokeninput\"\n            type=\"text\"\n            class=\"input readonly mono small-text\"\n            value=\"5043b3575d66d0726f033687db38fc43\"\n            readonly\n        >\n        <button type=\"button\" class=\"copy-btn\" data-clipboard-target=\"#webserviceaccesstokeninput\">\n            <svg class=\"copy-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">\n                <rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"\/>\n                <path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"\/>\n            <\/svg>\n        <\/button>\n    <\/div>\n<\/div>",
+        "errors": null,
+        "lticonfigs": [
+            {
+                "id": "61",
+                "name": "L1",
+                "assistantid": "As1",
+                "data": [
+                    {
+                        "index": "tooldetailsplatformid-61",
+                        "header": "Platform ID",
+                        "value": "http:\/\/php72moodle\/learnwise"
+                    },
+                    {
+                        "index": "tooldetailsclientid-61",
+                        "header": "Client ID",
+                        "value": "DZzRJ0SDJOEEAlG"
+                    },
+                    {
+                        "index": "tooldetailsdeploymentid-61",
+                        "header": "Deployment ID",
+                        "value": "61"
+                    },
+                    {
+                        "index": "tooldetailspublickeyseturl-61",
+                        "header": "Public keyset URL",
+                        "value": "http:\/\/php72moodle\/learnwise\/mod\/lti\/certs.php"
+                    },
+                    {
+                        "index": "tooldetailsaccesstokenurl-61",
+                        "header": "Access token URL",
+                        "value": "http:\/\/php72moodle\/learnwise\/mod\/lti\/token.php"
+                    },
+                    {
+                        "index": "tooldetailsauthrequesturl-61",
+                        "header": "Authentication request URL",
+                        "value": "http:\/\/php72moodle\/learnwise\/mod\/lti\/auth.php"
+                    }
+                ]
+            }
+        ]
     }
 }}
 <form id="form1" method="post">
     <input type="hidden" name="sesskey" value="{{{ config.sesskey }}}">
     <input type="hidden" name="floatingButtonStatus" value="{{#floatingButtonStatus}}1{{/floatingButtonStatus}}">
-    <input type="hidden" name="ltiStatus" value="{{#ltiStatus}}1{{/ltiStatus}}">
     <input type="hidden" name="webServicesStatus" value="{{#webServicesStatus}}1{{/webServicesStatus}}">
     <input type="hidden" name="liveApiStatus" value="{{#liveApiStatus}}1{{/liveApiStatus}}">
+    <input type="hidden" name="aiOpsStatus" value="0">
     <input type="hidden" name="aiAssessmentStatus" value="{{#aiAssessmentStatus}}1{{/aiAssessmentStatus}}">
     <div class="container">
         <h1 class="main-title">{{#str}} integration_listpage, local_learnwise {{/str}}</h1>
@@ -177,57 +248,8 @@
         </div>
 
         {{#showltisetup}}
-        <!-- LTI Configuration -->
-        <div class="section">
-            <h2 class="section-title">{{#str}} lticonfig, local_learnwise {{/str}}</h2>
-            <div class="section-description-multi">
-                <p>{{#str}} lticonfig_desc, local_learnwise {{/str}}</p>
-                <p class="note">{{#str}} lticonfig_note, local_learnwise {{/str}}</p>
-            </div>
-
-            <!-- Assistant ID -->
-            <div class="field-row">
-                <div class="field-label">
-                    <label for="ltiAssistantId" class="label">{{#str}} assistantid, local_learnwise {{/str}}</label>
-                    <div class="label-hint">local_learnwise | ltiassistantid</div>
-                </div>
-                <div class="field-input">
-                    <input
-                        type="text"
-                        id="ltiAssistantId"
-                        name="ltiAssistantId"
-                        class="input"
-                        placeholder="{{#str}} enterassistantid, local_learnwise {{/str}}"
-                        value="{{{ltiAssistantId}}}"
-                    >
-                    {{#errors.ltiAssistantId}}
-                        <div class="d-block invalid-feedback">{{{ . }}}</div>
-                    {{/errors.ltiAssistantId}}
-                </div>
-            </div>
-
-            <!-- LTI Toggle -->
-            <div class="field-row">
-                <label class="field-label label">{{#str}} enablelti, local_learnwise {{/str}}</label>
-                <div class="field-input toggle-container">
-                    <div class="switch-wrapper" id="ltiSwitchWrapper">
-                        <div class="switch" id="ltiSwitch">
-                            <div class="switch-thumb"></div>
-                        </div>
-                        <span class="toggle-status" id="ltiStatus">{{#str}} statusdisabled, local_learnwise {{/str}}</span>
-                    </div>
-                    <div class="tooltip" id="ltiTooltip">
-                        {{#str}} enablelti_tooltip, local_learnwise {{/str}}
-                    </div>
-                    {{#errors.ltiStatus}}
-                        <div class="d-block invalid-feedback">{{{ . }}}</div>
-                    {{/errors.ltiStatus}}
-                </div>
-            </div>
-
-            <!-- LTI Configuration Fields -->
-            <div class="lti-config" id="ltiConfig" style="display: none;"></div>
-        </div>
+            <!-- LTI Configuration -->
+            {{> local_learnwise/lticonfiguration }}
         {{/showltisetup}}
 
         <!-- Course contents integration -->
@@ -274,6 +296,16 @@
                     {{#errors.liveApiStatus}}
                         <div class="d-block invalid-feedback">{{{ . }}}</div>
                     {{/errors.liveApiStatus}}
+                </div>
+            </div>
+
+            <div class="field-row ai-ops-field-row">
+                <label for="aiOpsStatus" class="field-label label">{{#str}} aiops, local_learnwise {{/str}}</label>
+                <div class="field-input toggle-container">
+                    <input type="checkbox" name="aiOpsStatus" value="1" id="aiOpsStatus"{{#aiOpsStatus}} checked {{/aiOpsStatus}}>
+                    {{#errors.aiOpsStatus}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.aiOpsStatus}}
                 </div>
             </div>
 
@@ -416,6 +448,6 @@
 </div>
 {{#js}}
 require(['local_learnwise/setup'], function(amd) {
-    amd.init({{#showtoast}}true{{/showtoast}});
+    amd.init(false{{#showtoast}} || true{{/showtoast}}, false{{#showltisetup}} || true{{/showltisetup}});
 });
 {{/js}}

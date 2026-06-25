@@ -35,9 +35,11 @@ use local_learnwise\external\forum\discussions;
 use local_learnwise\external\forums;
 use local_learnwise\external\modules;
 use local_learnwise\external\notifications;
+use local_learnwise\external\plugininfo;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
 use local_learnwise\external\users;
+use local_learnwise\external\ws_proxy;
 use local_learnwise\local\OAuth2\Request;
 use local_learnwise\server;
 use local_learnwise\util;
@@ -55,16 +57,16 @@ $PAGE->set_heading($SITE->fullname);
 
 $urlparts = explode('/', trim((string) get_file_argument(), '/'));
 $callbacks = require('callbacks.php');
+$response = util::make_response([
+    'Cache-Control' => 'no-store, no-cache, must-revalidate',
+]);
 
 try {
     $server = server::get_instance();
     $request = Request::createFromGlobals();
-    $response = util::make_response([
-        'Cache-Control' => 'no-store, no-cache, must-revalidate',
-    ]);
 
-    if (!get_config('local_learnwise', 'liveapi')) {
-        $response->setError(500, get_string('apidisabled', constants::COMPONENT));
+    if (!get_config(constants::COMPONENT, 'liveapi')) {
+        $response->setError(404, get_string('apidisabled', constants::COMPONENT));
         $response->send();
         die;
     }
@@ -88,6 +90,17 @@ try {
     $callback = null;
     $params = [];
     $nextroute = array_shift($urlparts);
+
+    if ($nextroute === 'ws') {
+        if (get_config(constants::COMPONENT, 'aiops')) {
+            ws_proxy::dispatch($urlparts, $response);
+        } else {
+            $response->setError(404, get_string('aiopsdisabled', constants::COMPONENT));
+        }
+        $response->send();
+        die;
+    }
+
     if ($nextroute === userdetails::$route) {
         baseapi::$my = true;
         if (!$urlparts) {
@@ -206,6 +219,11 @@ try {
             modules::set_id((int) $nextroute);
             $callback = modules::class;
         }
+    } else if ($nextroute === plugininfo::$route) {
+        $callback = baseapi::external_function_info('local_learnwise_plugininfo');
+        local_learnwise_call_external_function($callback, $params, $response);
+        $response->send();
+        die;
     }
     if (isset($callbacks[$callback])) {
         local_learnwise_call_external_function((object) $callbacks[$callback], $params, $response);
