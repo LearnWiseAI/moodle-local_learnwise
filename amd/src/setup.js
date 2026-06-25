@@ -23,7 +23,7 @@
  */
 define(
     [
-        `${M.cfg.wwwroot}/local/learnwise/vendorjs/zenorocha/clipboard.min.js`,
+        M.cfg.wwwroot + '/local/learnwise/vendorjs/zenorocha/clipboard.min.js',
         'core/str', 'core/notification', 'core/fragment', 'core/config', 'core/templates',
         'core/ajax', 'local_learnwise/lticonfiguration'
     ],
@@ -89,6 +89,11 @@ define(
         aiAssessmentTooltip: document.getElementById("aiAssessmentTooltip"),
         aiAssessmentStatus: document.getElementById("aiAssessmentStatus"),
         courseIds: document.getElementById("courseIds"),
+
+        webServiceRotateTokenButton: document.getElementById("webservicerotatetokenbutton"),
+        wsRotateTokenModal: document.getElementById("wsRotateTokenModal"),
+        closeWsRotateTokenModal: document.getElementById("closeWsRotateTokenModal"),
+        confirmWsRotateToken: document.getElementById("confirmWsRotateToken"),
     };
 
     // Initialize state from form values
@@ -188,6 +193,18 @@ define(
             }
         });
 
+        elements.wsRotateTokenModal.addEventListener("click", function(e) {
+            if (e.target === elements.closeWsRotateTokenModal) {
+                closeWsRotateTokenModal();
+            }
+            if (e.target === elements.confirmWsRotateToken) {
+                confirmWsRotateToken();
+            }
+            if (e.target === elements.wsRotateTokenModal) {
+                closeWsRotateTokenModal();
+            }
+        });
+
         // Environment radio buttons
         var environmentRadios = document.querySelectorAll('input[name="environment"]');
         environmentRadios.forEach(function(radio) {
@@ -214,6 +231,20 @@ define(
             })
             .catch(Notification.exception);
         });
+
+        // Add Rotate Key Confirmation
+        var webServiceRotateTokenButtonId = elements.webServiceRotateTokenButton.id;
+        var sectionWrapper = elements.webServiceRotateTokenButton.closest('.section');
+        if (sectionWrapper) {
+            sectionWrapper.addEventListener('click', function(e) {
+                var targetButton = e.target.closest('#' + webServiceRotateTokenButtonId);
+                if (targetButton) {
+                    e.preventDefault();
+                    elements.webServiceRotateTokenButton = targetButton;
+                    showWsRotateTokenModal();
+                }
+            });
+        }
     }
 
     /**
@@ -552,6 +583,48 @@ define(
             elements.ltiConfigTable = document.querySelector('[data-region="ltilist"]');
             return null;
         }).catch(Notification.exception);
+    }
+
+    /**
+     * Show the WS Rotate confirmation modal.
+     * Show the modal dialog by setting display style to flex.
+     *
+     * @function showWsRotateTokenModal
+     * @private
+     */
+    function showWsRotateTokenModal() {
+        elements.wsRotateTokenModal.style.display = "flex";
+    }
+
+    /**
+     * Closes the WS Rotate confirmation modal.
+     * Hides the modal dialog by setting display style to none.
+     *
+     * @function closeWsRotateTokenModal
+     * @private
+     */
+    function closeWsRotateTokenModal() {
+        elements.wsRotateTokenModal.style.display = "none";
+    }
+
+    /**
+     * Confirms WS Rotate removal and updates the interface.
+     *
+     * @function confirmWsRotateToken
+     * @private
+     */
+    function confirmWsRotateToken() {
+        state.webServicesEnabled = 1;
+        Fragment.loadFragment('local_learnwise', 'process_setup', Config.contextid, {
+            formdata: 'enablewebservice=' + (state.webServicesEnabled ? 1 : 0) +
+                '&rotatewebservicetoken=1'
+        }).then(function(html, js) {
+            Templates.replaceNodeContents(elements.webServicesConfig, html, js);
+            closeWsRotateTokenModal();
+            return null;
+        }).catch(Notification.exception);
+
+        elements.form.elements.webServicesStatus.value = state.webServicesEnabled ? 1 : 0;
     }
 
     /**

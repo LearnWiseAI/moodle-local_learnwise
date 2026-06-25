@@ -41,7 +41,7 @@ define([
      * @returns {Promise}
      */
     function getModal(modalConfig) {
-        return new Promise(function(resolve, reject) {
+        return new window.Promise(function(resolve, reject) {
             require(['core/modal'], function(Modal) {
                 if (typeof Modal.create === 'function') {
                     resolve(Modal);
