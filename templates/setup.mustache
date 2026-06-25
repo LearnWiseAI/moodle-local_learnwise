@@ -446,6 +446,23 @@
         </div>
     </div>
 </div>
+
+<!-- Modal for Rotate webservice token confirmation -->
+<div class="modal-overlay" id="wsRotateTokenModal" style="display: none;">
+    <div class="mmodal">
+        <div class="modal-header">
+            <h3 class="modal-title">{{#str}} rotatetokenmodal_title, local_learnwise {{/str}}</h3>
+        </div>
+        <div class="modal-body">
+            <p>{{#str}} rotatetokenmodal_desc, local_learnwise {{/str}}</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="closeWsRotateTokenModal" class="btn btn-secondary">{{#str}} rotatetokenmodal_no, local_learnwise {{/str}}</button>
+            <button type="button" id="confirmWsRotateToken" class="btn btn-danger">{{#str}} rotatetokenmodal_yes, local_learnwise {{/str}}</button>
+        </div>
+    </div>
+</div>
+
 {{#js}}
 require(['local_learnwise/setup'], function(amd) {
     amd.init(false{{#showtoast}} || true{{/showtoast}}, false{{#showltisetup}} || true{{/showltisetup}});

@@ -55,6 +55,9 @@ class webservicesetup extends moodleform {
             ]);
         }
 
+        $mform->addElement('hidden', 'rotatewebservicetoken', 0);
+        $mform->setType('rotatewebservicetoken', PARAM_BOOL);
+
         $mform->addElement('submit', 'setupwebservicesetup', get_string('setuptoken', constants::COMPONENT));
     }
 
@@ -112,6 +115,14 @@ class webservicesetup extends moodleform {
                 $systemcontext = context_system::instance();
                 assign_capability('webservice/rest:use', CAP_ALLOW, $CFG->defaultuserroleid, $systemcontext->id, true);
             }
+
+            if (!empty($formdata->rotatewebservicetoken)) {
+                $currenttoken = $this->_customdata['currenttoken'];
+                $webservicemanager = new webservice();
+                $webservicemanager->delete_user_ws_token($currenttoken->id);
+                $this->_customdata['currenttoken'] = null;
+            }
+
             if (empty($this->_customdata['currenttoken'])) {
                 $this->_customdata['currenttoken'] = util::get_or_generate_token_for_user(constants::COMPONENT, true);
             }
