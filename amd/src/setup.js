@@ -22,9 +22,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(
-    [M.cfg.wwwroot + '/local/learnwise/vendorjs/zenorocha/clipboard.min.js',
-        'core/str', 'core/notification', 'core/fragment', 'core/config', 'core/templates'],
-    function(ClipboardJS, Str, Notification, Fragment, Config, Templates) {
+    [
+        `${M.cfg.wwwroot}/local/learnwise/vendorjs/zenorocha/clipboard.min.js`,
+        'core/str', 'core/notification', 'core/fragment', 'core/config', 'core/templates',
+        'core/ajax', 'local_learnwise/lticonfiguration'
+    ],
+    function(ClipboardJS, Str, Notification, Fragment, Config, Templates, Ajax, LtiConfiguration) {
 
     /**
      * Application state object containing all configuration settings
@@ -32,24 +35,27 @@ define(
      * @property {string} environment - Current environment (sandbox/production)
      * @property {string} floatingButtonAssistantId - Assistant ID for floating button
      * @property {boolean} showFloatingButton - Whether floating button is enabled
-     * @property {string} ltiAssistantId - Assistant ID for LTI integration
      * @property {boolean} ltiEnabled - Whether LTI integration is enabled
      * @property {boolean} webServicesEnabled - Whether web services are enabled
      * @property {boolean} liveApiEnabled - Whether live API is enabled
      * @property {boolean} showToast - Whether to show toast notifications
+     * @property {boolean} ltiSetup - Whether to use lti config
      */
     var state = {
         environment: "sandbox",
         floatingButtonAssistantId: "",
         showFloatingButton: false,
-        ltiAssistantId: "",
         ltiEnabled: false,
         webServicesEnabled: false,
         liveApiEnabled: false,
         aiAssessmentEnabled: false,
         courseIds: "",
         aiAssessmentAssistantId: "",
+        showToast: false,
+        ltiSetup: false,
     };
+
+    var COMPONENT = 'local_learnwise';
 
     /**
      * DOM elements cache for efficient access to form elements and controls
@@ -63,12 +69,7 @@ define(
         floatingButtonSwitchWrapper: document.getElementById("floatingButtonSwitchWrapper"),
         floatingButtonTooltip: document.getElementById("floatingButtonTooltip"),
 
-        ltiAssistantId: document.getElementById("ltiAssistantId"),
-        ltiSwitch: document.getElementById("ltiSwitch"),
-        ltiStatus: document.getElementById("ltiStatus"),
-        ltiSwitchWrapper: document.getElementById("ltiSwitchWrapper"),
-        ltiTooltip: document.getElementById("ltiTooltip"),
-        ltiConfig: document.getElementById("ltiConfig"),
+        ltiConfigTable: document.querySelector('[data-region="ltilist"]'),
 
         webServicesSwitch: document.getElementById("webServicesSwitch"),
         webServicesStatus: document.getElementById("webServicesStatus"),
@@ -95,20 +96,12 @@ define(
         state.floatingButtonAssistantId = elements.floatingButtonAssistantId.value;
     }
 
-    if (elements.ltiAssistantId) {
-        state.ltiAssistantId = elements.ltiAssistantId.value;
-    }
-
     if (elements.aiAssessmentAssistantId) {
         state.aiAssessmentAssistantId = elements.aiAssessmentAssistantId.value;
     }
 
     if (elements.floatingButtonStatus) {
         state.showFloatingButton = parseInt(elements.form.elements.floatingButtonStatus.value) === 1;
-    }
-
-    if (elements.ltiStatus) {
-        state.ltiEnabled = parseInt(elements.form.elements.ltiStatus.value) === 1;
     }
 
     if (elements.webServicesStatus) {
@@ -141,14 +134,6 @@ define(
             state.floatingButtonAssistantId = e.target.value;
             updateFloatingButtonSwitch();
         });
-
-        // LTI assistant ID input
-        if (elements.ltiAssistantId) {
-            elements.ltiAssistantId.addEventListener("input", function(e) {
-                state.ltiAssistantId = e.target.value;
-                updateLtiSwitch();
-            });
-        }
 
         // AI Assessment assistant ID input
         if (elements.aiAssessmentAssistantId) {
@@ -193,13 +178,13 @@ define(
         // Modal close on overlay click
         elements.ltiRemovalModal.addEventListener("click", function(e) {
             if (e.target === elements.closeLtiModal) {
-                closeLtiModal();
+                closeLtiRemovalModal();
             }
             if (e.target === elements.confirmLtiRemoval) {
                 confirmLtiRemoval();
             }
             if (e.target === elements.ltiRemovalModal) {
-                closeLtiModal();
+                closeLtiRemovalModal();
             }
         });
 
@@ -209,34 +194,13 @@ define(
             if (radio.checked) {
                 state.environment = radio.value;
             }
-            radio.addEventListener("change", function(e) {
-                if (e.target.checked) {
-                    state.environment = e.target.value;
-                    updateLtiConfig();
-                }
-            });
         });
-
-        // LTI switch
-        if (elements.ltiSwitch) {
-            elements.ltiSwitch.addEventListener("click", function() {
-                if (canEnableLti()) {
-                    if (state.ltiEnabled) {
-                        // Show confirmation modal
-                        elements.ltiRemovalModal.style.display = "flex";
-                    } else {
-                        state.ltiEnabled = true;
-                        updateLtiSwitch();
-                    }
-                }
-            });
-        }
 
         // Initialize clipboard functionality
         var clipboardInstance = new ClipboardJS('.copy-btn');
         clipboardInstance.on('success', function(e) {
             e.clearSelection();
-            Str.get_string('copied', 'local_learnwise')
+            Str.get_string('copied', COMPONENT)
             .then(function(str) {
                 if (state.showToast) {
                     require(['core/toast'], function(Toast) {
@@ -270,22 +234,10 @@ define(
      *
      * @function canEnableAiassessment
      * @private
-     * @returns {boolean} True if LTI can be enabled, false otherwise
+     * @returns {boolean} True if Assessment can be enabled, false otherwise
      */
     function canEnableAiassessment() {
         return state.aiAssessmentAssistantId.trim().length > 0;
-    }
-
-    /**
-     * Checks if LTI integration can be enabled based on current state.
-     * Requires a valid LTI assistant ID to be present.
-     *
-     * @function canEnableLti
-     * @private
-     * @returns {boolean} True if LTI can be enabled, false otherwise
-     */
-    function canEnableLti() {
-        return state.ltiAssistantId.trim().length > 0;
     }
 
     /**
@@ -306,13 +258,13 @@ define(
 
             if (state.showFloatingButton) {
                 elements.floatingButtonSwitch.classList.add("active");
-                Str.get_string('statusenabled', 'local_learnwise').then(function(str) {
+                Str.get_string('statusenabled', COMPONENT).then(function(str) {
                     elements.floatingButtonStatus.textContent = str;
                     return null;
                 }).fail(Notification.exception);
             } else {
                 elements.floatingButtonSwitch.classList.remove("active");
-                Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
+                Str.get_string('statusdisabled', COMPONENT).then(function(str) {
                     elements.floatingButtonStatus.textContent = str;
                     return null;
                 }).fail(Notification.exception);
@@ -321,84 +273,13 @@ define(
             elements.floatingButtonSwitch.classList.remove("active");
             elements.floatingButtonSwitch.classList.add("disabled");
             elements.floatingButtonSwitchWrapper.style.cursor = "not-allowed";
-            Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
+            Str.get_string('statusdisabled', COMPONENT).then(function(str) {
                 elements.floatingButtonStatus.textContent = str;
                 return null;
             }).fail(Notification.exception);
             state.showFloatingButton = false;
         }
         elements.form.elements.floatingButtonStatus.value = state.showFloatingButton ? 1 : 0;
-    }
-
-    /**
-     * Updates the LTI configuration section by loading dynamic content.
-     * Fetches and renders LTI configuration HTML based on current state
-     * including environment and assistant ID settings.
-     *
-     * @function updateLtiConfig
-     * @private
-     */
-    function updateLtiConfig() {
-        if (!elements.ltiConfig || !canEnableLti() || !state.ltiEnabled) {
-            return;
-        }
-        Fragment.loadFragment('local_learnwise', 'process_setup', Config.contextid, {
-                formdata: 'enablelti=' + (state.ltiEnabled ? 1 : 0) +
-            '&assistantid=' + encodeURIComponent(elements.ltiAssistantId.value) +
-            '&environment=' + encodeURIComponent(state.environment)
-        }).then(function(html, js) {
-            Templates.replaceNodeContents(elements.ltiConfig, html, js);
-            return null;
-        }).catch(Notification.exception);
-    }
-
-    /**
-     * Updates the LTI switch UI and configuration visibility.
-     * Manages the LTI integration toggle state, updates visual indicators,
-     * and shows/hides the LTI configuration section accordingly.
-     *
-     * @function updateLtiSwitch
-     * @private
-     */
-    function updateLtiSwitch() {
-        if (!elements.ltiAssistantId) {
-            return;
-        }
-        var canEnable = canEnableLti();
-
-        if (canEnable) {
-            elements.ltiSwitch.classList.remove("disabled");
-            elements.ltiSwitchWrapper.style.cursor = "pointer";
-            elements.ltiTooltip.style.display = "none";
-
-            if (state.ltiEnabled) {
-                elements.ltiSwitch.classList.add("active");
-                Str.get_string('statusenabled', 'local_learnwise').then(function(str) {
-                    elements.ltiStatus.textContent = str;
-                    return null;
-                }).catch(Notification.exception);
-                elements.ltiConfig.style.display = "block";
-            } else {
-                elements.ltiSwitch.classList.remove("active");
-                Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
-                    elements.ltiStatus.textContent = str;
-                    return null;
-                }).catch(Notification.exception);
-                elements.ltiConfig.style.display = "none";
-            }
-            updateLtiConfig();
-        } else {
-            elements.ltiSwitch.classList.remove("active");
-            elements.ltiSwitch.classList.add("disabled");
-            elements.ltiSwitchWrapper.style.cursor = "not-allowed";
-            Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
-                elements.ltiStatus.textContent = str;
-                return null;
-            }).catch(Notification.exception);
-            elements.ltiConfig.style.display = "none";
-            state.ltiEnabled = false;
-        }
-        elements.form.elements.ltiStatus.value = state.ltiEnabled ? 1 : 0;
     }
 
     /**
@@ -420,13 +301,13 @@ define(
 
             if (state.aiAssessmentEnabled) {
                 elements.aiAssessmentSwitch.classList.add("active");
-                Str.get_string('statusenabled', 'local_learnwise').then(function(str) {
+                Str.get_string('statusenabled', COMPONENT).then(function(str) {
                     elements.aiAssessmentStatus.textContent = str;
                     return null;
                 }).catch(Notification.exception);
             } else {
                 elements.aiAssessmentSwitch.classList.remove("active");
-                Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
+                Str.get_string('statusdisabled', COMPONENT).then(function(str) {
                     elements.aiAssessmentStatus.textContent = str;
                     return null;
                 }).catch(Notification.exception);
@@ -435,7 +316,7 @@ define(
             elements.aiAssessmentSwitch.classList.remove("active");
             elements.aiAssessmentSwitch.classList.add("disabled");
             elements.aiAssessmentSwitchWrapper.style.cursor = "not-allowed";
-            Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
+            Str.get_string('statusdisabled', COMPONENT).then(function(str) {
                 elements.aiAssessmentStatus.textContent = str;
                 return null;
             }).catch(Notification.exception);
@@ -481,20 +362,20 @@ define(
     function updateWebServicesSwitch() {
         if (state.webServicesEnabled) {
             elements.webServicesSwitch.classList.add("active");
-            Str.get_string('statusenabled', 'local_learnwise').then(function(str) {
+            Str.get_string('statusenabled', COMPONENT).then(function(str) {
                 elements.webServicesStatus.textContent = str;
                 return null;
             }).catch(Notification.exception);
             elements.webServicesConfig.style.display = "block";
         } else {
             elements.webServicesSwitch.classList.remove("active");
-            Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
+            Str.get_string('statusdisabled', COMPONENT).then(function(str) {
                 elements.webServicesStatus.textContent = str;
                 return null;
             }).catch(Notification.exception);
             elements.webServicesConfig.style.display = "none";
         }
-        Fragment.loadFragment('local_learnwise', 'process_setup', Config.contextid, {
+        Fragment.loadFragment(COMPONENT, 'process_setup', Config.contextid, {
             formdata: 'enablewebservice=' + (state.webServicesEnabled ? 1 : 0)
         }).then(function(html, js) {
             Templates.replaceNodeContents(elements.webServicesConfig, html, js);
@@ -515,14 +396,14 @@ define(
     function updateLiveApiSwitch() {
         if (state.liveApiEnabled) {
             elements.liveApiSwitch.classList.add("active");
-            Str.get_string('statusenabled', 'local_learnwise').then(function(str) {
+            Str.get_string('statusenabled', COMPONENT).then(function(str) {
                 elements.liveApiStatus.textContent = str;
                 return null;
             }).catch(Notification.exception);
             elements.liveApiConfig.style.display = "block";
         } else {
             elements.liveApiSwitch.classList.remove("active");
-            Str.get_string('statusdisabled', 'local_learnwise').then(function(str) {
+            Str.get_string('statusdisabled', COMPONENT).then(function(str) {
                 elements.liveApiStatus.textContent = str;
                 return null;
             }).catch(Notification.exception);
@@ -532,13 +413,28 @@ define(
     }
 
     /**
+     * Show the LTI removal confirmation modal.
+     * Show the modal dialog by setting display style to flex.
+     *
+     * @function showLtiRemovalModal
+     * @private
+     */
+    function showLtiRemovalModal() {
+        if (!state.deleteconfigid) {
+            throw new Error('delete config id is not defined');
+        }
+        elements.ltiRemovalModal.style.display = "flex";
+    }
+
+    /**
      * Closes the LTI removal confirmation modal.
      * Hides the modal dialog by setting display style to none.
      *
-     * @function closeLtiModal
+     * @function closeLtiRemovalModal
      * @private
      */
-    function closeLtiModal() {
+    function closeLtiRemovalModal() {
+        delete state.deleteconfigid;
         elements.ltiRemovalModal.style.display = "none";
     }
 
@@ -551,9 +447,111 @@ define(
      * @private
      */
     function confirmLtiRemoval() {
-        state.ltiEnabled = false;
-        updateLtiSwitch();
-        closeLtiModal();
+        if (!state.deleteconfigid) {
+            throw new Error('delete config id is not defined');
+        }
+        Ajax.call([{
+            methodname: 'local_learnwise_deletelti',
+            args: {
+                id: state.deleteconfigid,
+            }
+        }])[0].then(function(response) {
+            if (response.success) {
+                var removeElements = elements.ltiConfigTable.querySelectorAll(
+                    '[data-rowindex="' + state.deleteconfigid + '"],#detail-' + state.deleteconfigid
+                );
+                removeElements.forEach(function(removeElement) {
+                    removeElement.remove();
+                });
+                closeLtiRemovalModal();
+                if (!document.querySelector('[data-rowindex]')) {
+                    updateLtiConfigTable();
+                }
+            } else {
+                throw new Error('config with id is not deleted');
+            }
+            return null;
+        }).catch(Notification.exception);
+    }
+
+    /**
+     * Register lti related operations
+     *
+     * @function registerLtiCrud
+     * @private
+     */
+    function registerLtiCrud() {
+        if (!state.ltiSetup) {
+            return;
+        }
+        LtiConfiguration.registerModalForm('[data-action="addlti"],[data-action="updatelti"]', {
+            title: Str.get_string('setuplti', COMPONENT),
+        }, updateLtiConfigTable);
+        document.addEventListener('click', function(e) {
+            var deleteaction = e.target.closest('[data-action="deletelti"]');
+            if (deleteaction) {
+                e.preventDefault();
+                state.deleteconfigid = deleteaction.dataset.id;
+                showLtiRemovalModal();
+            }
+            var viewassistantbtn = e.target.closest('[data-action="viewlti"]');
+            if (viewassistantbtn) {
+                var table = viewassistantbtn.closest('[data-region="ltilist"]');
+                if (table) {
+                    var detailrow = table.querySelector('#detail-' + viewassistantbtn.dataset.index);
+                    if (detailrow) {
+                        if (detailrow.style.display === 'none') {
+                            detailrow.style.display = '';
+                        } else {
+                            detailrow.style.display = 'none';
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Update lti config html table.
+     *
+     * @function updateLtiConfigTable
+     * @private
+     * @param {Object} data Data used to update the LTI config table.
+     */
+    function updateLtiConfigTable(data) {
+        var removeel = null;
+        var append = false;
+        var params = {
+            action: 'refreshtable'
+        };
+        var replaceelement = elements.ltiConfigTable;
+        if (data && data.id) {
+            params.action = 'refreshtablerow';
+            params.id = data.id;
+            replaceelement = elements.ltiConfigTable.querySelector('[data-rowindex="' + params.id + '"]');
+            removeel = elements.ltiConfigTable.querySelector('#detail-' + params.id);
+            if (!replaceelement) {
+                append = true;
+                replaceelement = elements.ltiConfigTable;
+            }
+        }
+        Fragment.loadFragment(COMPONENT, 'refresh_lticonfig', Config.contextid, params)
+        .then(function(html, js) {
+            var norecordsrow = elements.ltiConfigTable.querySelector('[data-region="norecords"]');
+            if (norecordsrow) {
+                norecordsrow.remove();
+            }
+            if (removeel) {
+                removeel.remove();
+            }
+            if (append) {
+                Templates.appendNodeContents(replaceelement, html, js);
+            } else {
+                Templates.replaceNode(replaceelement, html, js);
+            }
+            elements.ltiConfigTable = document.querySelector('[data-region="ltilist"]');
+            return null;
+        }).catch(Notification.exception);
     }
 
     /**
@@ -569,19 +567,21 @@ define(
          * Sets up event listeners, initializes state, and updates all UI components.
          *
          * @function init
-         * @param {boolean} showToast - Whether to show toast notifications for user feedback
          * @public
+         * @param {boolean} showToast Whether to show toast notifications for user feedback.
+         * @param {boolean} ltiSetup LTI setup configuration data.
          */
-        init: function(showToast) {
+        init: function(showToast, ltiSetup) {
             state.showToast = showToast;
+            state.ltiSetup = ltiSetup;
             initializeEventListeners();
 
             // Initial state updates
             updateFloatingButtonSwitch();
-            updateLtiSwitch();
             updateWebServicesSwitch();
             updateLiveApiSwitch();
             updateAiAssessmentSwitch();
+            registerLtiCrud();
         }
     };
 

@@ -22,8 +22,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use local_learnwise\form\assistantinput;
+use local_learnwise\constants;
 use local_learnwise\form\webservicesetup;
+use local_learnwise\output\setup;
+use local_learnwise\util;
 
 /**
  * Summary of local_learnwise_standard_footer_html
@@ -49,21 +51,6 @@ function local_learnwise_output_fragment_process_setup($args) {
     require_capability('moodle/site:config', $context);
 
     $o = '';
-    if (isset($formdata['enablelti'])) {
-        $formdata['setupltisetup'] = $formdata['removeltisetup'] = false;
-        if (!empty($formdata['enablelti'])) {
-            $formdata['setupltisetup'] = true;
-        } else {
-            $formdata['removeltisetup'] = true;
-        }
-        $formidentifier = str_replace('\\', '_', assistantinput::class);
-        $formdata['_qf__' . $formidentifier] = 1;
-        $customdata = !empty($formdata['environment']) ? $formdata : null;
-        $form = new assistantinput(null, $customdata, 'post', '', null, true, $formdata);
-        if ($form->process_form_submission() && $formdata['setupltisetup']) {
-            $o .= $form->render_widget();
-        }
-    }
 
     if (isset($formdata['enablewebservice'])) {
         $formdata['setupwebservicesetup'] = $formdata['removewebservicesetup'] = false;
@@ -81,4 +68,59 @@ function local_learnwise_output_fragment_process_setup($args) {
     }
 
     return $o;
+}
+
+/**
+ * LTI Configuration Form
+ * @param array $args
+ * @return string
+ */
+function local_learnwise_output_fragment_form($args) {
+    $args = (object) $args;
+    $formdata = [];
+    parse_str($args->formdata, $formdata);
+
+    $formclass = $formdata['formclass'];
+    $formurl = new moodle_url(get_local_referer());
+    $formurl->param('formclass', $formclass);
+    $formurl->param('action', $formdata['action']);
+
+    $form = new $formclass($formurl, null, 'post', '', null, true, $formdata);
+    $form->check_access_for_dynamic_submission();
+    $form->set_data_for_dynamic_submission();
+
+    $response = ['success' => false];
+    if ($formresponse = $form->process_dynamic_submission()) {
+        $response['success'] = true;
+        $response['data'] = $formresponse;
+    } else {
+        $response['formhtml'] = $form->render();
+    }
+    return json_encode($response);
+}
+
+/**
+ * Refresh LTI configuration
+ * @param array $args
+ * @return string
+ */
+function local_learnwise_output_fragment_refresh_lticonfig($args) {
+    global $PAGE;
+    $args = (object) $args;
+    $html = '';
+    $output = $PAGE->get_renderer(constants::COMPONENT);
+    if ($args->action == 'refreshtable') {
+        $setup = new setup();
+        $templatedata = $setup->export_for_template($output);
+        $html = $output->render_from_template(
+            constants::COMPONENT . '/lticonfigtable',
+            $templatedata
+        );
+    } else if ($args->action == 'refreshtablerow') {
+        $ltityperecord = util::get_lti_data($args->id);
+        if (!empty($ltityperecord)) {
+            $html = $output->render_from_template(constants::COMPONENT . '/lticonfigrow', $ltityperecord->templatedata);
+        }
+    }
+    return $html;
 }

@@ -1,0 +1,79 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_learnwise/lticonfiguration
+
+    Template for displaying LearnWise LTI configurations, including
+    instructions, an add button and the LTI configuration table partial.
+
+    Example context (json):
+    {
+        "lticonfigs": [
+            {
+                "id": "61",
+                "name": "L1",
+                "assistantid": "As1",
+                "data": [
+                    {
+                        "index": "tooldetailsplatformid-61",
+                        "header": "Platform ID",
+                        "value": "http:\/\/php72moodle\/learnwise"
+                    },
+                    {
+                        "index": "tooldetailsclientid-61",
+                        "header": "Client ID",
+                        "value": "DZzRJ0SDJOEEAlG"
+                    },
+                    {
+                        "index": "tooldetailsdeploymentid-61",
+                        "header": "Deployment ID",
+                        "value": "61"
+                    },
+                    {
+                        "index": "tooldetailspublickeyseturl-61",
+                        "header": "Public keyset URL",
+                        "value": "http:\/\/php72moodle\/learnwise\/mod\/lti\/certs.php"
+                    },
+                    {
+                        "index": "tooldetailsaccesstokenurl-61",
+                        "header": "Access token URL",
+                        "value": "http:\/\/php72moodle\/learnwise\/mod\/lti\/token.php"
+                    },
+                    {
+                        "index": "tooldetailsauthrequesturl-61",
+                        "header": "Authentication request URL",
+                        "value": "http:\/\/php72moodle\/learnwise\/mod\/lti\/auth.php"
+                    }
+                ]
+            }
+        ]
+    }
+}}
+<h2 class="section-title">{{#str}} lticonfig, local_learnwise {{/str}}</h2>
+<div class="section-description-multi">
+    <div class="lticonfignote">
+        <p>{{#str}} lticonfig_desc, local_learnwise {{/str}}</p>
+        <p class="note">{{#str}} lticonfig_note, local_learnwise {{/str}}</p>
+    </div>
+    <div class="lticonfigadd">
+        <button class="btn btn-primary" type="submit" data-action="addlti" id="add-lticonfig-button" data-formclass="local_learnwise\form\updatelti">
+            {{#str}}addlticonfig, local_learnwise{{/str}}
+        </button>
+    </div>
+</div>
+
+{{> local_learnwise/lticonfigtable }}

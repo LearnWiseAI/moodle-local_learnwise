@@ -17,7 +17,9 @@
 {{!
     @template local_learnwise/ltisetup
 
-    TODO describe template ltisetup
+    Template for displaying LTI setup configuration fields.
+    Renders a list of LTI platform settings including Platform ID, Client ID, Deployment ID,
+    Public keyset URL, Access token URL, and Authentication request URL with copy-to-clipboard functionality.
 
     Example context (json):
     {
@@ -25,7 +27,7 @@
             {
                 "index": 1,
                 "header": "Platform ID",
-                "value": "http:\/\/php72moodle.titlocal\/learnwise"
+                "value": "http:\/\/php72moodle\/learnwise"
             },
             {
                 "index": 2,
@@ -40,17 +42,17 @@
             {
                 "index": 4,
                 "header": "Public keyset URL",
-                "value": "http:\/\/php72moodle.titlocal\/learnwise\/mod\/lti\/certs.php"
+                "value": "http:\/\/php72moodle\/learnwise\/mod\/lti\/certs.php"
             },
             {
                 "index": 5,
                 "header": "Access token URL",
-                "value": "http:\/\/php72moodle.titlocal\/learnwise\/mod\/lti\/token.php"
+                "value": "http:\/\/php72moodle\/learnwise\/mod\/lti\/token.php"
             },
             {
                 "index": 6,
                 "header": "Authentication request URL",
-                "value": "http:\/\/php72moodle.titlocal\/learnwise\/mod\/lti\/auth.php"
+                "value": "http:\/\/php72moodle\/learnwise\/mod\/lti\/auth.php"
             }
         ]
     }
