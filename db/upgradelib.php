@@ -18,7 +18,7 @@
  * Upgrade functions for Learnwise
  *
  * @package    local_learnwise
- * @copyright  2026 YOUR NAME <your@email.com>
+ * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

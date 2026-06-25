@@ -34,6 +34,9 @@ use local_learnwise\external\forum\discussions;
 use local_learnwise\external\forums;
 use local_learnwise\external\modules;
 use local_learnwise\external\notifications;
+use local_learnwise\external\quiz\attempts;
+use local_learnwise\external\quiz\reviewattempt;
+use local_learnwise\external\quizzes;
 use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
 use local_learnwise\external\users;
@@ -123,6 +126,15 @@ $callbacks = [
     ],
     books::class => [
         'description' => 'Get books',
+    ],
+    quizzes::class => [
+        'description' => 'Get quizzes',
+    ],
+    attempts::class => [
+        'description' => 'Get quiz attempts',
+    ],
+    reviewattempt::class => [
+        'description' => 'Get quiz attempt review',
     ],
 ];
 
