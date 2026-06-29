@@ -14,19 +14,41 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_learnwise\external;
+
 /**
- * Version information for Learnwise
+ * Class api_route
  *
  * @package    local_learnwise
- * @copyright  2025 LearnWise <help@learnwise.ai>
+ * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+interface api_route {
+    /**
+     * Indicates api read/write mode
+     *
+     * @return string
+     */
+    public static function crudtype();
 
-defined('MOODLE_INTERNAL') || die();
+    /**
+     * Define description of api
+     *
+     * @return string
+     */
+    public static function description();
 
-$plugin->component    = 'local_learnwise';
-$plugin->release      = '1.3.9b';
-$plugin->version      = 2026060505.01;
-$plugin->requires     = 2017111309;
-$plugin->supported    = [34, 38];
-$plugin->maturity     = MATURITY_STABLE;
+    /**
+     * Gives native like function info
+     *
+     * @return array
+     */
+    public static function function_info();
+
+    /**
+     * Gives native like function api name
+     *
+     * @return string
+     */
+    public static function function_name();
+}

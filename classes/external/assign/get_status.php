@@ -32,6 +32,11 @@ use required_capability_exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class get_status extends baseapi {
+    #[\Override]
+    public static function description() {
+        return 'Returns information about an assignment submission status';
+    }
+
     /**
      * Summary of execute_parameters
      * @return external_function_parameters

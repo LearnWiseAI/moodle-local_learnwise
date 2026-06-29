@@ -41,6 +41,11 @@ class courses extends baseapi {
      */
     public static $route = 'courses';
 
+    #[\Override]
+    public static function description() {
+        return 'Get user courses';
+    }
+
     /**
      * Returns the parameters for the execute function.
      *

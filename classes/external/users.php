@@ -31,6 +31,11 @@ class users extends userdetails {
      */
     public static $route = 'users';
 
+    #[\Override]
+    public static function description() {
+        return 'Get user info';
+    }
+
     /**
      * Returns the parameters for the execute function.
      *

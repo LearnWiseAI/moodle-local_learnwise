@@ -38,6 +38,11 @@ class plugininfo extends baseapi {
      */
     public static $route = 'plugininfo';
 
+    #[\Override]
+    public static function description() {
+        return 'Returns information about a plugin setup';
+    }
+
     /**
      * Summary of execute_parameters
      * @return external_function_parameters

@@ -18,6 +18,8 @@ namespace local_learnwise\external;
 
 use core_component;
 use core_plugin_manager;
+use local_learnwise\api_response;
+use local_learnwise\api_server;
 use local_learnwise\util;
 
 /**
@@ -33,13 +35,22 @@ use local_learnwise\util;
  */
 class ws_proxy {
     /**
+     * Indicates function is called and used when formatting response
+     *
+     * @var bool
+     */
+    protected static $called = false;
+
+    /**
      * Dispatch a WS function call from URL segments and return the result.
      *
-     * @param array $urlparts Remaining URL segments after /ws/.
-     * @param \local_learnwise\local\OAuth2\Response $response OAuth2 response object
+     * @param api_server $apiserver
      * @return void
      */
-    public static function dispatch(array $urlparts, $response): void {
+    public static function dispatch(api_server $apiserver) {
+        self::$called = true;
+        $urlparts = $apiserver->get_urlparts();
+        $response = $apiserver->get_response();
         // Reconstruct function name: /ws/mod_assign/get_assignments -> mod_assign_get_assignments.
         if (count($urlparts) < 2) {
             $response->setError(400, 'Invalid WS path: expected /ws/<component>/<function>');
@@ -48,7 +59,12 @@ class ws_proxy {
         $component = array_shift($urlparts);
         $component = core_component::normalize_componentname($component);
 
-        if (!in_array($component, array_merge(['core'], core_component::get_component_names()))) {
+        $allcomponents = ['core'];
+        foreach (core_component::get_component_list() as $plugininfo) {
+            $allcomponents = array_merge($allcomponents, array_keys($plugininfo));
+        }
+
+        if (!in_array($component, $allcomponents)) {
             $response->setError(400, 'Invalid WS component');
             return;
         }
@@ -95,18 +111,11 @@ class ws_proxy {
             }
         }
 
-        // Call the function via Moodle's external API.
-        $function = $allowed[$functionname];
-        local_learnwise_call_external_function($function, $params, $response);
-
-        if ($response->isClientError() || $response->isServerError()) {
-            return;
-        }
-
-        // Apply proxy-level pagination for array responses.
-        $responsedata = $response->getParameters();
-        $data = self::apply_pagination($responsedata, $response);
-        $response->setParameters($data);
+        $apiserver->set_parameters($params);
+        $apiserver->set_functionname($functionname);
+        $apiserver->add_responseformatter(function ($returns) use ($response) {
+            return self::apply_pagination($returns, $response);
+        });
     }
 
     /**
@@ -116,12 +125,12 @@ class ws_proxy {
      * and adds X-Total-Count and X-Has-More headers.
      *
      * @param mixed $data The function result
-     * @param \local_learnwise\local\OAuth2\Response $response Response object (for headers)
+     * @param api_response $response Response object (for headers)
      * @return mixed Paginated data (or original if not an array)
      */
-    private static function apply_pagination($data, $response) {
+    protected static function apply_pagination($data, $response) {
         // Only paginate indexed arrays (lists).
-        if (!is_array($data) || empty($data) || !util::array_is_list($data)) {
+        if (!self::$called || !is_array($data) || empty($data) || !util::array_is_list($data)) {
             return $data;
         }
 

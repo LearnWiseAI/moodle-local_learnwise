@@ -37,6 +37,11 @@ class reviewattempt extends baseapi {
      */
     public static $route = 'review';
 
+    #[\Override]
+    public static function description() {
+        return 'Get quiz attempt review';
+    }
+
     /**
      * Summary of execute_parameters
      * @return external_function_parameters

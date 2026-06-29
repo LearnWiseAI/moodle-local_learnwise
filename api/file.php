@@ -22,43 +22,21 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use local_learnwise\constants;
-use local_learnwise\local\OAuth2\Request;
-use local_learnwise\server;
-use local_learnwise\util;
+use local_learnwise\api_server;
 
 define('NO_DEBUG_DISPLAY', true);
 define('WS_SERVER', true);
 
-//phpcs:ignore moodle.Files.RequireLogin.Missing
-require('../../../config.php');
-require_once($CFG->libdir . '/externallib.php');
+// phpcs:ignore moodle.Files.RequireLogin.Missing
+require(dirname(__FILE__, 4) . '/config.php');
 
-$server = server::get_instance();
-$request = Request::createFromGlobals();
-$response = util::make_response([
-    'Cache-Control' => 'no-store, no-cache, must-revalidate',
-]);
+$apiserver = new api_server();
+$apiserver->authenticate();
+$response = $apiserver->get_response();
 
-if (!get_config('local_learnwise', 'liveapi')) {
-    $response->setError(500, get_string('apidisabled', constants::COMPONENT));
+if ($response->isClientError() || $response->isServerError()) {
     $response->send();
     die;
 }
-
-if (!$server->verifyResourceRequest($request, $response)) {
-    $response->send();
-    die;
-}
-
-// Authenticate user.
-$token = $server->getAccessTokenData($request);
-$user = get_complete_user_data('id', $token['user_id'], null, true);
-
-core_user::require_active_user($user, true, true);
-
-// Emulate normal session.
-enrol_check_plugins($user);
-core\session\manager::set_user($user);
 
 require_once($CFG->dirroot . '/pluginfile.php');

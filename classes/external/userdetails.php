@@ -42,6 +42,11 @@ class userdetails extends baseapi {
      */
     public static $route = 'me';
 
+    #[\Override]
+    public static function description() {
+        return 'Get user details';
+    }
+
     /**
      * Returns the parameters for the execute function.
      *

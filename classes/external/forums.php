@@ -38,6 +38,11 @@ class forums extends baseapi {
      */
     public static $route = 'forums';
 
+    #[\Override]
+    public static function description() {
+        return 'Get forums';
+    }
+
     /**
      * Returns the parameters for the execute function.
      *

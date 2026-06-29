@@ -16,10 +16,15 @@
 
 namespace local_learnwise\external;
 
+use core_component;
 use external_api;
+use external_description;
 use external_function_parameters;
 use external_multiple_structure;
+use external_single_structure;
+use local_learnwise\constants;
 use moodle_url;
+use ReflectionClass;
 use stored_file;
 
 defined('MOODLE_INTERNAL') || die();
@@ -33,7 +38,7 @@ require_once($CFG->libdir . '/externallib.php');
  * @copyright  2025 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class baseapi extends external_api {
+abstract class baseapi extends external_api implements api_route {
     /**
      * The name of the API.
      *
@@ -59,7 +64,7 @@ abstract class baseapi extends external_api {
      * Returns the base parameters for the API.
      *
      * @param array $additional Additional parameters to merge with the base parameters.
-     * @return \external_function_parameters
+     * @return external_function_parameters
      */
     public static function base_parameters(array $additional = []) {
         return new external_function_parameters(array_merge($additional, [
@@ -92,7 +97,7 @@ abstract class baseapi extends external_api {
     /**
      * Returns the structure for the API response.
      *
-     * @return \external_multiple_structure|\external_single_structure
+     * @return external_multiple_structure|external_single_structure
      */
     public static function execute_returns() {
         $singlestructe = static::single_structure();
@@ -122,7 +127,6 @@ abstract class baseapi extends external_api {
      * @return int|null The ID if set, null otherwise.
      */
     public static function get_id() {
-
         if (!self::is_singleoperation()) {
             return null;
         }
@@ -148,11 +152,11 @@ abstract class baseapi extends external_api {
     /**
      * Cleans the return value based on the description.
      *
-     * @param \external_description $description The description of the return value.
+     * @param external_description $description The description of the return value.
      * @param mixed $response The response to clean.
      * @return mixed The cleaned response.
      */
-    public static function clean_returnvalue(\external_description $description, $response) {
+    public static function clean_returnvalue(external_description $description, $response) {
         global $CFG;
         if ($description instanceof timestampvalue) {
             return self::converttimestamp($response);
@@ -219,10 +223,54 @@ abstract class baseapi extends external_api {
         );
     }
 
+    #[\Override]
+    public static function function_name() {
+        $nameparts = explode('\\', get_called_class());
+        $nameparts = array_diff($nameparts, ['external']);
+        return join('_', $nameparts);
+    }
+
+    #[\Override]
+    public static function crudtype() {
+        return 'read';
+    }
+
+    #[\Override]
+    public static function function_info() {
+        $nameparts = explode('\\', get_called_class());
+        return [
+            'name' => static::function_name(),
+            'classname' => get_called_class(),
+            'methodname' => 'execute',
+            'component' => $nameparts[0],
+            'descripion' => static::description(),
+            'loginrequired' => true,
+            'type' => static::crudtype(),
+        ];
+    }
+
+    /**
+     * Gives list of custom callbacks in native supported formats
+     *
+     * @return array
+     */
+    public static function exernal_callbacks() {
+        $classes = core_component::get_component_classes_in_namespace(constants::COMPONENT, 'external');
+        $callbacks = [];
+        foreach (array_keys($classes) as $classname) {
+            $reflection = new ReflectionClass($classname);
+            if ($reflection->implementsInterface(api_route::class) && !$reflection->isAbstract()) {
+                $functioninfo = call_user_func([$classname, 'function_info']);
+                $callbacks[$functioninfo['name']] = $functioninfo;
+            }
+        }
+        return $callbacks;
+    }
+
     /**
      * Returns input parameters definition
      *
-     * @return \external_function_parameters
+     * @return external_function_parameters
      */
     abstract public static function execute_parameters();
 
@@ -231,7 +279,7 @@ abstract class baseapi extends external_api {
      *
      * This method must be implemented by subclasses to define the structure of the API response.
      *
-     * @return \external_single_structure The structure for the API response.
+     * @return external_single_structure The structure for the API response.
      */
     abstract public static function single_structure();
 }

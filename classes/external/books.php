@@ -38,6 +38,11 @@ class books extends baseapi {
      */
     public static $route = 'books';
 
+    #[\Override]
+    public static function description() {
+        return 'Get books';
+    }
+
     /**
      * Summary of execute_parameters
      * @return \external_function_parameters

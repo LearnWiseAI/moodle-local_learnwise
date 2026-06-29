@@ -55,6 +55,7 @@ $string['environment_desc'] = 'Always use Production, unless directed otherwise 
 $string['environmentdevelopment'] = 'Development';
 $string['environmentproduction'] = 'Production';
 $string['environmentsandbox'] = 'Sandbox';
+$string['error'] = 'Error';
 $string['externaltoken'] = 'Token';
 $string['fieldvalidationerror'] = 'The value of "{$a->field}" is not valid';
 $string['floatingbuttonconfig'] = 'Floating Button Configuration';
