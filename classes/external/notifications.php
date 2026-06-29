@@ -39,6 +39,11 @@ class notifications extends baseapi {
      */
     public static $route = 'notifications';
 
+    #[\Override]
+    public static function description() {
+        return 'Get notifications';
+    }
+
     /**
      * Returns the parameters for the execute function.
      *

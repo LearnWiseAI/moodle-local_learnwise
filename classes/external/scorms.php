@@ -36,6 +36,11 @@ class scorms extends baseapi {
      */
     public static $route = 'scorms';
 
+    #[\Override]
+    public static function description() {
+        return 'Get scorms';
+    }
+
     /**
      * Returns the parameters for the execute function.
      *
@@ -70,6 +75,9 @@ class scorms extends baseapi {
         if (!empty($response['scorms'])) {
             $returnscorms = [];
             foreach ($response['scorms'] as $scorm) {
+                if (static::skip_record($scorm['coursemodule'])) {
+                    continue;
+                }
                 $scormdata = [
                     'id' => $scorm['coursemodule'],
                     'name' => $scorm['name'],

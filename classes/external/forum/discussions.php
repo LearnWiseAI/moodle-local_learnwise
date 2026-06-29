@@ -39,6 +39,11 @@ class discussions extends baseapi {
      */
     public static $route = 'discussions';
 
+    #[\Override]
+    public static function description() {
+        return 'Get forum discussions';
+    }
+
     /**
      * Returns the parameters for the execute function.
      *

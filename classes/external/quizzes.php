@@ -40,6 +40,11 @@ class quizzes extends baseapi {
      */
     public static $route = 'quizzes';
 
+    #[\Override]
+    public static function description() {
+        return 'Get quizzes';
+    }
+
     /**
      * Summary of execute_parameters
      * @return external_function_parameters

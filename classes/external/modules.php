@@ -43,6 +43,11 @@ class modules extends baseapi {
      */
     public static $withcompletion = false;
 
+    #[\Override]
+    public static function description() {
+        return 'Get module details';
+    }
+
     /**
      * Returns the parameters required for the execute function.
      *

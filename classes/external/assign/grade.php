@@ -44,6 +44,16 @@ class grade extends baseapi {
      */
     public static $route = 'grade';
 
+    #[\Override]
+    public static function crudtype() {
+        return 'write';
+    }
+
+    #[\Override]
+    public static function description() {
+        return 'Submit assignment grade';
+    }
+
     /**
      * Returns the parameters for the execute function.
      *

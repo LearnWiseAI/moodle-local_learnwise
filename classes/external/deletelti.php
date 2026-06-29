@@ -39,12 +39,17 @@ use local_learnwise\util;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class deletelti extends baseapi {
+    #[\Override]
+    public static function description() {
+        return 'Delete lti configuration';
+    }
+
     /**
      * Describes the parameters for local_learnwise_deletelti
      *
      * @return external_function_parameters
      */
-    public static function execute_parameters(): external_function_parameters {
+    public static function execute_parameters() {
         return new external_function_parameters([
             'id' => new external_value(PARAM_INT, 'id'),
         ]);
