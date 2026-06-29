@@ -37,6 +37,11 @@ class attempts extends baseapi {
      */
     public static $route = 'attempts';
 
+    #[\Override]
+    public static function description() {
+        return 'Get quiz attempts';
+    }
+
     /**
      * Summary of execute_parameters
      * @return external_function_parameters

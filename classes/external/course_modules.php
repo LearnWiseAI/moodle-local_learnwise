@@ -37,6 +37,11 @@ class course_modules extends baseapi {
      */
     public static $route = 'modules';
 
+    #[\Override]
+    public static function description() {
+        return 'Get course modules';
+    }
+
     /**
      * Indicates whether course modules should include completion information.
      *

@@ -43,6 +43,11 @@ class calenderdetails extends baseapi {
      */
     public static $route = 'calendar';
 
+    #[\Override]
+    public static function description() {
+        return 'Get calender upcoming events';
+    }
+
     /**
      * Summary of execute_parameters
      *

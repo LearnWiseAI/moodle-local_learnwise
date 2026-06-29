@@ -39,6 +39,11 @@ class assignments extends baseapi {
      */
     public static $route = 'assignments';
 
+    #[\Override]
+    public static function description() {
+        return 'Get course assignments';
+    }
+
     /**
      * Summary of execute_parameters
      * @return \external_function_parameters

@@ -43,6 +43,11 @@ class submissions extends baseapi {
      */
     public static $route = 'submissions';
 
+    #[\Override]
+    public static function description() {
+        return 'Get assign submissions';
+    }
+
     /**
      * Returns the parameters for the execute function.
      *

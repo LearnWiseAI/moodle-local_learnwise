@@ -17,34 +17,38 @@
 namespace local_learnwise\external;
 
 /**
- * Class getusers
+ * Class api_route
  *
  * @package    local_learnwise
- * @copyright  2025 LearnWise <help@learnwise.ai>
+ * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class users extends userdetails {
+interface api_route {
     /**
-     * The name of the API.
+     * Indicates api read/write mode
      *
-     * @var string
+     * @return string
      */
-    public static $route = 'users';
-
-    #[\Override]
-    public static function description() {
-        return 'Get user info';
-    }
+    public static function crudtype();
 
     /**
-     * Returns the parameters for the execute function.
+     * Define description of api
      *
-     * @return \external_function_parameters
+     * @return string
      */
-    public static function execute_parameters() {
-        $structure = parent::execute_parameters();
-        $structure->keys['userid']->required = VALUE_REQUIRED;
-        $structure->keys['userid']->allownull = NULL_NOT_ALLOWED;
-        return $structure;
-    }
+    public static function description();
+
+    /**
+     * Gives native like function info
+     *
+     * @return array
+     */
+    public static function function_info();
+
+    /**
+     * Gives native like function api name
+     *
+     * @return string
+     */
+    public static function function_name();
 }
