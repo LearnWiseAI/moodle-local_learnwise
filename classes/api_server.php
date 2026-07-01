@@ -40,6 +40,7 @@ use local_learnwise\external\scorms;
 use local_learnwise\external\userdetails;
 use local_learnwise\external\users;
 use local_learnwise\external\ws_proxy;
+use moodle_exception;
 use webservice_base_server;
 
 defined('MOODLE_INTERNAL') || die();
@@ -446,7 +447,8 @@ class api_server extends webservice_base_server {
         if ($ex instanceof api_exception) {
             $this->response->setError(404, $ex->getMessage());
         } else {
-            $this->response->setError(404, get_string('error', constants::COMPONENT));
+            $errorcode = $ex instanceof moodle_exception ? $ex->errorcode : null;
+            $this->response->setError(404, get_string('error', constants::COMPONENT), $errorcode);
         }
         $this->response->send($this->responseformat);
     }
