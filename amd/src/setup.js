@@ -53,6 +53,7 @@ define(
         aiAssessmentAssistantId: "",
         showToast: false,
         ltiSetup: false,
+        isTokenShown: false,
     };
 
     var COMPONENT = 'local_learnwise';
@@ -89,6 +90,16 @@ define(
         aiAssessmentTooltip: document.getElementById("aiAssessmentTooltip"),
         aiAssessmentStatus: document.getElementById("aiAssessmentStatus"),
         courseIds: document.getElementById("courseIds"),
+
+        webServiceRotateTokenButton: document.getElementById("webservicerotatetokenbutton"),
+        wsRotateTokenModal: document.getElementById("wsRotateTokenModal"),
+        closeWsRotateTokenModal: document.getElementById("closeWsRotateTokenModal"),
+        confirmWsRotateToken: document.getElementById("confirmWsRotateToken"),
+
+        webserviceAccessTokenInput: document.getElementById("webserviceAccessTokenInput"),
+        visibilityControlBtn: document.getElementById("visibilityControlBtn"),
+        hiddenTokenIconWrapper: document.getElementById("hiddenTokenIconWrapper"),
+        seenTokenIconWrapper: document.getElementById("seenTokenIconWrapper"),
     };
 
     // Initialize state from form values
@@ -188,6 +199,18 @@ define(
             }
         });
 
+        elements.wsRotateTokenModal.addEventListener("click", function(e) {
+            if (e.target === elements.closeWsRotateTokenModal) {
+                closeWsRotateTokenModal();
+            }
+            if (e.target === elements.confirmWsRotateToken) {
+                confirmWsRotateToken();
+            }
+            if (e.target === elements.wsRotateTokenModal) {
+                closeWsRotateTokenModal();
+            }
+        });
+
         // Environment radio buttons
         var environmentRadios = document.querySelectorAll('input[name="environment"]');
         environmentRadios.forEach(function(radio) {
@@ -214,6 +237,23 @@ define(
             })
             .catch(Notification.exception);
         });
+
+        var sectionWrapper = elements.webServiceRotateTokenButton.closest('.section');
+        if (sectionWrapper) {
+            state.isTokenShown = elements.webserviceAccessTokenInput.getAttribute('type') === 'text';
+            sectionWrapper.addEventListener('click', function(e) {
+                // Add Rotate Key Confirmation
+                if (elements.webServiceRotateTokenButton.contains(e.target)) {
+                    e.preventDefault();
+                    showWsRotateTokenModal();
+                }
+                // Hide/show Token
+                if (elements.visibilityControlBtn.contains(e.target)) {
+                    e.preventDefault();
+                    setWebServicesTokenVisibility(true);
+                }
+            });
+        }
     }
 
     /**
@@ -378,11 +418,44 @@ define(
         Fragment.loadFragment(COMPONENT, 'process_setup', Config.contextid, {
             formdata: 'enablewebservice=' + (state.webServicesEnabled ? 1 : 0)
         }).then(function(html, js) {
-            Templates.replaceNodeContents(elements.webServicesConfig, html, js);
-            return null;
+            return Templates.replaceNodeContents(elements.webServicesConfig, html, js);
+        }).then(function() {
+            setWebServicesElements();
+            return;
         }).catch(Notification.exception);
 
         elements.form.elements.webServicesStatus.value = state.webServicesEnabled ? 1 : 0;
+    }
+
+    /**
+     * Toggles visibility of the web services access token input.
+     *
+     * @param {boolean} toggle If true, flips the current visibility state.
+     * @private
+     */
+    function setWebServicesTokenVisibility(toggle) {
+        if (toggle) {
+            state.isTokenShown = !state.isTokenShown;
+        }
+        elements.webserviceAccessTokenInput.setAttribute('type', !state.isTokenShown ? 'password' : 'text');
+        elements.hiddenTokenIconWrapper.classList.toggle('hidden', state.isTokenShown);
+        elements.seenTokenIconWrapper.classList.toggle('hidden', !state.isTokenShown);
+    }
+
+    /**
+     * Refreshes cached web services DOM elements after the fragment reloads.
+     * Rebinds the token input, button, and visibility icon wrappers, then
+     * applies the current token visibility state.
+     *
+     * @private
+     */
+    function setWebServicesElements() {
+        elements.webServiceRotateTokenButton = document.getElementById("webservicerotatetokenbutton");
+        elements.webserviceAccessTokenInput = document.getElementById("webserviceAccessTokenInput");
+        elements.visibilityControlBtn = document.getElementById("visibilityControlBtn");
+        elements.hiddenTokenIconWrapper = document.getElementById("hiddenTokenIconWrapper");
+        elements.seenTokenIconWrapper = document.getElementById("seenTokenIconWrapper");
+        setWebServicesTokenVisibility();
     }
 
     /**
@@ -552,6 +625,51 @@ define(
             elements.ltiConfigTable = document.querySelector('[data-region="ltilist"]');
             return null;
         }).catch(Notification.exception);
+    }
+
+    /**
+     * Show the WS Rotate confirmation modal.
+     * Show the modal dialog by setting display style to flex.
+     *
+     * @function showWsRotateTokenModal
+     * @private
+     */
+    function showWsRotateTokenModal() {
+        elements.wsRotateTokenModal.style.display = "flex";
+    }
+
+    /**
+     * Closes the WS Rotate confirmation modal.
+     * Hides the modal dialog by setting display style to none.
+     *
+     * @function closeWsRotateTokenModal
+     * @private
+     */
+    function closeWsRotateTokenModal() {
+        elements.wsRotateTokenModal.style.display = "none";
+    }
+
+    /**
+     * Confirms WS Rotate removal and updates the interface.
+     *
+     * @function confirmWsRotateToken
+     * @private
+     */
+    function confirmWsRotateToken() {
+        state.webServicesEnabled = 1;
+        Fragment.loadFragment('local_learnwise', 'process_setup', Config.contextid, {
+            formdata: 'enablewebservice=' + (state.webServicesEnabled ? 1 : 0) +
+                '&rotatewebservicetoken=1'
+        }).then(function(html, js) {
+            return Templates.replaceNodeContents(elements.webServicesConfig, html, js);
+        }).then(function() {
+            closeWsRotateTokenModal();
+            setWebServicesElements();
+            return;
+        })
+        .catch(Notification.exception);
+
+        elements.form.elements.webServicesStatus.value = state.webServicesEnabled ? 1 : 0;
     }
 
     /**

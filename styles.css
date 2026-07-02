@@ -120,7 +120,7 @@
     gap: 0.5rem;
     align-items: center;
 }
-#page-admin-local-learnwise-setup #region-main .copy-btn {
+#page-admin-local-learnwise-setup #region-main .styled-icon-btn {
     flex-shrink: 0;
     padding: 0.3rem 0.55rem;
     border: 1px solid #d1d5db;
@@ -129,12 +129,18 @@
     cursor: pointer;
     transition: background-color 0.15s ease-in-out;
 }
-#page-admin-local-learnwise-setup #region-main .copy-btn:hover {
+#page-admin-local-learnwise-setup #region-main .styled-icon-btn:hover {
     background-color: #f9fafb;
+}
+#page-admin-local-learnwise-setup #region-main .styled-icon-btn .icon {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
 }
 #page-admin-local-learnwise-setup #region-main .copy-icon {
     width: 1rem;
     height: 1rem;
+    vertical-align: middle;
 }
 #page-admin-local-learnwise-setup #region-main .toggle-container {
     display: flex;
@@ -262,11 +268,12 @@
     color: #111827;
 }
 #page-admin-local-learnwise-setup #region-main .modal-body {
-    padding: 0 1.5rem 1rem 1.5rem;
+    padding: 1rem 1.5rem;
 }
 #page-admin-local-learnwise-setup #region-main .modal-body p {
     color: #6b7280;
     font-size: 0.875rem;
+    margin-bottom: 0;
 }
 #page-admin-local-learnwise-setup #region-main .modal-footer {
     padding: 1rem 1.5rem 1.5rem 1.5rem;
