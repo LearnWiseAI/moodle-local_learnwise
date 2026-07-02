@@ -66,7 +66,7 @@
                 "selected": false
             }
         ],
-        "webServicesConfigHtml": "<div class=\"field-row\">\n    <div class=\"field-label\">\n        <label class=\"label\">Access Token<\/label>\n        <div class=\"label-hint\">local_learnwise | accesstoken<\/div>\n    <\/div>\n    <div class=\"field-input copy-field\">\n        <input\n            id=\"webserviceaccesstokeninput\"\n            type=\"text\"\n            class=\"input readonly mono small-text\"\n            value=\"5043b3575d66d0726f033687db38fc43\"\n            readonly\n        >\n        <button type=\"button\" class=\"copy-btn\" data-clipboard-target=\"#webserviceaccesstokeninput\">\n            <svg class=\"copy-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">\n                <rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"\/>\n                <path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"\/>\n            <\/svg>\n        <\/button>\n    <\/div>\n<\/div>",
+        "webServicesConfigHtml": "<div class=\"field-row\">\n    <div class=\"field-label\">\n        <label class=\"label\">Access Token<\/label>\n        <div class=\"label-hint\">local_learnwise | accesstoken<\/div>\n    <\/div>\n    <div class=\"field-input copy-field\">\n        <input\n            id=\"webserviceAccessTokenInput\"\n            type=\"text\"\n            class=\"input readonly mono small-text\"\n            value=\"5043b3575d66d0726f033687db38fc43\"\n            readonly\n        >\n        <button type=\"button\" class=\"styled-icon-btn copy-btn\" data-clipboard-target=\"#webserviceAccessTokenInput\">\n            <svg class=\"copy-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">\n                <rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"\/>\n                <path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"\/>\n            <\/svg>\n        <\/button>\n    <\/div>\n<\/div>",
         "errors": null,
         "lticonfigs": [
             {
@@ -323,7 +323,7 @@
                             value="{{{liveApiConfigClientId}}}"
                             readonly
                         >
-                        <button type="button" class="copy-btn" data-clipboard-target="#liveApiConfigClientId">
+                        <button type="button" class="styled-icon-btn copy-btn" data-clipboard-target="#liveApiConfigClientId">
                             <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                                 <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
@@ -345,7 +345,7 @@
                             value="{{{liveApiConfigClientSecret}}}"
                             readonly
                         >
-                        <button type="button" class="copy-btn" data-clipboard-target="#liveApiConfigClientSecret">
+                        <button type="button" class="styled-icon-btn copy-btn" data-clipboard-target="#liveApiConfigClientSecret">
                             <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                                 <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
@@ -446,6 +446,23 @@
         </div>
     </div>
 </div>
+
+<!-- Modal for Rotate webservice token confirmation -->
+<div class="modal-overlay" id="wsRotateTokenModal" style="display: none;">
+    <div class="mmodal">
+        <div class="modal-header">
+            <h3 class="modal-title">{{#str}} rotatetokenmodal_title, local_learnwise {{/str}}</h3>
+        </div>
+        <div class="modal-body">
+            <p>{{#str}} rotatetokenmodal_desc, local_learnwise {{/str}}</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="closeWsRotateTokenModal" class="btn btn-secondary">{{#str}} rotatetokenmodal_no, local_learnwise {{/str}}</button>
+            <button type="button" id="confirmWsRotateToken" class="btn btn-danger">{{#str}} rotatetokenmodal_yes, local_learnwise {{/str}}</button>
+        </div>
+    </div>
+</div>
+
 {{#js}}
 require(['local_learnwise/setup'], function(amd) {
     amd.init(false{{#showtoast}} || true{{/showtoast}}, false{{#showltisetup}} || true{{/showltisetup}});

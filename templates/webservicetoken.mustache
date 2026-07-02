@@ -31,17 +31,28 @@
     </div>
     <div class="field-input copy-field">
         <input
-            id="webserviceaccesstokeninput"
-            type="text"
+            id="webserviceAccessTokenInput"
+            type="password"
             class="input readonly mono small-text"
             value="{{{ token }}}"
             readonly
         >
-        <button type="button" class="copy-btn" data-clipboard-target="#webserviceaccesstokeninput">
+        <button type="button" class="styled-icon-btn copy-btn" data-clipboard-target="#webserviceAccessTokenInput">
             <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                 <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
             </svg>
+        </button>
+        <button id="visibilityControlBtn" type="button" class="styled-icon-btn visibility-control-btn">
+            <span id="hiddenTokenIconWrapper">
+                {{#pix}} hidden-token, local_learnwise {{/pix}}
+            </span>
+            <span id="seenTokenIconWrapper" class="hidden">
+                {{#pix}} seen-token, local_learnwise {{/pix}}
+            </span>
+        </button>
+        <button id="webservicerotatetokenbutton" type="button" class="styled-icon-btn rotate-key-btn">
+            {{#pix}} rotate-token, local_learnwise {{/pix}}
         </button>
     </div>
 </div>
