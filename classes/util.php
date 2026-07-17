@@ -54,6 +54,7 @@ class util {
         'mod/assign:manageallocations',
         'mod/book:read',
         'local/learnwise:plugininfo',
+        'mod/h5pactivity:view',
     ];
 
     /**
