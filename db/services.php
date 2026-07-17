@@ -91,6 +91,7 @@ $services = [
             'local_learnwise_get_books',
             'local_learnwise_plugininfo',
             'core_course_search_courses',
+            'mod_h5pactivity_get_h5pactivities_by_courses',
         ],
         'enabled' => 1,
         'restrictedusers' => 1,
