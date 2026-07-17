@@ -69,6 +69,7 @@ class plugininfo extends baseapi {
         $response['clientid'] = $clientcreds->uniqid;
         $response['redirecturl'] = !empty($config->redirecturl) ? $config->redirecturl : '';
         $response['redirecturl'] = preg_replace('/\R/', ',', $response['redirecturl']);
+        $response['version'] = util::get_plugin_versioninfo()->release;
 
         return $response;
     }
@@ -92,6 +93,7 @@ class plugininfo extends baseapi {
             'aiops' => new external_value(PARAM_BOOL, 'Indicates aiops is enabled or not'),
             'clientid' => new external_value(PARAM_ALPHANUMEXT, 'A client id'),
             'redirecturl' => new external_value(PARAM_RAW, 'A client id'),
+            'version' => new external_value(PARAM_RAW, 'A plugin release number'),
         ]);
     }
 }
