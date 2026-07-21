@@ -165,6 +165,7 @@ abstract class baseapi extends external_api implements api_route {
             $response = str_replace(
                 [
                     "{$CFG->wwwroot}/webservice/pluginfile.php",
+                    "{$CFG->wwwroot}/tokenpluginfile.php",
                     "{$CFG->wwwroot}/pluginfile.php",
                 ],
                 "{$CFG->wwwroot}/local/learnwise/api/file.php",
