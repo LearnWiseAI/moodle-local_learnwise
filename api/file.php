@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file file
+ * File serving endpoint for the LearnWise API.
  *
  * @package    local_learnwise
  * @copyright  2025 LearnWise <help@learnwise.ai>
@@ -23,12 +23,22 @@
  */
 
 use local_learnwise\api_server;
+use local_learnwise\constants;
 
 define('NO_DEBUG_DISPLAY', true);
 define('WS_SERVER', true);
 
 // phpcs:ignore moodle.Files.RequireLogin.Missing
 require(dirname(__FILE__, 4) . '/config.php');
+
+$key = optional_param('key', null, PARAM_ALPHANUM);
+if (!empty($key)) {
+    $filteredpath = get_file_argument();
+    $scriptkey = constants::COMPONENT . '_' . sha1($filteredpath);
+    require_user_key_login($scriptkey);
+    require_once($CFG->dirroot . '/pluginfile.php');
+    return;
+}
 
 $apiserver = new api_server();
 $apiserver->authenticate();

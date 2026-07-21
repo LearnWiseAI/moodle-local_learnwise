@@ -28,7 +28,9 @@ use local_learnwise\external\books;
 use local_learnwise\external\calenderdetails;
 use local_learnwise\external\courses;
 use local_learnwise\external\course_modules;
+use local_learnwise\external\files;
 use local_learnwise\external\forum\discussions;
+use local_learnwise\external\forum\singlediscussion;
 use local_learnwise\external\forums;
 use local_learnwise\external\modules;
 use local_learnwise\external\notifications;
@@ -37,6 +39,7 @@ use local_learnwise\external\quiz\attempts;
 use local_learnwise\external\quiz\reviewattempt;
 use local_learnwise\external\quizzes;
 use local_learnwise\external\scorms;
+use local_learnwise\external\sections;
 use local_learnwise\external\userdetails;
 use local_learnwise\external\users;
 use local_learnwise\external\ws_proxy;
@@ -213,6 +216,13 @@ class api_server extends webservice_base_server {
             }
         }
 
+        $fullurlpath = join('/', array_merge([$nextroute], $this->urlparts));
+        if ($fullurlpath === files::$route) {
+            $this->parameters['path'] = $this->request->query['path'];
+            $this->functionname = files::function_name();
+            $this->urlparts = [];
+        }
+
         if ($nextroute === userdetails::$route) {
             baseapi::$my = true;
             if (!$this->urlparts) {
@@ -225,6 +235,13 @@ class api_server extends webservice_base_server {
             if (is_numeric($nextroute)) {
                 $this->parameters['userid'] = $nextroute;
                 $this->functionname = users::function_name();
+            }
+        }
+        if ($nextroute === singlediscussion::$route) {
+            $nextroute = array_shift($this->urlparts);
+            if (!is_null($nextroute)) {
+                $this->parameters['id'] = (int) $nextroute;
+                $this->functionname = singlediscussion::function_name();
             }
         }
         if ($nextroute === notifications::$route) {
@@ -242,7 +259,16 @@ class api_server extends webservice_base_server {
                     $this->functionname = courses::function_name();
                 } else {
                     $this->parameters['courseid'] = courses::get_id();
-                    if ($nextroute === assignments::$route) {
+                    if ($nextroute === sections::$route) {
+                        $nextroute = array_shift($this->urlparts);
+                        if (is_null($nextroute)) {
+                            $this->functionname = sections::function_name();
+                        } else if (is_numeric($nextroute)) {
+                            sections::set_id((int) $nextroute);
+                            $this->parameters['sectionid'] = sections::get_id();
+                            $this->functionname = sections::function_name();
+                        }
+                    } else if ($nextroute === assignments::$route) {
                         $nextroute = array_shift($this->urlparts);
                         if (is_null($nextroute)) {
                             $this->functionname = assignments::function_name();

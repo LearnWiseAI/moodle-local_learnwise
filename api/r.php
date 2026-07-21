@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file service
+ * API server entry point for LearnWise local plugin.
  *
  * @package    local_learnwise
  * @copyright  2025 LearnWise <help@learnwise.ai>
