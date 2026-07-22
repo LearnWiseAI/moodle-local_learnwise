@@ -238,17 +238,21 @@ define(
             .catch(Notification.exception);
         });
 
-        var sectionWrapper = elements.webServiceRotateTokenButton.closest('.section');
+        var sectionWrapper = elements.webServicesConfig ? elements.webServicesConfig.closest('.section') : null;
         if (sectionWrapper) {
-            state.isTokenShown = elements.webserviceAccessTokenInput.getAttribute('type') === 'text';
+            if (elements.webserviceAccessTokenInput) {
+                state.isTokenShown = elements.webserviceAccessTokenInput.getAttribute('type') === 'text';
+            }
             sectionWrapper.addEventListener('click', function(e) {
                 // Add Rotate Key Confirmation
-                if (elements.webServiceRotateTokenButton.contains(e.target)) {
+                if (elements.webServiceRotateTokenButton &&
+                    elements.webServiceRotateTokenButton.contains(e.target)) {
                     e.preventDefault();
                     showWsRotateTokenModal();
                 }
                 // Hide/show Token
-                if (elements.visibilityControlBtn.contains(e.target)) {
+                if (elements.visibilityControlBtn &&
+                    elements.visibilityControlBtn.contains(e.target)) {
                     e.preventDefault();
                     setWebServicesTokenVisibility(true);
                 }
@@ -437,9 +441,15 @@ define(
         if (toggle) {
             state.isTokenShown = !state.isTokenShown;
         }
-        elements.webserviceAccessTokenInput.setAttribute('type', !state.isTokenShown ? 'password' : 'text');
-        elements.hiddenTokenIconWrapper.classList.toggle('hidden', state.isTokenShown);
-        elements.seenTokenIconWrapper.classList.toggle('hidden', !state.isTokenShown);
+        if (elements.webserviceAccessTokenInput) {
+            elements.webserviceAccessTokenInput.setAttribute('type', !state.isTokenShown ? 'password' : 'text');
+        }
+        if (elements.hiddenTokenIconWrapper) {
+            elements.hiddenTokenIconWrapper.classList.toggle('hidden', state.isTokenShown);
+        }
+        if (elements.seenTokenIconWrapper) {
+            elements.seenTokenIconWrapper.classList.toggle('hidden', !state.isTokenShown);
+        }
     }
 
     /**
