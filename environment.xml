@@ -1,0 +1,14 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<COMPATIBILITY_MATRIX>
+    <PLUGIN name="local_learnwise">
+        <CUSTOM_CHECKS>
+            <CUSTOM_CHECK file="local/learnwise/lib.php" function="local_learnwise_env_check_auth_header" level="optional">
+                <FEEDBACK>
+                    <ON_CHECK message="mustneededauthheader" plugin="local_learnwise" />
+                    <ON_OK message="checkpassauthheader" plugin="local_learnwise" />
+                </FEEDBACK>
+            </CUSTOM_CHECK>
+        </CUSTOM_CHECKS>
+    </PLUGIN>
+</COMPATIBILITY_MATRIX>

@@ -124,3 +124,41 @@ function local_learnwise_output_fragment_refresh_lticonfig($args) {
     }
     return $html;
 }
+
+/**
+ * Check authentication header environment setting
+ *
+ * @param environment_results $result The environment result object to set status
+ * @return environment_results The environment result object with status set
+ */
+function local_learnwise_env_check_auth_header(environment_results $result) {
+    global $CFG;
+    $ch = curl_init($CFG->wwwroot . '/local/learnwise/authheadercheck.php');
+
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer sampletoken',
+        ],
+    ]);
+
+    $response = curl_exec($ch);
+    $info = curl_getinfo($ch);
+    curl_close($ch);
+
+    $valid = 200 === (int) $info['http_code'];
+
+    if ($valid) {
+        $responseobj = json_decode($response);
+        if (!json_last_error()) {
+            $valid = !empty($responseobj->success);
+        } else {
+            $valid = false;
+        }
+    }
+
+    $result->setInfo('local_learnwise health check');
+    $result->setStatus($valid);
+
+    return $result;
+}
