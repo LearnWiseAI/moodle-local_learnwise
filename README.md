@@ -11,6 +11,9 @@ Note that this plugin requires an existing organizational account within the Lea
 - Access to the LearnWise Admin Panel
 - Site administrator privileges in your Moodle environment
 
+### Optional Feature Requirements
+- **Live API Integration**: Requires a server that passes the Authorization header
+
 ## Installation steps
 1. Download the plugin from [Moodle plugins directory](https://moodle.org/plugins/local_learnwise) or from [GitHub](https://github.com/LearnWiseAI/moodle-local_learnwise/) repository.
 2. Go to Site Administrator > Plugins > Install plugins and upload the downloaded plugin zip file
@@ -19,7 +22,7 @@ Note that this plugin requires an existing organizational account within the Lea
 
 ## Configure the Plugin in Moodle
 1. Go to Site Administration > Server > LearnWise Integration.
-2. Select “Production” as your environment.
+2. Select "Production" as your environment.
 
 ![Configuration](https://github.com/LearnWiseAI/moodle-local_learnwise/raw/main/pix/environment.png)
 
@@ -47,7 +50,7 @@ Note that this plugin requires an existing organizational account within the Lea
 ## 3. Ingest Moodle Course Content (Optional)
 
 To enable the assistant to interact with course-specific material:
-1. In the LearnWise Admin Panel, go to the **“Knowledge”** tab.
+1. In the LearnWise Admin Panel, go to the **"Knowledge"** tab.
 2. Click **Courses > Moodle > Connect**.
 
 ![learnwise-course.png](https://github.com/LearnWiseAI/moodle-local_learnwise/raw/main/pix/learnwise-course.png)
@@ -66,15 +69,50 @@ To enable the assistant to interact with course-specific material:
 
 ## 4. Enable Live API Integration (Optional)
 
-To pull live Moodle data (user role,  assignments, etc.):
+To pull live Moodle data (user role, assignments, etc.):
+
+**Requirements:**
+- Your server must pass the Authorization header
+- **Apache**: `mod_rewrite` must be enabled
+- **Nginx**: Configure to pass the Authorization header (see below)
+
+### Apache Configuration
+
+Ensure Apache's `mod_rewrite` module is enabled:
+```bash
+sudo a2enmod rewrite
+sudo systemctl restart apache2
+```
+
+### Nginx Configuration
+
+Add the following to your Nginx server block configuration (typically in `/etc/nginx/sites-available/your-site` or `/etc/nginx/conf.d/your-site.conf`):
+
+```nginx
+location ~ \.php$ {
+    # ... your existing PHP configuration ...
+
+    # Pass the Authorization header to PHP-FPM
+    fastcgi_pass unix:/var/run/php-fpm.sock;  # or your PHP-FPM socket/port
+    fastcgi_param HTTP_AUTHORIZATION $http_authorization;
+}
+```
+
+After updating the Nginx configuration, test and reload:
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Setup Steps
 
 1. Enable the **Live API Integration** toggle in Moodle
 2. Copy the **Client ID** and **Secret** from your Moodle
 
 ![API integration.png](https://github.com/LearnWiseAI/moodle-local_learnwise/raw/main/pix/integration.png)
 
-1. Paste them into your LearnWise dashboard and click **Verify**.
-2. If successful, you’ll be redirected to Moodle to confirm authorization.
+3. Paste them into your LearnWise dashboard and click **Verify**.
+4. If successful, you'll be redirected to Moodle to confirm authorization.
 
 ![Learnwise-API](https://github.com/LearnWiseAI/moodle-local_learnwise/raw/main/pix/learnwise-api.png)
 
