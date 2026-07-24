@@ -151,6 +151,28 @@
                     {{/errors.environment}}
                 </div>
             </div>
+
+            <!-- Region -->
+            <div class="field-row">
+                <div class="field-label">
+                    <label for="floatingButtonRegion" class="label">{{#str}} region, local_learnwise {{/str}}</label>
+                    <div class="label-hint">local_learnwise | region</div>
+                </div>
+                <div class="field-input">
+                    <select
+                        id="floatingButtonRegion"
+                        name="floatingButtonRegion"
+                        class="custom-select input"
+                    >
+                        {{#regionOptions}}
+                        <option value="{{{ key }}}"{{#selected}} selected{{/selected}}>{{{ value }}}</option>
+                        {{/regionOptions}}
+                    </select>
+                    {{#errors.floatingButtonRegion}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.floatingButtonRegion}}
+                </div>
+            </div>
         </div>
 
         <!-- Floating button configuration -->
@@ -178,28 +200,6 @@
                     {{#errors.floatingButtonAssistantId}}
                         <div class="d-block invalid-feedback">{{{ . }}}</div>
                     {{/errors.floatingButtonAssistantId}}
-                </div>
-            </div>
-
-            <!-- Region -->
-            <div class="field-row">
-                <div class="field-label">
-                    <label for="floatingButtonRegion" class="label">{{#str}} region, local_learnwise {{/str}}</label>
-                    <div class="label-hint">local_learnwise | region</div>
-                </div>
-                <div class="field-input">
-                    <select
-                        id="floatingButtonRegion"
-                        name="floatingButtonRegion"
-                        class="custom-select input"
-                    >
-                        {{#regionOptions}}
-                        <option value="{{{ key }}}"{{#selected}} selected{{/selected}}>{{{ value }}}</option>
-                        {{/regionOptions}}
-                    </select>
-                    {{#errors.floatingButtonRegion}}
-                        <div class="d-block invalid-feedback">{{{ . }}}</div>
-                    {{/errors.floatingButtonRegion}}
                 </div>
             </div>
 
