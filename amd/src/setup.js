@@ -220,7 +220,15 @@ define(
         });
 
         // Initialize clipboard functionality
-        var clipboardInstance = new ClipboardJS('.copy-btn');
+        var clipboardInstance = new ClipboardJS('.copy-btn', {
+            text: function(trigger) {
+                var targetEl = this.target(trigger);
+                if (targetEl instanceof HTMLInputElement) {
+                    return targetEl.getAttribute('value');
+                }
+                return '';
+            }
+        });
         clipboardInstance.on('success', function(e) {
             e.clearSelection();
             Str.get_string('copied', COMPONENT)
