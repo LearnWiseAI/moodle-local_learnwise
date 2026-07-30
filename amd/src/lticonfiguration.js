@@ -83,7 +83,7 @@ define([
                 modal.getRoot().on('submit ' + ModalEvents.save, function(e) {
                     e.preventDefault();
                     var form = modal.getRoot().find('form')[0];
-                    modal.setBody(callFragment(form).then(function(html, js, ajaxdata) {
+                    var fragmentPromise = callFragment(form).then(function(html, js, ajaxdata) {
                         if (ajaxdata.success) {
                             modal.destroy();
                             if (typeof successcallback === 'function') {
@@ -91,7 +91,8 @@ define([
                             }
                         }
                         return $.Deferred().resolve(html, js).promise();
-                    }));
+                    });
+                    modal.setBody(fragmentPromise);
                 });
                 modal.show();
                 return modal;
