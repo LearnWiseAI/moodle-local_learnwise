@@ -126,15 +126,15 @@ class books extends baseapi {
                 'course_id' => $cm->course,
             ];
 
-            $intro = file_rewrite_pluginfile_urls(
+            $descriptiondata = external_format_text(
                 $bookcm->intro,
-                'pluginfile.php',
+                $bookcm->introformat,
                 $context->id,
                 'mod_book',
                 'intro',
                 null
             );
-            $bookinfo['description'] = content_to_text($intro, (int) FORMAT_MARKDOWN);
+            $bookinfo['description'] = $descriptiondata[0];
             $bookinfo['descriptionfiles'] = util::extract_pluginfile_urls_from_text(
                 $bookcm->intro,
                 $context->id,
@@ -181,14 +181,19 @@ class books extends baseapi {
 
                     $titles = '';
                     if (!$book->customtitles) {
-                        $chapters = book_preload_chapters($book);
+                        $innerchapters = book_preload_chapters($book);
 
                         if (!$chapter->subchapter) {
-                            $currtitle = book_get_chapter_title($chapter->id, $chapters, $book, $context);
+                            $currtitle = book_get_chapter_title($chapter->id, $innerchapters, $book, $context);
                             $titles = "<h3>{$currtitle}</h3>";
                         } else {
-                            $currtitle = book_get_chapter_title($chapters[$chapter->id]->parent, $chapters, $book, $context);
-                            $currsubtitle = book_get_chapter_title($chapter->id, $chapters, $book, $context);
+                            $currtitle = book_get_chapter_title(
+                                $innerchapters[$chapter->id]->parent,
+                                $innerchapters,
+                                $book,
+                                $context
+                            );
+                            $currsubtitle = book_get_chapter_title($chapter->id, $innerchapters, $book, $context);
                             $titles = "<h3>{$currtitle}</h3>";
                             $titles .= "<h4>{$currsubtitle}</h4>";
                         }
@@ -232,7 +237,7 @@ class books extends baseapi {
         $structure = new external_single_structure([
             'id' => new external_value(PARAM_INT, 'course module id of book'),
             'name' => new external_value(PARAM_TEXT, 'name of book'),
-            'description' => new external_value(PARAM_TEXT, 'Description of book'),
+            'description' => new external_value(PARAM_RAW, 'Description of book'),
             'descriptionfiles' => new external_multiple_structure(
                 new external_value(PARAM_URL, 'Description file url'),
                 'URL of description files',
