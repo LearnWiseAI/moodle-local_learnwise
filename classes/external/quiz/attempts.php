@@ -85,7 +85,7 @@ class attempts extends baseapi {
             }
 
             if ($attempt['sumgrades'] > 0) {
-                $attempt['grade'] = quiz_rescale_grade($attempt['sumgrades'], $quiz);
+                $attempt['grade'] = quiz_rescale_grade($attempt['sumgrades'], $quiz, false);
             }
             if (static::is_singleoperation()) {
                 return $attempt;
