@@ -14,19 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_learnwise\local\courseselector;
+
 /**
- * Version information for Learnwise
+ * Class current_course_selector
  *
  * @package    local_learnwise
  * @copyright  2025 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component    = 'local_learnwise';
-$plugin->release      = '1.4.6a';
-$plugin->version      = 2026081002;
-$plugin->requires     = 2020061500;
-$plugin->supported    = [39, 502];
-$plugin->maturity     = MATURITY_STABLE;
+class current_course_selector extends potential_course_selector {
+    /** @var bool */
+    protected $current = true;
+}
