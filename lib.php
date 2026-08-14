@@ -162,3 +162,22 @@ function local_learnwise_env_check_auth_header(environment_results $result) {
 
     return $result;
 }
+
+
+/**
+ * Process course assignment actions
+ *
+ * @param array $args
+ * @return string
+ */
+function local_learnwise_output_fragment_process_courses($args) {
+    $args = (object) $args;
+
+    if ($args->action === 'add') {
+        util::add_courses($args->courseids);
+    } else if ($args->action === 'remove') {
+        util::remove_courses($args->courseids);
+    }
+
+    return json_encode(['success' => true]);
+}
