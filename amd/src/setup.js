@@ -49,7 +49,6 @@ define(
         webServicesEnabled: false,
         liveApiEnabled: false,
         aiAssessmentEnabled: false,
-        courseIds: "",
         aiAssessmentAssistantId: "",
         showToast: false,
         ltiSetup: false,
@@ -89,7 +88,6 @@ define(
         aiAssessmentSwitchWrapper: document.getElementById("aiAssessmentSwitchWrapper"),
         aiAssessmentTooltip: document.getElementById("aiAssessmentTooltip"),
         aiAssessmentStatus: document.getElementById("aiAssessmentStatus"),
-        courseIds: document.getElementById("courseIds"),
 
         webServiceRotateTokenButton: document.getElementById("webservicerotatetokenbutton"),
         wsRotateTokenModal: document.getElementById("wsRotateTokenModal"),
@@ -125,10 +123,6 @@ define(
 
     if (elements.aiAssessmentStatus) {
         state.aiAssessmentEnabled = parseInt(elements.form.elements.aiAssessmentStatus.value) === 1;
-    }
-
-    if (elements.courseIds) {
-        state.courseIds = elements.courseIds.value;
     }
 
     /**
@@ -178,12 +172,6 @@ define(
         elements.aiAssessmentSwitch.addEventListener("click", function() {
             state.aiAssessmentEnabled = !state.aiAssessmentEnabled;
             updateAiAssessmentSwitch();
-        });
-
-        // Course ids input
-        elements.courseIds.addEventListener("input", function(e) {
-            state.courseIds = e.target.value;
-            updateCourseIdsInput();
         });
 
         // Modal close on overlay click
@@ -376,31 +364,6 @@ define(
         }
 
         elements.form.elements.aiAssessmentStatus.value = state.aiAssessmentEnabled ? 1 : 0;
-    }
-
-    /**
-     * Updates the courseid
-     *
-     * @function updateCourseIdsInput
-     * @private
-     */
-    function updateCourseIdsInput() {
-        var pattern = /^(\d+)(,\d+)*$/;
-        var saveBtn = document.getElementById('save-btn');
-        var inputEl = elements.courseIds;
-
-        var value = (state.courseIds || "").trim();
-        if (!value) {
-            inputEl.classList.remove('border-danger');
-            saveBtn.disabled = false;
-            saveBtn.className = 'save-btn';
-            return;
-        }
-
-        var isValid = pattern.test(state.courseIds);
-        inputEl.classList.toggle('border-danger', !isValid);
-        saveBtn.disabled = !isValid;
-        saveBtn.className = isValid ? 'save-btn' : 'save-btn bg-gray text-dark';
     }
 
     /**

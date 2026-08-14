@@ -206,18 +206,11 @@
             <!-- Courseids -->
             <div class="field-row">
                 <div class="field-label">
-                    <label for="courseIds" class="label">{{#str}} courseids, local_learnwise {{/str}}</label>
+                    <label class="label">{{#str}} courseids, local_learnwise {{/str}}</label>
                     <div class="label-hint">local_learnwise | courseids</div>
                 </div>
                 <div class="field-input">
-                    <input
-                        type="text"
-                        id="courseIds"
-                        name="courseIds"
-                        class="input"
-                        placeholder="{{#str}} entercourseids, local_learnwise {{/str}}"
-                        value="{{{courseIds}}}"
-                    >
+                    <a href="{{{coursesurl}}}" target="_blank"> {{#str}} courseids, local_learnwise {{/str}} </a>
                     <div class="text-hint">{{#str}} courseids_desc, local_learnwise {{/str}}</div>
                     {{#errors.courseIds}}
                         <div class="d-block invalid-feedback">{{{ . }}}</div>

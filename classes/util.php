@@ -555,4 +555,41 @@ class util {
     public static function array_is_list(array $data): bool {
         return array_keys($data) === range(0, count($data) - 1);
     }
+
+    /**
+     * Add courses to the list of selected courses.
+     *
+     * @param string $courseids Comma-separated list of course IDs to add.
+     */
+    public static function add_courses($courseids) {
+        $selectedcourses = [];
+        if (!empty($courseids)) {
+            $selectedcourses = explode(',', $courseids);
+        }
+        $exstingcourses = get_config('local_learnwise', 'courseids');
+        $newcourseids = $selectedcourses;
+        if (!empty($exstingcourses)) {
+            $exstingcourses = explode(',', $exstingcourses);
+            $newcourseids = array_unique(array_merge($exstingcourses, $selectedcourses));
+        }
+        set_config('courseids', implode(',', $newcourseids), 'local_learnwise');
+    }
+
+    /**
+     * Remove courses from the list of selected courses.
+     *
+     * @param string $courseids Comma-separated list of course IDs to remove.
+     */
+    public static function remove_courses($courseids) {
+        $selectedcourses = [];
+        if (!empty($courseids)) {
+            $selectedcourses = explode(',', $courseids);
+        }
+        $exstingcourses = get_config('local_learnwise', 'courseids');
+        if (!empty($exstingcourses)) {
+            $exstingcourses = explode(',', $exstingcourses);
+            $newcourseids = array_diff($exstingcourses, $selectedcourses);
+            set_config('courseids', implode(',', $newcourseids), 'local_learnwise');
+        }
+    }
 }
