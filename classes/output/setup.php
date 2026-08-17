@@ -22,6 +22,7 @@ use local_learnwise\constants;
 use local_learnwise\external\upsertlti;
 use local_learnwise\form\webservicesetup;
 use local_learnwise\util;
+use moodle_url;
 use renderable;
 use renderer_base;
 use stdClass;
@@ -204,6 +205,7 @@ class setup implements renderable, templatable {
         $data->envProduction = $env === constants::ENVIRONMENTS[0];
         $data->envDevelopment = $env === constants::ENVIRONMENTS[1];
         $data->envSandbox = $env === constants::ENVIRONMENTS[2];
+        $data->coursesurl = new moodle_url('/local/learnwise/courses.php');
         $data->regionOptions = array_map(function ($r) {
             return [
                 'key' => $r,
