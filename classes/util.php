@@ -486,6 +486,9 @@ class util {
         global $CFG;
         require_once($CFG->dirroot . '/mod/lti/lib.php');
         require_once($CFG->dirroot . '/mod/lti/locallib.php');
+        if (!$ltitypeid) {
+            return null;
+        }
         $ltityperecord = lti_get_type($ltitypeid);
         if (!$ltityperecord) {
             return null;
