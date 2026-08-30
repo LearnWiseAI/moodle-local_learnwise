@@ -308,7 +308,11 @@ class util {
      * @return string
      */
     public static function get_remotehosturl($env = null) {
-        return str_replace('chat.', 'aiden.', self::get_ltitoolurl($env));
+        return str_replace(
+            ['chat.', 'aiden.sandbox'],
+            ['aiden.', 'aiden-sbx'],
+            self::get_ltitoolurl($env)
+        );
     }
 
     /**
