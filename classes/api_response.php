@@ -32,6 +32,44 @@ class api_response extends oauth2_response {
     private $emptyarrayresponse = false;
 
     /**
+     * @var int|null Maximum encoded JSON response size in bytes.
+     */
+    private $maxresponsebytes = null;
+
+    /**
+     * @var string|null Error description used when the response exceeds its size limit.
+     */
+    private $responseoversizedescription = null;
+
+    /**
+     * Reject JSON responses larger than the configured byte limit.
+     *
+     * @param int $maxresponsebytes Maximum encoded JSON response size in bytes
+     * @param string $errordescription Error description returned to the client
+     * @return void
+     */
+    public function set_response_size_limit(int $maxresponsebytes, string $errordescription) {
+        $this->maxresponsebytes = $maxresponsebytes;
+        $this->responseoversizedescription = $errordescription;
+    }
+
+    #[\Override]
+    public function setParameters(array $parameters) {
+        $encoded = json_encode($parameters);
+        if (
+            $this->maxresponsebytes !== null
+            && $encoded !== false
+            && strlen($encoded) > $this->maxresponsebytes
+        ) {
+            parent::setParameters([]);
+            parent::setError(413, 'response_too_large', $this->responseoversizedescription);
+            return;
+        }
+
+        parent::setParameters($parameters);
+    }
+
+    /**
      * Preserve list response shape when Moodle returns an empty external_multiple_structure.
      *
      * @param bool $emptyarrayresponse Whether empty parameters should encode as []

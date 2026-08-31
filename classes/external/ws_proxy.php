@@ -18,9 +18,7 @@ namespace local_learnwise\external;
 
 use core_component;
 use core_plugin_manager;
-use local_learnwise\api_response;
 use local_learnwise\api_server;
-use local_learnwise\util;
 
 /**
  * Generic WS proxy - translates REST-style JSON requests into Moodle WS function calls.
@@ -35,11 +33,11 @@ use local_learnwise\util;
  */
 class ws_proxy {
     /**
-     * Indicates function is called and used when formatting response
+     * Maximum JSON response size sent through the WS proxy.
      *
-     * @var bool
+     * @var int
      */
-    protected static $called = false;
+    protected const MAX_RESPONSE_BYTES = 10 * 1024 * 1024;
 
     /**
      * Dispatch a WS function call from URL segments and return the result.
@@ -48,7 +46,6 @@ class ws_proxy {
      * @return void
      */
     public static function dispatch(api_server $apiserver) {
-        self::$called = true;
         $urlparts = $apiserver->get_urlparts();
         $response = $apiserver->get_response();
         // Reconstruct function name: /ws/mod_assign/get_assignments -> mod_assign_get_assignments.
@@ -100,7 +97,7 @@ class ws_proxy {
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         if ($method === 'GET') {
             $params = $_GET;
-            // Remove internal pagination params before passing to Moodle.
+            // Ignore legacy proxy pagination controls instead of forwarding invalid parameters to Moodle.
             unset($params['_page'], $params['_per_page']);
         } else {
             $rawbody = file_get_contents('php://input');
@@ -113,40 +110,12 @@ class ws_proxy {
 
         $apiserver->set_parameters($params);
         $apiserver->set_functionname($functionname);
-        $apiserver->add_responseformatter(function ($returns) use ($response) {
-            return self::apply_pagination($returns, $response);
-        });
-    }
-
-    /**
-     * Apply proxy-level pagination to array responses.
-     *
-     * Accepts _page and _per_page query params. For array responses, slices the result
-     * and adds X-Total-Count and X-Has-More headers.
-     *
-     * @param mixed $data The function result
-     * @param api_response $response Response object (for headers)
-     * @return mixed Paginated data (or original if not an array)
-     */
-    protected static function apply_pagination($data, $response) {
-        // Only paginate indexed arrays (lists).
-        if (!self::$called || !is_array($data) || empty($data) || !util::array_is_list($data)) {
-            return $data;
-        }
-
-        $page = max(1, optional_param('_page', 1, PARAM_INT));
-        $perpage = max(1, min(200, optional_param('_per_page', 50, PARAM_INT)));
-        $total = count($data);
-        $offset = ($page - 1) * $perpage;
-
-        $response->addHttpHeaders([
-            'X-Total-Count' => (string)$total,
-            'X-Has-More' => ($offset + $perpage < $total) ? 'true' : 'false',
-            'X-Page' => (string)$page,
-            'X-Per-Page' => (string)$perpage,
-        ]);
-
-        return array_slice($data, $offset, $perpage);
+        $response->set_response_size_limit(
+            self::MAX_RESPONSE_BYTES,
+            'The Moodle API returned more than 10 MiB of JSON, so the result was not sent. '
+                . 'Retry the same endpoint with narrower filters or pagination parameters supported by that '
+                . 'Moodle endpoint.'
+        );
     }
 
     /**
