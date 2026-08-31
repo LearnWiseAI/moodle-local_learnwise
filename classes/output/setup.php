@@ -65,7 +65,6 @@ class setup implements renderable, templatable {
         $this->lticonfigs = array_filter($lticonfigs);
         $this->formvalues = new stdClass();
         $this->formvalues->floatingButtonAssistantId = !empty($config->assistantid) ? $config->assistantid : '';
-        $this->formvalues->courseIds = !empty($config->courseids) ? $config->courseids : '';
         $this->formvalues->liveApiConfigClientId = $clientcreds->uniqid;
         $this->formvalues->liveApiConfigClientSecret = $clientcreds->secret;
         $this->formvalues->liveApiConfigRedirectURLs = !empty($config->redirecturl) ? $config->redirecturl : '';
@@ -106,10 +105,6 @@ class setup implements renderable, templatable {
             'floatingButtonAssistantId' => [
                 PARAM_ALPHANUMEXT,
                 new lang_string('assistantid', $plugin),
-            ],
-            'courseIds' => [
-                PARAM_SEQUENCE,
-                new lang_string('courseids', $plugin),
             ],
             'floatingButtonStatus' => [
                 PARAM_BOOL,
@@ -238,7 +233,6 @@ class setup implements renderable, templatable {
         $plugin = constants::COMPONENT;
         $oldconfig = get_config($plugin);
         set_config('assistantid', $postdata->floatingButtonAssistantId, $plugin);
-        set_config('courseids', $postdata->courseIds, $plugin);
         set_config('showassistantwidget', $postdata->floatingButtonStatus, $plugin);
         set_config('webservices', $postdata->webServicesStatus, $plugin);
         set_config('liveapi', $postdata->liveApiStatus, $plugin);

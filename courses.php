@@ -31,7 +31,8 @@ use local_learnwise\local\courseselector\potential_course_selector;
 
 require('../../config.php');
 
-require_admin();
+require_login(null, false);
+require_capability('moodle/site:config', context_system::instance());
 
 $url = new moodle_url('/local/learnwise/courses.php', []);
 $context = context_system::instance();
