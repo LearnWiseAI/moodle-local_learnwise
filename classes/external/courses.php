@@ -73,7 +73,9 @@ class courses extends baseapi {
 
         $response = [];
         if (!empty(baseapi::$my)) {
-            $courses = enrol_get_all_users_courses($USER->id, true);
+            // The enddate field is not returned by default, so ask for it explicitly,
+            // otherwise it is always reported as null.
+            $courses = enrol_get_all_users_courses($USER->id, true, 'enddate');
         } else {
             $category = core_course_category::user_top();
             $courses = $category->get_courses(['recursive' => true, 'sort' => ['fullname' => 1]]);
