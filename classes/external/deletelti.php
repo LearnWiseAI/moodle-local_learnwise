@@ -28,6 +28,7 @@ use context_system;
 use external_function_parameters;
 use external_single_structure;
 use external_value;
+use invalid_parameter_exception;
 use local_learnwise\constants;
 use local_learnwise\util;
 
@@ -73,6 +74,11 @@ class deletelti extends baseapi {
         $context = context_system::instance();
         self::validate_context($context);
         require_capability('moodle/site:config', $context);
+
+        if (!util::is_managed_lti_type($params['id'])) {
+            throw new invalid_parameter_exception('Invalid LTI ID:
+                This LTI ID is not associated with the Learnwise configuration.');
+        }
 
         $type = lti_get_type($params['id']);
 
