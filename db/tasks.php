@@ -31,7 +31,7 @@ $tasks = [
     [
         'classname' => 'local_learnwise\task\cleanup_tokens',
         'blocking' => 0,
-        'minute' => '*',
+        'minute' => '0',
         'hour' => '*',
         'day' => '*',
         'month' => '*',

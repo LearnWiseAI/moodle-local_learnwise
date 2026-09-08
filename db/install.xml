@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/learnwise/db" VERSION="20250918" COMMENT="XMLDB file for Moodle local/learnwise"
+<XMLDB PATH="local/learnwise/db" VERSION="20260908" COMMENT="XMLDB file for Moodle local/learnwise"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -41,6 +41,9 @@
         <KEY NAME="fkauthid" TYPE="foreign" FIELDS="authid" REFTABLE="local_learnwise_userauth" REFFIELDS="id"/>
         <KEY NAME="uniqcode" TYPE="unique" FIELDS="code"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="timeexpiry" UNIQUE="false" FIELDS="timeexpiry"/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="local_learnwise_accesstoken" COMMENT="Stores access token for users">
       <FIELDS>
@@ -54,6 +57,9 @@
         <KEY NAME="fkauthid" TYPE="foreign" FIELDS="authid" REFTABLE="local_learnwise_userauth" REFFIELDS="id"/>
         <KEY NAME="uniqtoken" TYPE="unique" FIELDS="token"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="timeexpiry" UNIQUE="false" FIELDS="timeexpiry"/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="local_learnwise_refreshtoken" COMMENT="Stores refresh token related to user auth">
       <FIELDS>
@@ -67,6 +73,9 @@
         <KEY NAME="fkauthid" TYPE="foreign" FIELDS="authid" REFTABLE="local_learnwise_userauth" REFFIELDS="id"/>
         <KEY NAME="uniqrefreshtoken" TYPE="unique" FIELDS="token"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="timeexpiry" UNIQUE="false" FIELDS="timeexpiry"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>
