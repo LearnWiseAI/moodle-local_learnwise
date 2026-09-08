@@ -28,6 +28,7 @@ use context_system;
 use external_function_parameters;
 use external_single_structure;
 use external_value;
+use invalid_parameter_exception;
 use local_learnwise\constants;
 use local_learnwise\util;
 use stdClass;
@@ -91,6 +92,11 @@ class upsertlti extends baseapi {
             self::execute_parameters(),
             $params
         );
+
+        if ($params['id'] > 0 && !util::is_managed_lti_type($params['id'])) {
+            throw new invalid_parameter_exception('Invalid LTI ID:
+                This LTI ID is not associated with the Learnwise configuration.');
+        }
 
         $environment = util::get_env();
         $toolurl = util::get_ltitoolurl($environment);

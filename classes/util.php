@@ -593,4 +593,23 @@ class util {
             set_config('courseids', implode(',', $newcourseids), 'local_learnwise');
         }
     }
+
+    /**
+     * Check whether an LTI type is managed.
+     *
+     * @param int $ltitypeid
+     * @return bool
+     */
+    public static function is_managed_lti_type($ltitypeid) {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/lti/locallib.php');
+
+        if (!$ltitypeid) {
+            return false;
+        }
+
+        $typeids = get_config(constants::COMPONENT, 'ltitypeids');
+        $typeids = empty($typeids) ? [] : array_filter(explode(',', $typeids));
+        return in_array($ltitypeid, $typeids);
+    }
 }
