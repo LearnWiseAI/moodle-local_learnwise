@@ -146,7 +146,7 @@ final class lib_test extends \advanced_testcase {
         ]);
 
         $stored = get_config('local_learnwise', 'courseids');
-        $this->assertMatchesRegularExpression('/^[\d,]*$/', $stored, 'Only digits and commas may be stored');
+        $this->assertSame(1, preg_match('/^[\d,]*$/', $stored), 'Only digits and commas may be stored');
         $this->assertStringNotContainsString('script', $stored);
         $this->assertStringNotContainsString('DROP', $stored);
     }
@@ -164,7 +164,7 @@ final class lib_test extends \advanced_testcase {
         ]);
 
         $stored = get_config('local_learnwise', 'courseids');
-        $this->assertMatchesRegularExpression('/^[\d,]*$/', (string) $stored);
+        $this->assertSame(1, preg_match('/^[\d,]*$/', (string) $stored));
         $this->assertStringNotContainsString('abc', (string) $stored);
     }
 
