@@ -17,6 +17,7 @@
 namespace local_learnwise\privacy;
 
 use context_system;
+use context_user;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\writer;
 use core_privacy\local\metadata\collection;
@@ -162,11 +163,11 @@ class provider implements
     public static function get_users_in_context(\core_privacy\local\request\userlist $userlist): void {
         $context = $userlist->get_context();
 
-        if (!$context instanceof context_system) {
+        if (!$context instanceof context_system && !$context instanceof context_user) {
             return;
         }
 
-        $userlist->add_from_sql('user_id', "SELECT DISTINCT user_id FROM {local_learnwise_userauth}", []);
+        $userlist->add_from_sql('userid', "SELECT DISTINCT userid FROM {local_learnwise_userauth}", []);
     }
 
     /**
