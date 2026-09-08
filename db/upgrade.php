@@ -171,5 +171,43 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026071700, 'local', 'learnwise');
     }
 
+    if ($oldversion < 2026090800) {
+        // Define index timeexpiry (not unique) to be added to local_learnwise_authcode.
+        $table = new xmldb_table('local_learnwise_authcode');
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
+        // @phpstan-ignore argument.type
+        $index = new xmldb_index('timeexpiry', XMLDB_INDEX_NOTUNIQUE, ['timeexpiry']);
+
+        // Conditionally launch add index timeexpiry.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define index timeexpiry (not unique) to be added to local_learnwise_accesstoken.
+        $table = new xmldb_table('local_learnwise_accesstoken');
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
+        // @phpstan-ignore argument.type
+        $index = new xmldb_index('timeexpiry', XMLDB_INDEX_NOTUNIQUE, ['timeexpiry']);
+
+        // Conditionally launch add index timeexpiry.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define index timeexpiry (not unique) to be added to local_learnwise_refreshtoken.
+        $table = new xmldb_table('local_learnwise_refreshtoken');
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
+        // @phpstan-ignore argument.type
+        $index = new xmldb_index('timeexpiry', XMLDB_INDEX_NOTUNIQUE, ['timeexpiry']);
+
+        // Conditionally launch add index timeexpiry.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Learnwise savepoint reached.
+        upgrade_plugin_savepoint(true, 2026090800, 'local', 'learnwise');
+    }
+
     return true;
 }

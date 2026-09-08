@@ -236,6 +236,12 @@ class provider implements
                     foreach ($tablemap as $prop => $table) {
                         $userauth->$prop = $DB->get_records($table, ['authid' => $userauth->id]);
                         foreach ($userauth->$prop as $item) {
+                            if (isset($item->code)) {
+                                $item->code = $notexportedstr;
+                            }
+                            if (isset($item->token)) {
+                                $item->token = $notexportedstr;
+                            }
                             if (isset($item->timeexpiry)) {
                                 $item->timeexpiry = transform::datetime($item->timeexpiry);
                             }
