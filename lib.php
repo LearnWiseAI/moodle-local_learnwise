@@ -23,6 +23,7 @@
  */
 
 use local_learnwise\constants;
+use local_learnwise\form\updatelti;
 use local_learnwise\form\webservicesetup;
 use local_learnwise\output\setup;
 use local_learnwise\util;
@@ -81,6 +82,9 @@ function local_learnwise_output_fragment_form($args) {
     parse_str($args->formdata, $formdata);
 
     $formclass = $formdata['formclass'];
+    if (!in_array($formclass, [updatelti::class])) {
+        throw new coding_exception('Unexpected formclass');
+    }
     $formurl = new moodle_url(get_local_referer());
     $formurl->param('formclass', $formclass);
     $formurl->param('action', $formdata['action']);
@@ -107,6 +111,7 @@ function local_learnwise_output_fragment_form($args) {
 function local_learnwise_output_fragment_refresh_lticonfig($args) {
     global $PAGE;
     $args = (object) $args;
+    require_capability('moodle/site:config', $args->context);
     $html = '';
     $output = $PAGE->get_renderer(constants::COMPONENT);
     if ($args->action == 'refreshtable') {
@@ -172,6 +177,8 @@ function local_learnwise_env_check_auth_header(environment_results $result) {
  */
 function local_learnwise_output_fragment_process_courses($args) {
     $args = (object) $args;
+    require_capability('moodle/site:config', $args->context);
+    $args->courseids = clean_param($args->courseids, PARAM_SEQUENCE);
 
     if ($args->action === 'add') {
         util::add_courses($args->courseids);

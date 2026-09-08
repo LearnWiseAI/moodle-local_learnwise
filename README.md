@@ -4,6 +4,7 @@ This plugin allows you to set up and configure the LearnWise AI assistant (https
 
 Note that this plugin requires an existing organizational account within the LearnWise platform. Want to learn more about LearnWise? Please get in touch with us at https://www.learnwise.ai/demo.
 
+**This Plugin is designed for single-tenant.**
 
 ## Requirements
 - Moodle 3.9 or Higher

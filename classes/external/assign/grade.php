@@ -22,6 +22,7 @@ use external_function_parameters;
 use external_multiple_structure;
 use external_single_structure;
 use external_value;
+use invalid_parameter_exception;
 use local_learnwise\external\baseapi;
 use stdClass;
 
@@ -124,6 +125,16 @@ class grade extends baseapi {
         $cm = $DB->get_record('course_modules', ['id' => $params['assignment_id']], '*', MUST_EXIST);
         [$assignment, $course, $cm, $context] = self::validate_assignment($cm->instance);
         require_capability('mod/assign:grade', $context);
+
+        if ($course->id != $params['course_id']) {
+            throw new invalid_parameter_exception('The assignment does not belong to the specified course.');
+        }
+
+        if (!$assignment->get_participant($params['user_id'])) {
+            throw new invalid_parameter_exception('The user is not a participant in this assignment.');
+        }
+
+        $assignment->require_view_submission($params['user_id']);
 
         $grade = $assignment->get_user_grade($params['user_id'], true);
         $originalgrade = $grade->grade;
