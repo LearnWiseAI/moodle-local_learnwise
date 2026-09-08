@@ -4,5 +4,10 @@ parameters:
     level: 5
     excludePaths:
         - classes/local/OAuth2/*
+        # PHPStan's Moodle extension does not model the PHPUnit test scaffolding
+        # (testing_data_generator's per-component create_* methods are resolved at
+        # runtime), so analysing tests produces only false positives. The tests are
+        # verified by running them instead.
+        - tests/*
     moodle:
         rootDirectory: %currentWorkingDirectory%
