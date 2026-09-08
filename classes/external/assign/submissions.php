@@ -83,6 +83,9 @@ class submissions extends baseapi {
         $submissions = [];
         $users = $assign->list_participants_with_filter_status_and_group(0);
         foreach ($users as $user) {
+            if (!$assign->can_view_submission($user->id)) {
+                continue;
+            }
             $submission = $assign->get_user_submission($user->id, false);
             $grades = $DB->get_record('assign_grades', ['assignment' => $assign->get_instance()->id, 'userid' => $user->id]);
             if (!$submission || static::skip_record($submission->userid)) {

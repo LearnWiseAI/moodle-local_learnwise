@@ -35,6 +35,7 @@ echo $OUTPUT->header();
 // Check access.
 require_login();
 require_sesskey();
+require_capability('moodle/site:config', context_system::instance());
 
 // Get the search parameter.
 $search = required_param('search', PARAM_RAW);
