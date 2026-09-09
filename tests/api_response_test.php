@@ -16,6 +16,8 @@
 
 namespace local_learnwise;
 
+use advanced_testcase;
+
 /**
  * Tests for the plugin API response.
  *
@@ -24,7 +26,7 @@ namespace local_learnwise;
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class api_response_test extends \advanced_testcase {
+final class api_response_test extends advanced_testcase {
     /**
      * Responses at the configured byte limit remain unchanged.
      */

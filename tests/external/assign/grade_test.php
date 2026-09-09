@@ -16,13 +16,15 @@
 
 namespace local_learnwise\external\assign;
 
+use advanced_testcase;
+use assign;
+use context_module;
+use dml_missing_record_exception;
 use invalid_parameter_exception;
+use local_learnwise\external\baseapi;
+use moodle_exception;
 use required_capability_exception;
-
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->dirroot . '/mod/assign/locallib.php');
+use stdClass;
 
 /**
  * Tests for the assignment grading endpoint.
@@ -40,23 +42,26 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class grade_test extends \advanced_testcase {
-    /** @var \stdClass */
+final class grade_test extends advanced_testcase {
+    /** @var stdClass */
     protected $course;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $assign;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $teacher;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $student;
 
     /**
      * Build a course with one assignment, a teacher and an enrolled student.
      */
     protected function setUp(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
         parent::setUp();
         $this->resetAfterTest();
 
@@ -68,6 +73,15 @@ final class grade_test extends \advanced_testcase {
 
         $this->teacher = $generator->create_and_enrol($this->course, 'editingteacher');
         $this->student = $generator->create_and_enrol($this->course, 'student');
+    }
+
+    /**
+     * Reset the static state shared by every API class.
+     */
+    protected function tearDown(): void {
+        baseapi::$my = null;
+        baseapi::$ids = [];
+        parent::tearDown();
     }
 
     /**
@@ -238,7 +252,7 @@ final class grade_test extends \advanced_testcase {
         $outsider = $this->getDataGenerator()->create_user();
         $this->setUser($outsider);
 
-        $this->expectException(\moodle_exception::class);
+        $this->expectException(moodle_exception::class);
 
         grade::execute(
             $this->course->id,
@@ -264,7 +278,7 @@ final class grade_test extends \advanced_testcase {
         $plugin->update_user_enrol($instance, $this->student->id, ENROL_USER_SUSPENDED);
 
         // Remove the capability that would let the teacher see suspended users.
-        $context = \context_module::instance($this->assign->cmid);
+        $context = context_module::instance($this->assign->cmid);
         $teacherrole = $DB->get_record('role', ['shortname' => 'editingteacher'], '*', MUST_EXIST);
         assign_capability('moodle/course:viewsuspendedusers', CAP_PREVENT, $teacherrole->id, $context->id, true);
 
@@ -305,7 +319,7 @@ final class grade_test extends \advanced_testcase {
         $this->getDataGenerator()->create_group_member(['groupid' => $groupb->id, 'userid' => $this->student->id]);
 
         // Make sure the teacher cannot simply see all groups.
-        $context = \context_module::instance($this->assign->cmid);
+        $context = context_module::instance($this->assign->cmid);
         $teacherrole = $DB->get_record('role', ['shortname' => 'editingteacher'], '*', MUST_EXIST);
         assign_capability('moodle/site:accessallgroups', CAP_PREVENT, $teacherrole->id, $context->id, true);
 
@@ -327,7 +341,7 @@ final class grade_test extends \advanced_testcase {
     public function test_unknown_assignment_is_rejected(): void {
         $this->setUser($this->teacher);
 
-        $this->expectException(\dml_missing_record_exception::class);
+        $this->expectException(dml_missing_record_exception::class);
 
         grade::execute($this->course->id, -1, $this->student->id, $this->assessment(50.0));
     }
@@ -366,5 +380,211 @@ final class grade_test extends \advanced_testcase {
     public function test_endpoint_is_declared_as_write(): void {
         $this->assertSame('write', grade::crudtype());
         $this->assertSame('local_learnwise_assign_grade', grade::function_name());
+    }
+
+    /**
+     * Grading is a write operation.
+     */
+    public function test_it_is_a_write_operation(): void {
+        $this->assertSame('write', grade::crudtype());
+        $this->assertSame('local_learnwise_assign_grade', grade::function_name());
+    }
+
+    /**
+     * The API is driven by the course, the assignment, the user and the marks.
+     */
+    public function test_execute_parameters(): void {
+        $params = grade::execute_parameters();
+
+        $this->assertSame(
+            ['course_id', 'assignment_id', 'user_id', 'rubric_assessment', 'advancedgradinginstanceid'],
+            array_keys($params->keys)
+        );
+        $this->assertSame(VALUE_DEFAULT, $params->keys['advancedgradinginstanceid']->required);
+    }
+
+    /**
+     * Both rubric and marking guide feedback can be submitted, and both are optional.
+     */
+    public function test_execute_parameters_accept_rubric_and_guide_feedback(): void {
+        $assessment = grade::execute_parameters()->keys['rubric_assessment'];
+
+        $this->assertArrayHasKey('submission_grade', $assessment->keys);
+        $this->assertSame(VALUE_OPTIONAL, $assessment->keys['general_feedback']->required);
+        $assessments = $assessment->keys['rubric_assessments'];
+        $this->assertSame(VALUE_OPTIONAL, $assessments->required);
+        $this->assertSame(VALUE_OPTIONAL, $assessments->keys['rubric_feedback_array']->required);
+        $this->assertSame(VALUE_OPTIONAL, $assessments->keys['guide_feedback_array']->required);
+    }
+
+    /**
+     * The API always answers with one verdict rather than a list.
+     */
+    public function test_it_is_always_a_single_operation(): void {
+        $this->assertTrue(grade::is_singleoperation());
+        $this->assertSame(['success', 'error'], array_keys(grade::single_structure()->keys));
+        $this->assertSame(VALUE_OPTIONAL, grade::single_structure()->keys['error']->required);
+    }
+
+    /**
+     * The assignment is resolved into everything the grading code needs.
+     */
+    public function test_validate_assignment(): void {
+        [$course, $cm, $assign] = $this->create_assignment();
+        $this->setAdminUser();
+
+        [$assignment, $foundcourse, $foundcm, $context] = grade::validate_assignment($assign->id);
+
+        $this->assertInstanceOf(assign::class, $assignment);
+        $this->assertSame((int) $course->id, (int) $foundcourse->id);
+        $this->assertSame((int) $cm->id, (int) $foundcm->id);
+        $this->assertSame((int) context_module::instance($cm->id)->id, (int) $context->id);
+    }
+
+    /**
+     * A simple numeric grade is saved against the student.
+     */
+    public function test_execute_saves_a_simple_grade(): void {
+        [$course, $cm, $assign, $teacher, $student] = $this->create_assignment();
+        $this->setUser($teacher);
+
+        $response = grade::execute($course->id, $cm->id, $student->id, [
+            'submission_grade' => 75.0,
+            'general_feedback' => 'Good work',
+        ], null);
+
+        $this->assertTrue($response['success']);
+        $assignment = new assign(context_module::instance($cm->id), $cm, $course);
+        $this->assertEqualsWithDelta(75.0, $assignment->get_user_grade($student->id, false)->grade, 0.001);
+    }
+
+    /**
+     * The grader is recorded as the user who called the API.
+     */
+    public function test_execute_records_the_grader(): void {
+        [$course, $cm, $assign, $teacher, $student] = $this->create_assignment();
+        $this->setUser($teacher);
+
+        grade::execute($course->id, $cm->id, $student->id, [
+            'submission_grade' => 75.0,
+            'general_feedback' => 'Good work',
+        ], null);
+
+        $assignment = new assign(context_module::instance($cm->id), $cm, $course);
+        $this->assertSame((int) $teacher->id, (int) $assignment->get_user_grade($student->id, false)->grader);
+    }
+
+    /**
+     * General feedback is stored alongside the grade.
+     */
+    public function test_execute_saves_the_general_feedback(): void {
+        global $DB;
+
+        [$course, $cm, $assign, $teacher, $student] = $this->create_assignment();
+        $this->setUser($teacher);
+
+        grade::execute($course->id, $cm->id, $student->id, [
+            'submission_grade' => 75.0,
+            'general_feedback' => 'Nicely argued',
+        ], null);
+
+        $assignment = new assign(context_module::instance($cm->id), $cm, $course);
+        $usergrade = $assignment->get_user_grade($student->id, false);
+        $comment = $DB->get_record('assignfeedback_comments', ['grade' => $usergrade->id]);
+        $this->assertStringContainsString('Nicely argued', $comment->commenttext);
+    }
+
+    /**
+     * A grade of zero is reported as a failure, with the reason.
+     */
+    public function test_execute_reports_a_zero_grade_as_a_failure(): void {
+        [$course, $cm, $assign, $teacher, $student] = $this->create_assignment();
+        $this->setUser($teacher);
+
+        $response = grade::execute($course->id, $cm->id, $student->id, [
+            'submission_grade' => 0.0,
+            'general_feedback' => '',
+        ], null);
+
+        $this->assertFalse($response['success']);
+        $this->assertSame(get_string('gradingdisabled', 'local_learnwise'), $response['error']);
+    }
+
+    /**
+     * Naming the wrong course for the assignment is rejected.
+     */
+    public function test_execute_rejects_a_mismatched_course(): void {
+        [, $cm, , $teacher, $student] = $this->create_assignment();
+        $othercourse = $this->getDataGenerator()->create_course();
+        $this->setUser($teacher);
+
+        $this->expectException(invalid_parameter_exception::class);
+        grade::execute($othercourse->id, $cm->id, $student->id, [
+            'submission_grade' => 75.0,
+            'general_feedback' => '',
+        ], null);
+    }
+
+    /**
+     * Grading somebody who is not on the assignment is rejected.
+     */
+    public function test_execute_rejects_a_non_participant(): void {
+        [$course, $cm, , $teacher] = $this->create_assignment();
+        $outsider = $this->getDataGenerator()->create_user();
+        $this->setUser($teacher);
+
+        $this->expectException(invalid_parameter_exception::class);
+        grade::execute($course->id, $cm->id, $outsider->id, [
+            'submission_grade' => 75.0,
+            'general_feedback' => '',
+        ], null);
+    }
+
+    /**
+     * A student cannot grade.
+     */
+    public function test_execute_requires_the_grade_capability(): void {
+        [$course, $cm, , , $student] = $this->create_assignment();
+        $this->setUser($student);
+
+        $this->expectException(required_capability_exception::class);
+        grade::execute($course->id, $cm->id, $student->id, [
+            'submission_grade' => 75.0,
+            'general_feedback' => '',
+        ], null);
+    }
+
+    /**
+     * An unknown assignment is rejected.
+     */
+    public function test_execute_rejects_an_unknown_assignment(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $this->setAdminUser();
+
+        $this->expectException(dml_missing_record_exception::class);
+        grade::execute($course->id, -1, 1, [
+            'submission_grade' => 75.0,
+            'general_feedback' => '',
+        ], null);
+    }
+
+    /**
+     * Build a course with an assignment, a teacher and a student.
+     *
+     * @return array
+     */
+    protected function create_assignment() {
+        $course = $this->getDataGenerator()->create_course();
+        $assign = $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id,
+            'grade' => 100,
+            'assignfeedback_comments_enabled' => 1,
+        ]);
+        $teacher = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $course->id, 'editingteacher');
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
+        $cm = get_coursemodule_from_id('assign', $assign->cmid, 0, false, MUST_EXIST);
+        return [$course, $cm, $assign, $teacher, $student];
     }
 }

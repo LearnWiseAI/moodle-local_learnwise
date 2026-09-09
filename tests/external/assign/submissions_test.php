@@ -16,10 +16,14 @@
 
 namespace local_learnwise\external\assign;
 
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->dirroot . '/mod/assign/locallib.php');
+use advanced_testcase;
+use assign;
+use context_module;
+use local_learnwise\external\baseapi;
+use local_learnwise\external\timestampvalue;
+use moodle_exception;
+use require_login_exception;
+use stdClass;
 
 /**
  * Tests for the assignment submissions endpoint.
@@ -37,26 +41,29 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class submissions_test extends \advanced_testcase {
-    /** @var \stdClass */
+final class submissions_test extends advanced_testcase {
+    /** @var stdClass */
     protected $course;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $assign;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $teacher;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $studenta;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $studentb;
 
     /**
      * Build a course with an assignment and two students who have both submitted.
      */
     protected function setUp(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
         parent::setUp();
         $this->resetAfterTest();
 
@@ -79,13 +86,22 @@ final class submissions_test extends \advanced_testcase {
     }
 
     /**
+     * Reset the static state shared by every API class.
+     */
+    protected function tearDown(): void {
+        baseapi::$my = null;
+        baseapi::$ids = [];
+        parent::tearDown();
+    }
+
+    /**
      * Insert a submitted online-text submission for a user.
      *
-     * @param \stdClass $user The submitting user
+     * @param stdClass $user The submitting user
      * @param string $text The online text body
      * @return int The submission id
      */
-    protected function create_submission(\stdClass $user, string $text): int {
+    protected function create_submission(stdClass $user, string $text): int {
         global $DB;
 
         $submission = (object) [
@@ -245,7 +261,7 @@ final class submissions_test extends \advanced_testcase {
         $outsider = $this->getDataGenerator()->create_user();
         $this->setUser($outsider);
 
-        $this->expectException(\require_login_exception::class);
+        $this->expectException(require_login_exception::class);
 
         submissions::execute($this->assign->cmid);
     }
@@ -268,7 +284,7 @@ final class submissions_test extends \advanced_testcase {
     public function test_unknown_cmid_is_rejected(): void {
         $this->setUser($this->teacher);
 
-        $this->expectException(\moodle_exception::class);
+        $this->expectException(moodle_exception::class);
 
         submissions::execute(-1);
     }
@@ -279,5 +295,211 @@ final class submissions_test extends \advanced_testcase {
     public function test_endpoint_metadata(): void {
         $this->assertSame('read', submissions::crudtype());
         $this->assertSame('local_learnwise_assign_submissions', submissions::function_name());
+    }
+
+    /**
+     * The API is driven by the assignment's course module id.
+     */
+    public function test_execute_parameters_take_an_assignment_id(): void {
+        $params = submissions::execute_parameters();
+
+        $this->assertSame(['assignmentid'], array_keys($params->keys));
+        $this->assertSame(PARAM_INT, $params->keys['assignmentid']->type);
+    }
+
+    /**
+     * An assignment nobody has started yields an empty list rather than an error.
+     */
+    public function test_execute_without_submissions(): void {
+        [$course, $cm, $teacher] = $this->create_assignment();
+        $this->setUser($teacher);
+
+        $this->assertSame([], submissions::execute($cm->id));
+    }
+
+    /**
+     * A submitted submission is reported with the submitting user and its state.
+     */
+    public function test_execute_reports_a_submitted_submission(): void {
+        [$course, $cm, $teacher, $student] = $this->create_assignment();
+        $this->submit($course, $cm, $student, ASSIGN_SUBMISSION_STATUS_SUBMITTED);
+        $this->setUser($teacher);
+
+        $response = submissions::execute($cm->id);
+
+        $this->assertCount(1, $response);
+        $this->assertSame((int) $student->id, (int) $response[0]->user_id);
+        $this->assertSame(get_string('onlysubmitted', 'local_learnwise'), $response[0]->workflow_state);
+    }
+
+    /**
+     * A draft submission is reported as unsubmitted.
+     */
+    public function test_execute_reports_a_draft_as_unsubmitted(): void {
+        [$course, $cm, $teacher, $student] = $this->create_assignment();
+        $this->submit($course, $cm, $student, ASSIGN_SUBMISSION_STATUS_DRAFT);
+        $this->setUser($teacher);
+
+        $response = submissions::execute($cm->id);
+
+        $this->assertSame(get_string('unsubmitted', 'local_learnwise'), $response[0]->workflow_state);
+    }
+
+    /**
+     * A graded submission is reported as graded.
+     */
+    public function test_execute_reports_a_graded_submission(): void {
+        [$course, $cm, $teacher, $student] = $this->create_assignment();
+        $this->submit($course, $cm, $student, ASSIGN_SUBMISSION_STATUS_SUBMITTED);
+        $this->setUser($teacher);
+        grade::execute($course->id, $cm->id, $student->id, [
+            'submission_grade' => 80.0,
+            'general_feedback' => 'Well argued',
+        ], null);
+
+        $response = submissions::execute($cm->id);
+
+        $this->assertSame(get_string('onlygraded', 'local_learnwise'), $response[0]->workflow_state);
+    }
+
+    /**
+     * Online text submissions are flattened into a plain text body.
+     */
+    public function test_execute_reports_the_online_text_body(): void {
+        [$course, $cm, $teacher, $student] = $this->create_assignment();
+        $submission = $this->submit($course, $cm, $student, ASSIGN_SUBMISSION_STATUS_SUBMITTED);
+        $this->add_online_text($cm, $submission, '<p>My submitted <strong>answer</strong> here</p>');
+        $this->setUser($teacher);
+
+        $response = submissions::execute($cm->id);
+
+        $this->assertStringContainsString('My submitted', $response[0]->body);
+        $this->assertStringContainsString('here', $response[0]->body);
+        $this->assertStringNotContainsString('<strong>', $response[0]->body);
+    }
+
+    /**
+     * Pinning a user id returns that student's submission rather than a list.
+     */
+    public function test_execute_returns_a_single_submission_when_pinned(): void {
+        [$course, $cm, $teacher, $student] = $this->create_assignment();
+        $other = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($other->id, $course->id, 'student');
+        $this->submit($course, $cm, $student, ASSIGN_SUBMISSION_STATUS_SUBMITTED);
+        $this->submit($course, $cm, $other, ASSIGN_SUBMISSION_STATUS_SUBMITTED);
+        $this->setUser($teacher);
+        submissions::set_id($other->id);
+
+        $response = submissions::execute($cm->id);
+
+        $this->assertSame((int) $other->id, (int) $response->user_id);
+    }
+
+    /**
+     * The grader's feedback comes back with the pinned submission.
+     */
+    public function test_execute_reports_feedback_with_a_pinned_submission(): void {
+        [$course, $cm, $teacher, $student] = $this->create_assignment();
+        $this->submit($course, $cm, $student, ASSIGN_SUBMISSION_STATUS_SUBMITTED);
+        $this->setUser($teacher);
+        grade::execute($course->id, $cm->id, $student->id, [
+            'submission_grade' => 80.0,
+            'general_feedback' => 'Well argued',
+        ], null);
+        submissions::set_id($student->id);
+
+        $response = submissions::execute($cm->id);
+
+        $this->assertCount(1, $response->submission_comments);
+        $this->assertStringContainsString('Well argued', $response->submission_comments[0]['comment']);
+        $this->assertSame((int) $teacher->id, (int) $response->submission_comments[0]['author_id']);
+        $this->assertSame(fullname($teacher), $response->submission_comments[0]['author_name']);
+    }
+
+    /**
+     * The list flavour reports only the fields every submission has.
+     */
+    public function test_single_structure_matches_the_flavour(): void {
+        $liststructure = submissions::single_structure();
+
+        $this->assertSame(['id', 'body', 'workflow_state', 'user_id'], array_keys($liststructure->keys));
+
+        submissions::set_id(1);
+        $singlestructure = submissions::single_structure();
+
+        $this->assertArrayHasKey('attachments', $singlestructure->keys);
+        $this->assertArrayHasKey('submission_comments', $singlestructure->keys);
+        $this->assertArrayHasKey('rubric_assessment', $singlestructure->keys);
+        $this->assertArrayHasKey('guide_assessment', $singlestructure->keys);
+    }
+
+    /**
+     * The time a comment was left is reported as ISO 8601.
+     */
+    public function test_comment_times_are_declared_as_timestamps(): void {
+        submissions::set_id(1);
+
+        $comments = submissions::single_structure()->keys['submission_comments'];
+
+        $this->assertInstanceOf(timestampvalue::class, $comments->content->keys['created_at']);
+    }
+
+    /**
+     * Build a course with an assignment, a teacher and a student.
+     *
+     * @return array
+     */
+    protected function create_assignment() {
+        $course = $this->getDataGenerator()->create_course();
+        $assign = $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id,
+            'grade' => 100,
+            'assignsubmission_onlinetext_enabled' => 1,
+            'assignfeedback_comments_enabled' => 1,
+        ]);
+        $teacher = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $course->id, 'editingteacher');
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
+        $cm = get_coursemodule_from_id('assign', $assign->cmid, 0, false, MUST_EXIST);
+        return [$course, $cm, $teacher, $student, $assign];
+    }
+
+    /**
+     * Record a submission in the given state.
+     *
+     * @param stdClass $course Course the assignment belongs to
+     * @param stdClass $cm Assignment course module
+     * @param stdClass $student Submitting student
+     * @param string $status Submission status to record
+     * @return stdClass
+     */
+    protected function submit($course, $cm, $student, $status) {
+        global $DB;
+
+        $assignment = new assign(context_module::instance($cm->id), $cm, $course);
+        $submission = $assignment->get_user_submission($student->id, true);
+        $submission->status = $status;
+        $DB->update_record('assign_submission', $submission);
+        return $submission;
+    }
+
+    /**
+     * Attach an online text answer to a submission.
+     *
+     * @param stdClass $cm Assignment course module
+     * @param stdClass $submission Submission to attach the text to
+     * @param string $text Online text body
+     * @return void
+     */
+    protected function add_online_text($cm, $submission, $text) {
+        global $DB;
+
+        $DB->insert_record('assignsubmission_onlinetext', (object) [
+            'assignment' => $cm->instance,
+            'submission' => $submission->id,
+            'onlinetext' => $text,
+            'onlineformat' => FORMAT_HTML,
+        ]);
     }
 }

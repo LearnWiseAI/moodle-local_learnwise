@@ -16,14 +16,17 @@
 
 namespace local_learnwise\privacy;
 
+use context_course;
 use context_system;
 use context_user;
+use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 use local_learnwise\storage;
 use local_learnwise\util;
+use stdClass;
 
 /**
  * Tests for the plugin's GDPR privacy provider.
@@ -37,13 +40,13 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /** @var storage */
     protected $storage;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $client;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $usera;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $userb;
 
     /**
@@ -65,10 +68,10 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Create an access token, refresh token and authorization code for a user.
      *
-     * @param \stdClass $user The owning user
+     * @param stdClass $user The owning user
      * @param string $suffix Unique suffix for the generated token values
      */
-    protected function seed_tokens(\stdClass $user, string $suffix): void {
+    protected function seed_tokens(stdClass $user, string $suffix): void {
         $expires = time() + 3600;
         $this->storage->setAccessToken("access-{$suffix}", $this->client->uniqid, $user->id, $expires);
         $this->storage->setRefreshToken("refresh-{$suffix}", $this->client->uniqid, $user->id, $expires);
@@ -85,7 +88,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * The provider declares the tables and external locations it touches.
      */
     public function test_get_metadata(): void {
-        $collection = provider::get_metadata(new \core_privacy\local\metadata\collection('local_learnwise'));
+        $collection = provider::get_metadata(new collection('local_learnwise'));
         $items = $collection->get_collection();
 
         $this->assertNotEmpty($items);
@@ -144,7 +147,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      */
     public function test_get_users_in_context_ignores_other_context_levels(): void {
         $course = $this->getDataGenerator()->create_course();
-        $userlist = new userlist(\context_course::instance($course->id), 'local_learnwise');
+        $userlist = new userlist(context_course::instance($course->id), 'local_learnwise');
 
         provider::get_users_in_context($userlist);
 
@@ -285,7 +288,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $userlist = new approved_userlist(
-            \context_course::instance($course->id),
+            context_course::instance($course->id),
             'local_learnwise',
             [$this->usera->id]
         );

@@ -16,6 +16,9 @@
 
 namespace local_learnwise;
 
+use advanced_testcase;
+use stdClass;
+
 /**
  * Tests for the Moodle-backed OAuth2 storage.
  *
@@ -24,14 +27,14 @@ namespace local_learnwise;
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class storage_test extends \advanced_testcase {
+final class storage_test extends advanced_testcase {
     /** @var storage */
     protected $storage;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $client;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $user;
 
     /**

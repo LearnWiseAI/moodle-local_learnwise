@@ -16,6 +16,10 @@
 
 namespace local_learnwise;
 
+use advanced_testcase;
+use context_module;
+use context_system;
+
 /**
  * Tests for the plugin utility helpers.
  *
@@ -28,7 +32,7 @@ namespace local_learnwise;
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class util_test extends \advanced_testcase {
+final class util_test extends advanced_testcase {
     /**
      * The component name is read from the COMPONENT constant when the subclass defines one.
      */
@@ -271,7 +275,7 @@ final class util_test extends \advanced_testcase {
         $role = util::get_or_create_role();
         $this->assertSame('learnwise_assistant', $role->shortname);
 
-        $systemcontext = \context_system::instance();
+        $systemcontext = context_system::instance();
         foreach (util::ROLECAPS as $capability) {
             $this->assertSame(
                 CAP_ALLOW,
@@ -300,7 +304,7 @@ final class util_test extends \advanced_testcase {
         $this->assertNotEmpty($user->id);
 
         $role = $DB->get_record('role', ['shortname' => 'learnwise_assistant'], '*', MUST_EXIST);
-        $systemcontext = \context_system::instance();
+        $systemcontext = context_system::instance();
         $this->assertTrue($DB->record_exists('role_assignments', [
             'roleid' => $role->id,
             'userid' => $user->id,
@@ -429,7 +433,7 @@ final class util_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
-        $context = \context_module::instance($page->cmid);
+        $context = context_module::instance($page->cmid);
 
         $fs = get_file_storage();
         $filerecord = [
@@ -459,7 +463,7 @@ final class util_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
-        $context = \context_module::instance($page->cmid);
+        $context = context_module::instance($page->cmid);
 
         $urls = util::extract_pluginfile_urls_from_text('No files here.', $context->id, 'mod_page', 'intro', null);
         $this->assertSame([], array_values($urls));
@@ -473,7 +477,7 @@ final class util_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
-        $context = \context_module::instance($page->cmid);
+        $context = context_module::instance($page->cmid);
 
         $fs = get_file_storage();
         $fs->create_file_from_string([
@@ -497,7 +501,7 @@ final class util_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
-        $context = \context_module::instance($page->cmid);
+        $context = context_module::instance($page->cmid);
 
         get_file_storage()->create_file_from_string([
             'contextid' => $context->id,

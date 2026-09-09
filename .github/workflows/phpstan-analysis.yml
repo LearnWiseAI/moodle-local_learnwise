@@ -60,7 +60,7 @@ jobs:
 
       - name: Install moodle-plugin-ci
         run: |
-          moodle-plugin-ci add-plugin catalyst/moodle-gradingform_rubric_ranges
+          moodle-plugin-ci add-plugin rajuptl21/moodle-gradingform_rubric_ranges
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
         env:
           DB: pgsql
