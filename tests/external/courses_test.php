@@ -16,6 +16,10 @@
 
 namespace local_learnwise\external;
 
+use advanced_testcase;
+use external_function_parameters;
+use external_multiple_structure;
+
 /**
  * Tests for the courses endpoint.
  *
@@ -28,11 +32,14 @@ namespace local_learnwise\external;
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class courses_test extends \advanced_testcase {
+final class courses_test extends advanced_testcase {
     /**
      * Clear the shared single-operation and "my" flags between tests.
      */
     protected function setUp(): void {
+        global $CFG;
+        require_once($CFG->libdir . '/completionlib.php');
+
         parent::setUp();
         $this->resetAfterTest();
         baseapi::$ids = [];
@@ -168,5 +175,175 @@ final class courses_test extends \advanced_testcase {
         $this->assertSame('read', courses::crudtype());
         $this->assertSame('local_learnwise_courses', courses::function_name());
         $this->assertNotEmpty(courses::description());
+    }
+
+    /**
+     * The API takes no input.
+     */
+    public function test_execute_parameters_are_empty(): void {
+        $params = courses::execute_parameters();
+
+        $this->assertInstanceOf(external_function_parameters::class, $params);
+        $this->assertSame([], $params->keys);
+    }
+
+    /**
+     * Start and end dates are reported as ISO 8601.
+     */
+    public function test_dates_are_declared_as_timestamps(): void {
+        $this->assertSame(['startdate', 'enddate'], courses::get_unixtimestamp_fields());
+    }
+
+    /**
+     * The "my" flavour lists only the courses the caller is enrolled on.
+     */
+    public function test_execute_lists_only_enrolled_courses_for_my(): void {
+        $enrolled = $this->getDataGenerator()->create_course(['fullname' => 'Enrolled course']);
+        $other = $this->getDataGenerator()->create_course(['fullname' => 'Other course']);
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $enrolled->id);
+        $this->setUser($user);
+        baseapi::$my = true;
+
+        $response = courses::execute();
+
+        $ids = array_map('intval', array_column($response, 'id'));
+        $this->assertContains((int) $enrolled->id, $ids);
+        $this->assertNotContains((int) $other->id, $ids);
+    }
+
+    /**
+     * The "my" flavour reports completion instead of participant counts.
+     */
+    public function test_execute_reports_completion_for_my(): void {
+        global $CFG;
+
+        $course = $this->getDataGenerator()->create_course(['fullname' => 'Maths', 'shortname' => 'MATH1']);
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        $this->setUser($user);
+        baseapi::$my = true;
+
+        $response = courses::execute();
+        $courseitem = reset($response);
+
+        $this->assertSame('Maths', $courseitem['name']);
+        $this->assertSame('MATH1', $courseitem['shortname']);
+        $this->assertArrayHasKey('completionstatus', $courseitem);
+        $this->assertNull($courseitem['completionstatus']);
+        $this->assertNull($courseitem['completiondate']);
+        $this->assertArrayNotHasKey('participants', $courseitem);
+        $this->assertSame($CFG->wwwroot . '/course/view.php?id=' . $course->id, $courseitem['url']);
+    }
+
+    /**
+     * The site wide flavour reports how many participants are tracked.
+     */
+    public function test_execute_reports_participants_for_the_site_flavour(): void {
+        global $USER;
+
+        $course = $this->getDataGenerator()->create_course(['fullname' => 'Physics']);
+        $this->getDataGenerator()->enrol_user($this->getDataGenerator()->create_user()->id, $course->id);
+        $this->setAdminUser();
+        $this->getDataGenerator()->enrol_user($USER->id, $course->id);
+
+        $response = courses::execute();
+        $found = null;
+        foreach ($response as $courseitem) {
+            if ((int) $courseitem['id'] === (int) $course->id) {
+                $found = $courseitem;
+            }
+        }
+
+        $this->assertNotNull($found);
+        $this->assertArrayHasKey('participants', $found);
+        $this->assertArrayNotHasKey('completionstatus', $found);
+    }
+
+    /**
+     * Modules are only inlined for courses the caller is enrolled on.
+     */
+    public function test_execute_inlines_modules_only_when_enrolled(): void {
+        global $USER;
+
+        $enrolled = $this->getDataGenerator()->create_course();
+        $notenrolled = $this->getDataGenerator()->create_course();
+        $this->getDataGenerator()->create_module('page', ['course' => $enrolled->id, 'name' => 'Intro page']);
+        $this->getDataGenerator()->create_module('page', ['course' => $notenrolled->id, 'name' => 'Hidden page']);
+        $this->setAdminUser();
+        $this->getDataGenerator()->enrol_user($USER->id, $enrolled->id);
+
+        $response = courses::execute();
+        $byid = [];
+        foreach ($response as $courseitem) {
+            $byid[(int) $courseitem['id']] = $courseitem;
+        }
+
+        $this->assertArrayHasKey('modules', $byid[(int) $enrolled->id]);
+        $this->assertSame('Intro page', $byid[(int) $enrolled->id]['modules'][0]['name']);
+        $this->assertArrayNotHasKey('modules', $byid[(int) $notenrolled->id]);
+    }
+
+    /**
+     * Pinning a course id returns that single course rather than a list.
+     */
+    public function test_execute_returns_a_single_course_when_pinned(): void {
+        $course = $this->getDataGenerator()->create_course(['fullname' => 'Chemistry']);
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        $this->setUser($user);
+        baseapi::$my = true;
+        courses::set_id($course->id);
+
+        $response = courses::execute();
+
+        $this->assertSame((int) $course->id, (int) $response['id']);
+        $this->assertSame('Chemistry', $response['name']);
+    }
+
+    /**
+     * A start or end date that was never set is reported as null, not as zero.
+     */
+    public function test_execute_reports_unset_dates_as_null(): void {
+        $course = $this->getDataGenerator()->create_course(['startdate' => 0, 'enddate' => 0]);
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        $this->setUser($user);
+        baseapi::$my = true;
+        courses::set_id($course->id);
+
+        $response = courses::execute();
+
+        $this->assertNull($response['startdate']);
+        $this->assertNull($response['enddate']);
+    }
+
+    /**
+     * The structure drops the fields that do not apply to the chosen flavour.
+     */
+    public function test_single_structure_matches_the_flavour(): void {
+        baseapi::$my = true;
+        $mystructure = courses::single_structure();
+
+        $this->assertArrayNotHasKey('participants', $mystructure->keys);
+        $this->assertArrayHasKey('completionstatus', $mystructure->keys);
+        $this->assertArrayHasKey('completiondate', $mystructure->keys);
+
+        baseapi::$my = null;
+        $sitestructure = courses::single_structure();
+
+        $this->assertArrayHasKey('participants', $sitestructure->keys);
+        $this->assertArrayNotHasKey('completionstatus', $sitestructure->keys);
+        $this->assertArrayNotHasKey('completiondate', $sitestructure->keys);
+    }
+
+    /**
+     * Inlined modules are optional, since they are absent for unenrolled courses.
+     */
+    public function test_single_structure_makes_modules_optional(): void {
+        $structure = courses::single_structure();
+
+        $this->assertInstanceOf(external_multiple_structure::class, $structure->keys['modules']);
+        $this->assertSame(VALUE_OPTIONAL, $structure->keys['modules']->required);
     }
 }

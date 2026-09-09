@@ -16,6 +16,10 @@
 
 namespace local_learnwise;
 
+use advanced_testcase;
+use moodle_page;
+use stdClass;
+
 /**
  * Tests for the page injection callback.
  *
@@ -24,7 +28,7 @@ namespace local_learnwise;
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class hook_callbacks_test extends \advanced_testcase {
+final class hook_callbacks_test extends advanced_testcase {
     /**
      * Reset the global page between tests so page layout changes do not leak.
      */
@@ -46,13 +50,13 @@ final class hook_callbacks_test extends \advanced_testcase {
     /**
      * Build a fresh page object for a course.
      *
-     * @param \stdClass|null $course Course to set on the page, or null for the site course
-     * @return \moodle_page
+     * @param stdClass|null $course Course to set on the page, or null for the site course
+     * @return moodle_page
      */
-    protected function make_page($course = null): \moodle_page {
+    protected function make_page($course = null): moodle_page {
         global $PAGE;
 
-        $PAGE = new \moodle_page();
+        $PAGE = new moodle_page();
         $PAGE->set_url('/course/view.php');
         $PAGE->set_course($course ?? get_site());
         return $PAGE;
@@ -201,7 +205,7 @@ final class hook_callbacks_test extends \advanced_testcase {
         global $PAGE;
         $this->setAdminUser();
 
-        $PAGE = new \moodle_page();
+        $PAGE = new moodle_page();
         $PAGE->set_url('/mod/lti/view.php', ['id' => 1]);
         $PAGE->set_course(get_site());
 

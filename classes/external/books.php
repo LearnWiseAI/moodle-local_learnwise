@@ -85,7 +85,7 @@ class books extends baseapi {
         }
 
         $course = get_course($params['courseid']);
-        $cms = get_coursemodules_in_course('book', $course->id, 'm.customtitles,m.revision,m.intro');
+        $cms = get_coursemodules_in_course('book', $course->id, 'm.customtitles,m.revision,m.intro,m.introformat');
         if (!$cms) {
             return [];
         }

@@ -16,10 +16,15 @@
 
 namespace local_learnwise\external\assign;
 
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->dirroot . '/mod/assign/locallib.php');
+use advanced_testcase;
+use assign;
+use context_module;
+use dml_missing_record_exception;
+use external_single_structure;
+use local_learnwise\external\baseapi;
+use moodle_exception;
+use required_capability_exception;
+use stdClass;
 
 /**
  * Tests for the assignment submission status endpoint.
@@ -36,23 +41,26 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class get_status_test extends \advanced_testcase {
-    /** @var \stdClass */
+final class get_status_test extends advanced_testcase {
+    /** @var stdClass */
     protected $course;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $assign;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $teacher;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $student;
 
     /**
      * Build a course with an assignment, a teacher and a student who has submitted.
      */
     protected function setUp(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
         parent::setUp();
         $this->resetAfterTest();
 
@@ -61,6 +69,15 @@ final class get_status_test extends \advanced_testcase {
         $this->assign = $generator->create_module('assign', ['course' => $this->course->id]);
         $this->teacher = $generator->create_and_enrol($this->course, 'editingteacher');
         $this->student = $generator->create_and_enrol($this->course, 'student');
+    }
+
+    /**
+     * Reset the static state shared by every API class.
+     */
+    protected function tearDown(): void {
+        baseapi::$my = null;
+        baseapi::$ids = [];
+        parent::tearDown();
     }
 
     /**
@@ -110,7 +127,7 @@ final class get_status_test extends \advanced_testcase {
         $this->create_submission();
         $this->setUser($this->student);
 
-        $this->expectException(\required_capability_exception::class);
+        $this->expectException(required_capability_exception::class);
 
         get_status::execute($this->assign->id, $this->student->id);
     }
@@ -122,7 +139,7 @@ final class get_status_test extends \advanced_testcase {
         $outsider = $this->getDataGenerator()->create_user();
         $this->setUser($outsider);
 
-        $this->expectException(\moodle_exception::class);
+        $this->expectException(moodle_exception::class);
 
         get_status::execute($this->assign->id, $this->student->id);
     }
@@ -134,7 +151,7 @@ final class get_status_test extends \advanced_testcase {
         $outsider = $this->getDataGenerator()->create_user();
         $this->setUser($this->teacher);
 
-        $this->expectException(\required_capability_exception::class);
+        $this->expectException(required_capability_exception::class);
 
         get_status::execute($this->assign->id, $outsider->id);
     }
@@ -146,7 +163,7 @@ final class get_status_test extends \advanced_testcase {
         $this->setUser($this->teacher);
         delete_user($this->student);
 
-        $this->expectException(\moodle_exception::class);
+        $this->expectException(moodle_exception::class);
 
         get_status::execute($this->assign->id, $this->student->id);
     }
@@ -157,7 +174,7 @@ final class get_status_test extends \advanced_testcase {
     public function test_unknown_assignment_is_refused(): void {
         $this->setUser($this->teacher);
 
-        $this->expectException(\dml_missing_record_exception::class);
+        $this->expectException(dml_missing_record_exception::class);
 
         get_status::execute(-1, $this->student->id);
     }
@@ -167,5 +184,126 @@ final class get_status_test extends \advanced_testcase {
      */
     public function test_is_always_a_single_operation(): void {
         $this->assertTrue(get_status::is_singleoperation());
+    }
+
+    /**
+     * The API is driven by an assignment instance id and a user id.
+     */
+    public function test_execute_parameters(): void {
+        $params = get_status::execute_parameters();
+
+        $this->assertSame(['assignid', 'userid'], array_keys($params->keys));
+        $this->assertSame(PARAM_INT, $params->keys['assignid']->type);
+        $this->assertSame(PARAM_INT, $params->keys['userid']->type);
+    }
+
+    /**
+     * The API always answers with one status rather than a list.
+     */
+    public function test_it_is_always_a_single_operation(): void {
+        $this->assertTrue(get_status::is_singleoperation());
+        $this->assertInstanceOf(external_single_structure::class, get_status::execute_returns());
+    }
+
+    /**
+     * Every field of the borrowed structure is optional, since the API reports a subset.
+     */
+    public function test_single_structure_is_entirely_optional(): void {
+        $structure = get_status::single_structure();
+
+        $this->assertArrayHasKey('submission', $structure->keys);
+        foreach ($structure->keys as $key => $value) {
+            $this->assertSame(VALUE_OPTIONAL, $value->required, "Key {$key} should be optional");
+        }
+    }
+
+    /**
+     * A student who has not started work yet has no submission to report.
+     */
+    public function test_execute_without_a_submission(): void {
+        [$assign, $teacher, $student] = $this->create_assignment();
+        $this->setUser($teacher);
+
+        $this->assertSame([], get_status::execute($assign->id, $student->id));
+    }
+
+    /**
+     * A started submission is reported back to the grader.
+     */
+    public function test_execute_reports_a_submission(): void {
+        [$assign, $teacher, $student, $course, $cm] = $this->create_assignment();
+        $this->create_user_submission($course, $cm, $student);
+        $this->setUser($teacher);
+
+        $response = get_status::execute($assign->id, $student->id);
+
+        $this->assertSame((int) $student->id, (int) $response['submission']->userid);
+        $this->assertSame(ASSIGN_SUBMISSION_STATUS_SUBMITTED, $response['submission']->status);
+    }
+
+    /**
+     * Only a grader may look at somebody else's submission.
+     */
+    public function test_execute_requires_the_grade_capability(): void {
+        [$assign, , $student] = $this->create_assignment();
+        $this->setUser($student);
+
+        $this->expectException(required_capability_exception::class);
+        get_status::execute($assign->id, $student->id);
+    }
+
+    /**
+     * An unknown assignment is rejected.
+     */
+    public function test_execute_rejects_an_unknown_assignment(): void {
+        $this->setAdminUser();
+
+        $this->expectException(dml_missing_record_exception::class);
+        get_status::execute(-1, 1);
+    }
+
+    /**
+     * An unknown user is rejected.
+     */
+    public function test_execute_rejects_an_unknown_user(): void {
+        [$assign, $teacher] = $this->create_assignment();
+        $this->setUser($teacher);
+
+        $this->expectException(dml_missing_record_exception::class);
+        get_status::execute($assign->id, -1);
+    }
+
+    /**
+     * Build a course with an assignment, a teacher and a student.
+     *
+     * @return array
+     */
+    protected function create_assignment() {
+        $course = $this->getDataGenerator()->create_course();
+        $assign = $this->getDataGenerator()->create_module('assign', ['course' => $course->id]);
+        $teacher = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $course->id, 'editingteacher');
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
+        $cm = get_coursemodule_from_id('assign', $assign->cmid, 0, false, MUST_EXIST);
+        return [$assign, $teacher, $student, $course, $cm];
+    }
+
+    /**
+     * Record a submitted submission for the given student.
+     *
+     * @param stdClass $course Course the assignment belongs to
+     * @param stdClass $cm Assignment course module
+     * @param stdClass $student Submitting student
+     * @return stdClass
+     */
+    protected function create_user_submission($course, $cm, $student) {
+        global $DB;
+
+        $assignment = new assign(context_module::instance($cm->id), $cm, $course);
+        $submission = $assignment->get_user_submission($student->id, true);
+        $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        $DB->update_record('assign_submission', $submission);
+        return $submission;
     }
 }

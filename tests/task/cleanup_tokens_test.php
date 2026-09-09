@@ -16,8 +16,10 @@
 
 namespace local_learnwise\task;
 
+use advanced_testcase;
 use local_learnwise\storage;
 use local_learnwise\util;
+use stdClass;
 
 /**
  * Tests for the expired token cleanup task.
@@ -27,14 +29,14 @@ use local_learnwise\util;
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class cleanup_tokens_test extends \advanced_testcase {
+final class cleanup_tokens_test extends advanced_testcase {
     /** @var storage */
     protected $storage;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $client;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $user;
 
     /**

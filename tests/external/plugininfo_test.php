@@ -16,7 +16,12 @@
 
 namespace local_learnwise\external;
 
+use advanced_testcase;
+use external_function_parameters;
+use external_single_structure;
+use local_learnwise\constants;
 use local_learnwise\util;
+use required_capability_exception;
 
 /**
  * Tests for the plugin info endpoint.
@@ -30,7 +35,7 @@ use local_learnwise\util;
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class plugininfo_test extends \advanced_testcase {
+final class plugininfo_test extends advanced_testcase {
     /**
      * Reset shared state before each test.
      */
@@ -38,6 +43,15 @@ final class plugininfo_test extends \advanced_testcase {
         parent::setUp();
         $this->resetAfterTest();
         baseapi::$ids = [];
+    }
+
+    /**
+     * Reset the static state shared by every API class.
+     */
+    protected function tearDown(): void {
+        baseapi::$my = null;
+        baseapi::$ids = [];
+        parent::tearDown();
     }
 
     /**
@@ -103,7 +117,7 @@ final class plugininfo_test extends \advanced_testcase {
         $user = $this->getDataGenerator()->create_user();
         $this->setUser($user);
 
-        $this->expectException(\required_capability_exception::class);
+        $this->expectException(required_capability_exception::class);
 
         plugininfo::execute();
     }
@@ -113,7 +127,7 @@ final class plugininfo_test extends \advanced_testcase {
      */
     public function test_is_always_a_single_operation(): void {
         $this->assertTrue(plugininfo::is_singleoperation());
-        $this->assertInstanceOf(\external_single_structure::class, plugininfo::execute_returns());
+        $this->assertInstanceOf(external_single_structure::class, plugininfo::execute_returns());
     }
 
     /**
@@ -126,5 +140,85 @@ final class plugininfo_test extends \advanced_testcase {
 
         $this->assertArrayHasKey('clientid', $cleaned);
         $this->assertArrayHasKey('version', $cleaned);
+    }
+
+    /**
+     * The API always answers with one object rather than a list.
+     */
+    public function test_it_is_always_a_single_operation(): void {
+        $this->assertTrue(plugininfo::is_singleoperation());
+        $this->assertInstanceOf(external_single_structure::class, plugininfo::execute_returns());
+    }
+
+    /**
+     * The API takes no input.
+     */
+    public function test_execute_parameters_are_empty(): void {
+        $params = plugininfo::execute_parameters();
+
+        $this->assertInstanceOf(external_function_parameters::class, $params);
+        $this->assertSame([], $params->keys);
+    }
+
+    /**
+     * An administrator gets the plugin's client id and release back.
+     */
+    public function test_execute_reports_the_plugin_setup(): void {
+        $this->setAdminUser();
+
+        $response = plugininfo::execute();
+
+        $this->assertFalse($response['aiops']);
+        $this->assertSame(util::get_or_generate_client()->uniqid, $response['clientid']);
+        $this->assertSame('', $response['redirecturl']);
+        $this->assertSame(util::get_plugin_versioninfo()->release, $response['version']);
+    }
+
+    /**
+     * The aiops flag mirrors the plugin setting.
+     */
+    public function test_execute_reports_aiops_when_enabled(): void {
+        $this->setAdminUser();
+        set_config('aiops', 1, constants::COMPONENT);
+
+        $response = plugininfo::execute();
+
+        $this->assertTrue($response['aiops']);
+    }
+
+    /**
+     * Redirect URLs are stored one per line but reported as a comma separated list.
+     */
+    public function test_execute_flattens_the_configured_redirect_urls(): void {
+        $this->setAdminUser();
+        set_config('redirecturl', "https://a.example.com\nhttps://b.example.com", constants::COMPONENT);
+
+        $response = plugininfo::execute();
+
+        $this->assertSame('https://a.example.com,https://b.example.com', $response['redirecturl']);
+    }
+
+    /**
+     * The response validates against the API's own declared structure.
+     */
+    public function test_execute_matches_the_declared_structure(): void {
+        $this->setAdminUser();
+
+        $cleaned = plugininfo::clean_returnvalue(plugininfo::execute_returns(), plugininfo::execute());
+
+        $this->assertSame(
+            ['aiops', 'clientid', 'redirecturl', 'version'],
+            array_keys($cleaned)
+        );
+    }
+
+    /**
+     * A user without the plugininfo capability is turned away.
+     */
+    public function test_execute_requires_the_plugininfo_capability(): void {
+        $this->setUser($this->getDataGenerator()->create_user());
+
+        $this->expectException(required_capability_exception::class);
+        plugininfo::execute();
     }
 }
