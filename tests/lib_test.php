@@ -16,10 +16,11 @@
 
 namespace local_learnwise;
 
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->dirroot . '/local/learnwise/lib.php');
+use advanced_testcase;
+use coding_exception;
+use context_system;
+use required_capability_exception;
+use stdClass;
 
 /**
  * Tests for the plugin's callback functions in lib.php.
@@ -40,17 +41,20 @@ require_once($CFG->dirroot . '/local/learnwise/lib.php');
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class lib_test extends \advanced_testcase {
-    /** @var \stdClass */
+final class lib_test extends advanced_testcase {
+    /** @var stdClass */
     protected $admin;
 
-    /** @var \stdClass */
+    /** @var stdClass */
     protected $student;
 
     /**
      * Prepare an admin and a plain user for the capability checks.
      */
     protected function setUp(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/learnwise/lib.php');
+
         parent::setUp();
         $this->resetAfterTest();
 
@@ -66,7 +70,7 @@ final class lib_test extends \advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
 
         $result = local_learnwise_output_fragment_process_courses([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'action' => 'add',
             'courseids' => (string) $course->id,
         ]);
@@ -83,7 +87,7 @@ final class lib_test extends \advanced_testcase {
         util::add_courses('11,12,13');
 
         local_learnwise_output_fragment_process_courses([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'action' => 'remove',
             'courseids' => '12',
         ]);
@@ -101,10 +105,10 @@ final class lib_test extends \advanced_testcase {
     public function test_process_courses_requires_site_config(): void {
         $this->setUser($this->student);
 
-        $this->expectException(\required_capability_exception::class);
+        $this->expectException(required_capability_exception::class);
 
         local_learnwise_output_fragment_process_courses([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'action' => 'add',
             'courseids' => '1',
         ]);
@@ -120,12 +124,12 @@ final class lib_test extends \advanced_testcase {
         $this->setUser($this->student);
         try {
             local_learnwise_output_fragment_process_courses([
-                'context' => \context_system::instance(),
+                'context' => context_system::instance(),
                 'action' => 'add',
                 'courseids' => '6',
             ]);
             $this->fail('Expected required_capability_exception');
-        } catch (\required_capability_exception $e) {
+        } catch (required_capability_exception $e) {
             $this->assertSame('5', get_config('local_learnwise', 'courseids'));
         }
     }
@@ -140,7 +144,7 @@ final class lib_test extends \advanced_testcase {
         $this->setAdminUser();
 
         local_learnwise_output_fragment_process_courses([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'action' => 'add',
             'courseids' => "1,2,<script>alert(1)</script>,3';DROP TABLE users;--",
         ]);
@@ -158,7 +162,7 @@ final class lib_test extends \advanced_testcase {
         $this->setAdminUser();
 
         local_learnwise_output_fragment_process_courses([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'action' => 'add',
             'courseids' => 'abc',
         ]);
@@ -176,7 +180,7 @@ final class lib_test extends \advanced_testcase {
         util::add_courses('9');
 
         $result = local_learnwise_output_fragment_process_courses([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'action' => 'explode',
             'courseids' => '9',
         ]);
@@ -191,10 +195,10 @@ final class lib_test extends \advanced_testcase {
     public function test_refresh_lticonfig_requires_site_config(): void {
         $this->setUser($this->student);
 
-        $this->expectException(\required_capability_exception::class);
+        $this->expectException(required_capability_exception::class);
 
         local_learnwise_output_fragment_refresh_lticonfig([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'action' => 'refreshtable',
         ]);
     }
@@ -206,7 +210,7 @@ final class lib_test extends \advanced_testcase {
         $this->setAdminUser();
 
         $html = local_learnwise_output_fragment_refresh_lticonfig([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'action' => 'refreshtablerow',
             'id' => 0,
         ]);
@@ -223,13 +227,13 @@ final class lib_test extends \advanced_testcase {
     public function test_form_fragment_rejects_unexpected_formclass(): void {
         $this->setAdminUser();
 
-        $this->expectException(\coding_exception::class);
+        $this->expectException(coding_exception::class);
         $this->expectExceptionMessage('Unexpected formclass');
 
         local_learnwise_output_fragment_form([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'formdata' => http_build_query([
-                'formclass' => \stdClass::class,
+                'formclass' => stdClass::class,
                 'action' => 'update',
             ]),
         ]);
@@ -241,11 +245,11 @@ final class lib_test extends \advanced_testcase {
     public function test_form_fragment_rejects_arbitrary_core_class(): void {
         $this->setAdminUser();
 
-        $this->expectException(\coding_exception::class);
+        $this->expectException(coding_exception::class);
         $this->expectExceptionMessage('Unexpected formclass');
 
         local_learnwise_output_fragment_form([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'formdata' => http_build_query([
                 'formclass' => 'moodle_url',
                 'action' => 'update',
@@ -259,11 +263,11 @@ final class lib_test extends \advanced_testcase {
     public function test_form_fragment_rejects_empty_formclass(): void {
         $this->setAdminUser();
 
-        $this->expectException(\coding_exception::class);
+        $this->expectException(coding_exception::class);
         $this->expectExceptionMessage('Unexpected formclass');
 
         local_learnwise_output_fragment_form([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'formdata' => http_build_query([
                 'formclass' => '',
                 'action' => 'update',
@@ -277,10 +281,10 @@ final class lib_test extends \advanced_testcase {
     public function test_process_setup_requires_site_config(): void {
         $this->setUser($this->student);
 
-        $this->expectException(\required_capability_exception::class);
+        $this->expectException(required_capability_exception::class);
 
         local_learnwise_output_fragment_process_setup([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'formdata' => http_build_query(['enablewebservice' => 0]),
         ]);
     }
@@ -292,7 +296,7 @@ final class lib_test extends \advanced_testcase {
         $this->setAdminUser();
 
         $result = local_learnwise_output_fragment_process_setup([
-            'context' => \context_system::instance(),
+            'context' => context_system::instance(),
             'formdata' => http_build_query([]),
         ]);
 

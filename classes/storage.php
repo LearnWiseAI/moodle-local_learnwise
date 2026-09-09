@@ -16,6 +16,7 @@
 
 namespace local_learnwise;
 
+use dml_write_exception;
 use moodle_database;
 use local_learnwise\local\OAuth2\OpenID\Storage\AuthorizationCodeInterface;
 use local_learnwise\local\OAuth2\Storage\AccessTokenInterface;
@@ -67,7 +68,7 @@ class storage implements
             $record = (object) $params;
             try {
                 $record->id = $this->db->insert_record('local_learnwise_userauth', $record);
-            } catch (\dml_write_exception $e) {
+            } catch (dml_write_exception $e) {
                 // A concurrent request may have inserted this row first.
                 $record = $this->db->get_record('local_learnwise_userauth', $params, '*', MUST_EXIST);
             }

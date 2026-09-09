@@ -16,6 +16,8 @@
 
 namespace local_learnwise;
 
+use advanced_testcase;
+
 /**
  * Tests for the plugin constants and redirect URL handling.
  *
@@ -24,7 +26,7 @@ namespace local_learnwise;
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class constants_test extends \advanced_testcase {
+final class constants_test extends advanced_testcase {
     /**
      * The component name matches the plugin directory.
      */

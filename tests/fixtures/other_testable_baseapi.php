@@ -31,7 +31,7 @@ namespace local_learnwise\external;
  * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class other_testable_baseapi extends testable_baseapi {
+final class other_testable_baseapi extends testable_baseapi {
     /** @var string */
     public static $route = 'othertestable';
 }
