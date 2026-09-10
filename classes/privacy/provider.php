@@ -230,17 +230,10 @@ class provider implements
                 foreach ($userauths as $userauth) {
                     $userauth->clientid = $notexportedstr;
                     foreach ($tablemap as $prop => $table) {
-                        $userauth->$prop = $DB->get_records($table, ['authid' => $userauth->id]);
+                        // Select metadata explicitly so new credential fields cannot enter privacy exports.
+                        $userauth->$prop = $DB->get_records($table, ['authid' => $userauth->id], '', 'id, timeexpiry');
                         foreach ($userauth->$prop as $item) {
-                            if (isset($item->code)) {
-                                $item->code = $notexportedstr;
-                            }
-                            if (isset($item->token)) {
-                                $item->token = $notexportedstr;
-                            }
-                            if (isset($item->timeexpiry)) {
-                                $item->timeexpiry = transform::datetime($item->timeexpiry);
-                            }
+                            $item->timeexpiry = transform::datetime($item->timeexpiry);
                         }
                     }
                     writer::with_context($context)->export_data(array_merge($subcontext, [(string) $userauth->id]), $userauth);
