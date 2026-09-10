@@ -126,20 +126,18 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
 
         provider::get_users_in_context($userlist);
 
-        $this->assertContains((int) $this->usera->id, array_map('intval', $userlist->get_userids()));
+        $this->assertSame([(int) $this->usera->id], array_map('intval', $userlist->get_userids()));
     }
 
     /**
-     * Users holding plugin data are discoverable from the system context.
+     * The system context does not own user authorizations.
      */
     public function test_get_users_in_context_for_system_context(): void {
         $userlist = new userlist(context_system::instance(), 'local_learnwise');
 
         provider::get_users_in_context($userlist);
 
-        $found = array_map('intval', $userlist->get_userids());
-        $this->assertContains((int) $this->usera->id, $found);
-        $this->assertContains((int) $this->userb->id, $found);
+        $this->assertEmpty($userlist->get_userids());
     }
 
     /**
@@ -152,30 +150,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         provider::get_users_in_context($userlist);
 
         $this->assertEmpty($userlist->get_userids());
-    }
-
-    /**
-     * A user context currently lists every user with plugin data, not just its owner.
-     *
-     * The query is not filtered by the context's instanceid, so asking about user A's
-     * context also returns user B. delete_data_for_users() only removes the userids that
-     * were approved, so this does not itself delete the wrong data, but it does surface
-     * unrelated users when a single user's context is processed.
-     *
-     * This documents current behaviour; if the query should be scoped to the context owner,
-     * add "WHERE userid = :userid" and tighten this test.
-     */
-    public function test_get_users_in_context_is_not_scoped_to_the_context_owner(): void {
-        $context = context_user::instance($this->usera->id);
-        $userlist = new userlist($context, 'local_learnwise');
-
-        provider::get_users_in_context($userlist);
-
-        $this->assertContains(
-            (int) $this->userb->id,
-            array_map('intval', $userlist->get_userids()),
-            'Unrelated users are currently returned for a single user context'
-        );
     }
 
     /**
@@ -200,7 +174,9 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
 
         provider::export_user_data($contextlist);
 
-        $data = writer::with_context($context)->get_data([get_string('pluginname', 'local_learnwise')]);
+        global $DB;
+        $authid = $DB->get_field('local_learnwise_userauth', 'id', ['userid' => $this->usera->id]);
+        $data = writer::with_context($context)->get_data([get_string('pluginname', 'local_learnwise'), (string) $authid]);
         $this->assertSame(get_string('privacy:request:notexportedsecurity', 'local_learnwise'), $data->clientid);
         $this->assertNotEquals($this->client->id, $data->clientid);
     }
@@ -299,16 +275,110 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     }
 
     /**
-     * Deleting all data in a context clears every user's tokens.
+     * Deleting a user context revokes only its owner's tokens.
      */
     public function test_delete_data_for_all_users_in_context(): void {
-        global $DB;
-
         provider::delete_data_for_all_users_in_context(context_user::instance($this->usera->id));
+        $this->assert_tokens_exist('a', false);
+        $this->assert_tokens_exist('b', true);
+    }
 
-        $this->assertSame(0, $DB->count_records('local_learnwise_userauth'));
-        $this->assertSame(0, $DB->count_records('local_learnwise_accesstoken'));
-        $this->assertSame(0, $DB->count_records('local_learnwise_refreshtoken'));
-        $this->assertSame(0, $DB->count_records('local_learnwise_authcode'));
+    /**
+     * Empty, foreign-user, system and course contexts must not authorize erasure or export.
+     */
+    public function test_unrelated_contexts_do_not_delete_or_export(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $contexts = [context_system::instance(), context_course::instance($course->id),
+            context_user::instance($this->userb->id)];
+        foreach (
+            array_merge([[]], array_map(function ($context) {
+                return [$context->id];
+            }, $contexts)) as $ids
+        ) {
+            $approved = new approved_contextlist($this->usera, 'local_learnwise', $ids);
+            provider::delete_data_for_user($approved);
+            provider::export_user_data($approved);
+            $this->assert_tokens_exist('a', true);
+            $this->assert_tokens_exist('b', true);
+        }
+        foreach ($contexts as $context) {
+            $this->assertFalse(writer::with_context($context)->has_any_data());
+            if (!$context instanceof context_user) {
+                provider::delete_data_for_all_users_in_context($context);
+                provider::delete_data_for_users(new approved_userlist(
+                    $context,
+                    'local_learnwise',
+                    [$this->usera->id, $this->userb->id]
+                ));
+                $this->assert_tokens_exist('a', true);
+                $this->assert_tokens_exist('b', true);
+            }
+        }
+    }
+
+    /**
+     * Approval of another user cannot erase data belonging to either context owner.
+     */
+    public function test_userlist_only_deletes_the_approved_context_owner(): void {
+        $context = context_user::instance($this->usera->id);
+        provider::delete_data_for_users(new approved_userlist($context, 'local_learnwise', [$this->userb->id]));
+        $this->assert_tokens_exist('a', true);
+        $this->assert_tokens_exist('b', true);
+        provider::delete_data_for_users(new approved_userlist(
+            $context,
+            'local_learnwise',
+            [$this->usera->id, $this->userb->id]
+        ));
+        $this->assert_tokens_exist('a', false);
+        $this->assert_tokens_exist('b', true);
+    }
+
+    /**
+     * Each client authorization is exported separately with credentials redacted, then erased together.
+     */
+    public function test_multiple_clients_are_exported_and_deleted_without_affecting_other_users(): void {
+        global $DB;
+        $this->client = (object) ['uniqid' => 'second-client', 'secret' => 'second-secret'];
+        $this->client->id = $DB->insert_record('local_learnwise_clients', $this->client);
+        $this->seed_tokens($this->usera, 'a2');
+        $context = context_user::instance($this->usera->id);
+        provider::export_user_data(new approved_contextlist($this->usera, 'local_learnwise', [$context->id]));
+        $auths = $DB->get_records('local_learnwise_userauth', ['userid' => $this->usera->id]);
+        $this->assertCount(2, $auths);
+        $redacted = get_string('privacy:request:notexportedsecurity', 'local_learnwise');
+        foreach ($auths as $auth) {
+            $data = writer::with_context($context)->get_data([get_string('pluginname', 'local_learnwise'), (string) $auth->id]);
+            $this->assertEquals($this->usera->id, $data->userid);
+            $this->assertSame($redacted, $data->clientid);
+            foreach (['authcodes', 'accesstokens', 'refreshtokens'] as $property) {
+                $this->assertCount(1, $data->$property);
+                foreach ($data->$property as $item) {
+                    $this->assertSame($redacted, $item->token);
+                    if ($property === 'authcodes') {
+                        $this->assertSame($redacted, $item->code);
+                    }
+                }
+            }
+        }
+        $this->assert_tokens_exist('a', true);
+        $this->assert_tokens_exist('a2', true);
+        provider::delete_data_for_all_users_in_context($context);
+        $this->assert_tokens_exist('a', false);
+        $this->assert_tokens_exist('a2', false);
+        $this->assert_tokens_exist('b', true);
+        $this->assertSame(1, $DB->count_records('local_learnwise_userauth'));
+        $this->assertSame(2, $DB->count_records('local_learnwise_clients'));
+    }
+
+    /**
+     * Assert that all three credential types remain retrievable or have been erased.
+     *
+     * @param string $suffix Token fixture suffix.
+     * @param bool $expected Whether the credentials should exist.
+     */
+    protected function assert_tokens_exist(string $suffix, bool $expected): void {
+        $this->assertSame($expected, (bool) $this->storage->getAccessToken("access-{$suffix}"));
+        $this->assertSame($expected, (bool) $this->storage->getRefreshToken("refresh-{$suffix}"));
+        $this->assertSame($expected, (bool) $this->storage->getAuthorizationCode("code-{$suffix}"));
     }
 }
