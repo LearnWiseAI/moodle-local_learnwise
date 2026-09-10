@@ -188,6 +188,8 @@ class storage implements
             'expires' => $authcode->timeexpiry,
             'scope' => $this->getDefaultScope(),
             'id_token' => $authcode->token,
+            'code_challenge' => $authcode->codechallenge,
+            'code_challenge_method' => $authcode->codechallengemethod,
         ];
     }
 
@@ -219,6 +221,8 @@ class storage implements
         $record = new stdClass();
         $record->authid = $userauth->id;
         $record->code = $code;
+        $record->codechallenge = $codechallenge;
+        $record->codechallengemethod = $codechallengemethod;
         $record->redirecturi = $redirecturi;
         $record->timeexpiry = $expires;
         if ($id = $this->db->get_field('local_learnwise_authcode', 'id', ['code' => $code])) {

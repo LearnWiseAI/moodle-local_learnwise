@@ -20,6 +20,7 @@ use local_learnwise\local\OAuth2\GrantType\AuthorizationCode;
 use local_learnwise\local\OAuth2\GrantType\RefreshToken;
 use local_learnwise\local\OAuth2\Server as OAuth2Server;
 
+// phpcs:disable moodle.NamingConventions.ValidFunctionName.LowercaseMethod -- Inherited OAuth API.
 /**
  * Class server
  *
@@ -57,5 +58,38 @@ class server extends OAuth2Server {
             self::$instance = $server;
         }
         return self::$instance;
+    }
+
+    /**
+     * Use the plugin controller without modifying the bundled OAuth library.
+     *
+     * @return \local_learnwise\oauth\authorize_controller
+     */
+    protected function createDefaultAuthorizeController() {
+        if (empty($this->responseTypes)) {
+            $this->responseTypes = $this->getDefaultResponseTypes();
+        }
+        return new \local_learnwise\oauth\authorize_controller(
+            $this->storages['client'],
+            $this->responseTypes,
+            $this->config,
+            $this->getScopeUtil()
+        );
+    }
+
+    /**
+     * Preserve PKCE on the URL used for login return and consent submission.
+     *
+     * @param array $params Validated OAuth authorization parameters.
+     * @return \moodle_url
+     */
+    public static function get_authorization_url(array $params): \moodle_url {
+        foreach (['code_challenge', 'code_challenge_method'] as $name) {
+            $value = optional_param($name, null, PARAM_RAW);
+            if ($value !== null) {
+                $params[$name] = $value;
+            }
+        }
+        return new \moodle_url('/local/learnwise/auth.php', $params);
     }
 }

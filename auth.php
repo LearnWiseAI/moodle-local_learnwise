@@ -37,7 +37,6 @@ $redirecturi = required_param('redirect_uri', PARAM_URL);
 $scope = optional_param('scope', false, PARAM_TEXT);
 $state = optional_param('state', false, PARAM_TEXT);
 
-$url = new moodle_url('/local/learnwise/auth.php', []);
 $params = [
     'client_id' => $clientid,
     'response_type' => $responsetype,
@@ -51,7 +50,7 @@ if ($state) {
 if ($redirecturi) {
     $params['redirect_uri'] = $redirecturi;
 }
-$url->params($params);
+$url = server::get_authorization_url($params);
 
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());

@@ -209,5 +209,20 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026090800, 'local', 'learnwise');
     }
 
+    if ($oldversion < 2026091001) {
+        // Nullable fields preserve codes issued before PKCE support was installed.
+        $table = new xmldb_table('local_learnwise_authcode');
+        $fields = [
+            new xmldb_field('codechallenge', XMLDB_TYPE_CHAR, '43', null, null, null, null, 'redirecturi'),
+            new xmldb_field('codechallengemethod', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'codechallenge'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026091001, 'local', 'learnwise');
+    }
+
     return true;
 }
