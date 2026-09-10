@@ -131,7 +131,7 @@ JS;
             $sitecourseid = get_site()->id;
             $currentcourseid = $COURSE->id > $sitecourseid ? $COURSE->id : null;
             $showincoursecheck = in_array($currentcourseid, $configcourseids);
-            if (isset($currentcourseid) ? (empty($configcourseids) || $showincoursecheck) : !$showincoursesonly) {
+            if (isset($currentcourseid) ? $showincoursecheck : !$showincoursesonly) {
                 $html .= $renderer->render_from_template('local_learnwise/assistantwidget', [
                     'assistantid' => $settings->assistantid,
                     'courseid' => $currentcourseid,
