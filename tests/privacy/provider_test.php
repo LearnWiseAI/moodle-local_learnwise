@@ -153,7 +153,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     }
 
     /**
-     * Exporting a user's data writes their tokens under the plugin subcontext.
+     * Exporting a user's data writes token metadata under the plugin subcontext.
      */
     public function test_export_user_data(): void {
         $context = context_user::instance($this->usera->id);
@@ -179,6 +179,40 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $data = writer::with_context($context)->get_data([get_string('pluginname', 'local_learnwise'), (string) $authid]);
         $this->assertSame(get_string('privacy:request:notexportedsecurity', 'local_learnwise'), $data->clientid);
         $this->assertNotEquals($this->client->id, $data->clientid);
+    }
+
+    /**
+     * Export only credential presence and expiry, without changing stored OAuth credentials.
+     */
+    public function test_export_only_includes_token_metadata(): void {
+        global $DB;
+        $authid = $DB->get_field('local_learnwise_userauth', 'id', ['userid' => $this->usera->id]);
+        $DB->set_field('local_learnwise_authcode', 'codechallenge', 'private-pkce-challenge', ['authid' => $authid]);
+        $DB->set_field('local_learnwise_authcode', 'codechallengemethod', 'S256', ['authid' => $authid]);
+        $tables = [
+            'authcodes' => 'local_learnwise_authcode',
+            'accesstokens' => 'local_learnwise_accesstoken',
+            'refreshtokens' => 'local_learnwise_refreshtoken',
+        ];
+        $before = [];
+        foreach ($tables as $property => $table) {
+            $before[$property] = $DB->get_records($table);
+        }
+        $context = context_user::instance($this->usera->id);
+        provider::export_user_data(new approved_contextlist($this->usera, 'local_learnwise', [$context->id]));
+        $data = writer::with_context($context)->get_data([get_string('pluginname', 'local_learnwise'), (string) $authid]);
+        foreach ($tables as $property => $table) {
+            $this->assertCount(1, $data->$property);
+            foreach ($data->$property as $item) {
+                $this->assertSame(['id', 'timeexpiry'], array_keys((array) $item));
+                $record = $before[$property][$item->id];
+                $this->assertEquals($authid, $record->authid);
+                $this->assertSame(\core_privacy\local\request\transform::datetime($record->timeexpiry), $item->timeexpiry);
+            }
+            $this->assertEquals($before[$property], $DB->get_records($table));
+        }
+        $this->assert_tokens_exist('a', true);
+        $this->assert_tokens_exist('b', true);
     }
 
     /**
@@ -353,10 +387,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
             foreach (['authcodes', 'accesstokens', 'refreshtokens'] as $property) {
                 $this->assertCount(1, $data->$property);
                 foreach ($data->$property as $item) {
-                    $this->assertSame($redacted, $item->token);
-                    if ($property === 'authcodes') {
-                        $this->assertSame($redacted, $item->code);
-                    }
+                    $this->assertSame(['id', 'timeexpiry'], array_keys((array) $item));
                 }
             }
         }
