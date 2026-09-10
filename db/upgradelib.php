@@ -48,3 +48,42 @@ function local_learnwise_upgrade_sync_role_capabilities() {
         );
     }
 }
+
+/**
+ * Replace legacy user OAuth credentials with hashes, preserving all other metadata.
+ *
+ * The marker is updated with the value so interrupted upgrades can safely resume.
+ * Client secrets and Moodle core webservice tokens are deliberately untouched.
+ *
+ * @return void
+ */
+function local_learnwise_upgrade_hash_user_tokens() {
+    global $DB;
+    $tables = [
+        'local_learnwise_authcode' => 'code',
+        'local_learnwise_accesstoken' => 'token',
+        'local_learnwise_refreshtoken' => 'token',
+    ];
+    foreach ($tables as $table => $field) {
+        $lastid = 0;
+        while (
+            $records = $DB->get_records_select(
+                $table,
+                'tokenhashed = 0 AND id > :lastid',
+                ['lastid' => $lastid],
+                'id ASC',
+                "id, {$field}",
+                0,
+                500
+            )
+        ) {
+            foreach ($records as $record) {
+                $lastid = $record->id;
+                $record->$field = hash('sha256', $record->$field);
+                $record->tokenhashed = 1;
+                $DB->update_record($table, $record);
+            }
+            upgrade_set_timeout(300);
+        }
+    }
+}
