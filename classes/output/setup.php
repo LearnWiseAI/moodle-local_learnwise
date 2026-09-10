@@ -72,6 +72,7 @@ class setup implements renderable, templatable {
         $this->formvalues->webServicesStatus = !empty($config->webservices);
         $this->formvalues->liveApiStatus = !empty($config->liveapi);
         $this->formvalues->aiOpsStatus = !empty($config->aiops);
+        $this->formvalues->showInCoursesOnlyStatus = !empty($config->showincoursesonly);
         $this->formvalues->environment = $env;
         $this->formvalues->region = !empty($config->region) ? $config->region : constants::REGION;
         $this->formvalues->aiAssessmentStatus = !empty($config->aiassessment);
@@ -121,6 +122,10 @@ class setup implements renderable, templatable {
             'aiOpsStatus' => [
                 PARAM_BOOL,
                 new lang_string('aiops', $plugin),
+            ],
+            'showincoursesonlyStatus' => [
+                PARAM_BOOL,
+                new lang_string('showincoursesonly', $plugin),
             ],
             'liveApiConfigRedirectURLs' => [
                 function ($value) {
@@ -237,6 +242,7 @@ class setup implements renderable, templatable {
         set_config('webservices', $postdata->webServicesStatus, $plugin);
         set_config('liveapi', $postdata->liveApiStatus, $plugin);
         set_config('aiops', $postdata->aiOpsStatus, $plugin);
+        set_config('showincoursesonly', $postdata->showInCoursesOnlyStatus, $plugin);
         set_config('redirecturl', $postdata->liveApiConfigRedirectURLs, $plugin);
         set_config('environment', $postdata->environment, $plugin);
         if (empty($postdata->floatingButtonRegion)) {

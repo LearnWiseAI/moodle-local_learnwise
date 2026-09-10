@@ -115,6 +115,7 @@
     <input type="hidden" name="webServicesStatus" value="{{#webServicesStatus}}1{{/webServicesStatus}}">
     <input type="hidden" name="liveApiStatus" value="{{#liveApiStatus}}1{{/liveApiStatus}}">
     <input type="hidden" name="aiOpsStatus" value="0">
+    <input type="hidden" name="showInCoursesOnlyStatus" value="0">
     <input type="hidden" name="aiAssessmentStatus" value="{{#aiAssessmentStatus}}1{{/aiAssessmentStatus}}">
     <div class="container">
         <h1 class="main-title">{{#str}} integration_listpage, local_learnwise {{/str}}</h1>
@@ -200,6 +201,21 @@
                     {{#errors.floatingButtonAssistantId}}
                         <div class="d-block invalid-feedback">{{{ . }}}</div>
                     {{/errors.floatingButtonAssistantId}}
+                </div>
+            </div>
+
+            <!-- Only show in courses -->
+            <div class="field-row show-in-courses-field-row">
+                <div class="field-label">
+                    <label for="showInCoursesOnlyStatus" class="label">{{#str}} showincoursesonly, local_learnwise {{/str}}</label>
+                    <div class="label-hint">local_learnwise | showincoursesonly</div>
+                </div>
+                <div class="field-input">
+                    <input type="checkbox" name="showInCoursesOnlyStatus" value="1" id="showInCoursesOnlyStatus"{{#showInCoursesOnlyStatus}} checked {{/showInCoursesOnlyStatus}}>
+                    <div class="text-hint">{{#str}} showincoursesonly_desc, local_learnwise {{/str}}</div>
+                    {{#errors.showInCoursesOnlyStatus}}
+                        <div class="d-block invalid-feedback">{{{ . }}}</div>
+                    {{/errors.showInCoursesOnlyStatus}}
                 </div>
             </div>
 
