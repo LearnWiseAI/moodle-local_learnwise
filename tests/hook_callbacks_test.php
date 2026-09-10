@@ -227,4 +227,128 @@ final class hook_callbacks_test extends advanced_testcase {
             (string) hook_callbacks::before_standard_top_of_body_html_generation()
         );
     }
+
+    /**
+     * Outside a course the widget is suppressed when it is restricted to courses only.
+     */
+    public function test_widget_hidden_off_course_when_restricted_to_courses(): void {
+        $this->setAdminUser();
+        $this->enable_widget();
+
+        set_config('showincoursesonly', 1, 'local_learnwise');
+        $this->make_page();
+
+        $html = (string) hook_callbacks::before_standard_top_of_body_html_generation();
+        $this->assertFalse(
+            strpos($html, 'assistant-123') !== false,
+            'assistant-123 should not be found in HTML when restricted to courses only'
+        );
+    }
+
+    /**
+     * Outside a course the widget still shows when it is not restricted to courses.
+     */
+    public function test_widget_shown_off_course_when_not_restricted(): void {
+        $this->setAdminUser();
+        $this->enable_widget();
+        set_config('showincoursesonly', 0, 'local_learnwise');
+        $this->make_page();
+
+        $html = hook_callbacks::before_standard_top_of_body_html_generation();
+
+        $this->assertTrue(
+            strpos($html, 'assistant-123') !== false,
+            'assistant-123 should be found in HTML when not restricted to courses'
+        );
+        $this->assertTrue(
+            strpos($html, 'courseId: null') !== false,
+            'courseId: null should be found in HTML'
+        );
+    }
+
+    /**
+     * The course restriction only applies off-course: inside a course the allowlist decides.
+     */
+    public function test_course_restriction_does_not_affect_courses(): void {
+        $this->setAdminUser();
+        $this->enable_widget();
+        set_config('showincoursesonly', 1, 'local_learnwise');
+
+        $course = $this->getDataGenerator()->create_course();
+        $this->make_page($course);
+
+        $html = hook_callbacks::before_standard_top_of_body_html_generation();
+        $this->assertTrue(
+            strpos($html, 'assistant-123') !== false,
+            'assistant-123 should be found even with course restriction when inside a course'
+        );
+    }
+
+    /**
+     * The "allow" course keeps loads assistant.
+     */
+    public function test_allow_course_limits_to_listed_courses(): void {
+        $this->setAdminUser();
+        $this->enable_widget();
+
+        $allowed = $this->getDataGenerator()->create_course();
+        $blocked = $this->getDataGenerator()->create_course();
+        set_config('courseids', (string) $allowed->id, 'local_learnwise');
+
+        $this->make_page($allowed);
+        $html = hook_callbacks::before_standard_top_of_body_html_generation();
+        $this->assertTrue(
+            strpos($html, 'assistant-123') !== false,
+            'assistant-123 should be found in allowed course'
+        );
+
+        $this->make_page($blocked);
+        $html = (string) hook_callbacks::before_standard_top_of_body_html_generation();
+        $this->assertFalse(
+            strpos($html, 'assistant-123') !== false,
+            'assistant-123 should not be found in blocked course'
+        );
+    }
+
+    /**
+     * An empty course list means every course gets the widget under either operation.
+     */
+    public function test_empty_course_list_shows_in_every_course(): void {
+        $this->setAdminUser();
+        $this->enable_widget();
+        set_config('courseids', '', 'local_learnwise');
+
+        $course = $this->getDataGenerator()->create_course();
+        $this->make_page($course);
+
+        $html = hook_callbacks::before_standard_top_of_body_html_generation();
+        $this->assertTrue(
+            strpos($html, 'assistant-123') !== false,
+            'assistant-123 should be found when course list is empty (shows in all courses)'
+        );
+    }
+
+    /**
+     * Inside a course the real course id reaches the widget; the site course maps to null.
+     */
+    public function test_widget_course_id_excludes_the_site_course(): void {
+        $this->setAdminUser();
+        $this->enable_widget();
+
+        $course = $this->getDataGenerator()->create_course();
+        $this->make_page($course);
+
+        $html = hook_callbacks::before_standard_top_of_body_html_generation();
+        $this->assertTrue(
+            strpos($html, "courseId: \"{$course->id}\"") !== false,
+            "courseId: \"{$course->id}\" should be found in course page"
+        );
+
+        $this->make_page();
+        $html = hook_callbacks::before_standard_top_of_body_html_generation();
+        $this->assertTrue(
+            strpos($html, 'courseId: null') !== false,
+            'courseId: null should be found on site course'
+        );
+    }
 }
