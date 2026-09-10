@@ -33,6 +33,17 @@ use context_system;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class util_test extends advanced_testcase {
+
+    /**
+     * Load PHP 8.1 pollyfill.
+     */
+    public function setUp(): void {
+        global $CFG;
+        parent::setUp();
+        require_once($CFG->dirroot . '/local/learnwise/tests/polyfill/bootstrap.php');
+        require_once($CFG->dirroot . '/local/learnwise/tests/polyfill/Php81.php');
+    }
+
     /**
      * The component name is read from the COMPONENT constant when the subclass defines one.
      */
@@ -148,7 +159,7 @@ final class util_test extends advanced_testcase {
         $this->resetAfterTest();
 
         $this->assertSame('https://aiden-sbx.learnwise.dev', util::get_remotehosturl('sandbox'));
-        $this->assertStringNotContainsString('aiden.sandbox', util::get_remotehosturl('sandbox'));
+        $this->assertNotContains('aiden.sandbox', util::get_remotehosturl('sandbox'));
     }
 
     /**
@@ -451,8 +462,8 @@ final class util_test extends advanced_testcase {
 
         $this->assertCount(1, $urls);
         $url = reset($urls);
-        $this->assertStringContainsString('attachment.txt', $url);
-        $this->assertStringNotContainsString('/webservice/pluginfile.php/', $url);
+        $this->assertContains('attachment.txt', $url);
+        $this->assertNotContains('/webservice/pluginfile.php/', $url);
     }
 
     /**
@@ -516,7 +527,7 @@ final class util_test extends advanced_testcase {
         $urls = util::extract_pluginfile_urls_from_text($text, $context->id, 'mod_page', 'content', 0);
 
         $this->assertCount(1, $urls);
-        $this->assertStringContainsString('/mod_page/content/0/body.txt', reset($urls));
+        $this->assertContains('/mod_page/content/0/body.txt', reset($urls));
     }
 
     /**

@@ -117,7 +117,7 @@ final class grade_test extends advanced_testcase {
             'assignment' => $this->assign->id,
             'userid' => $this->student->id,
         ]);
-        $this->assertEqualsWithDelta(80.0, (float) $grade->grade, 0.001);
+        $this->assertEquals(80.0, (float) $grade->grade);
     }
 
     /**
@@ -455,7 +455,7 @@ final class grade_test extends advanced_testcase {
 
         $this->assertTrue($response['success']);
         $assignment = new assign(context_module::instance($cm->id), $cm, $course);
-        $this->assertEqualsWithDelta(75.0, $assignment->get_user_grade($student->id, false)->grade, 0.001);
+        $this->assertEquals(75.0, $assignment->get_user_grade($student->id, false)->grade);
     }
 
     /**
@@ -491,7 +491,8 @@ final class grade_test extends advanced_testcase {
         $assignment = new assign(context_module::instance($cm->id), $cm, $course);
         $usergrade = $assignment->get_user_grade($student->id, false);
         $comment = $DB->get_record('assignfeedback_comments', ['grade' => $usergrade->id]);
-        $this->assertStringContainsString('Nicely argued', $comment->commenttext);
+        $this->assertNotFalse($comment);
+        $this->assertContains('Nicely argued', $comment->commenttext);
     }
 
     /**

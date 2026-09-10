@@ -107,7 +107,7 @@ final class books_test extends advanced_testcase {
         $this->assertSame('Handbook', $response[0]['name']);
         $this->assertSame((int) $course->id, (int) $response[0]['course_id']);
         $this->assertSame(get_section_name($course, 1), $response[0]['sectionname']);
-        $this->assertStringContainsString('All you need to know.', $response[0]['description']);
+        $this->assertContains('All you need to know.', $response[0]['description']);
         $this->assertSame([], $response[0]['descriptionfiles']);
         $this->assertArrayNotHasKey('chapters', $response[0]);
     }

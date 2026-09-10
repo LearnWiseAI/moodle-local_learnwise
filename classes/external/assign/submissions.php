@@ -142,6 +142,11 @@ class submissions extends baseapi {
      */
     public static function get_info(assign $assign, stdClass $submission) {
         global $DB, $USER;
+
+        // Backword Compatibility.
+        defined('ASSIGNFEEDBACK_COMMENTS_COMPONENT') || define('ASSIGNFEEDBACK_COMMENTS_COMPONENT', 'assignfeedback_comments');
+        defined('ASSIGNFEEDBACK_COMMENTS_FILEAREA') || define('ASSIGNFEEDBACK_COMMENTS_FILEAREA', 'feedback');
+
         $filesubmission = $assign->get_submission_plugin_by_type('file');
         if ($filesubmission) {
             foreach ($filesubmission->get_files($submission, $USER) as $storedfile) {

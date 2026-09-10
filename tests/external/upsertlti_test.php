@@ -19,6 +19,7 @@ namespace local_learnwise\external;
 use advanced_testcase;
 use external_single_structure;
 use local_learnwise\constants;
+use local_learnwise\output\setup;
 use local_learnwise\util;
 use required_capability_exception;
 
@@ -43,6 +44,11 @@ final class upsertlti_test extends advanced_testcase {
         $this->resetAfterTest();
         baseapi::$my = null;
         baseapi::$ids = [];
+
+        $setup = new setup();
+        if (!$setup->showltisetup()) {
+            $this->markTestSkipped('LTI 1.3 not available.');
+        }
     }
 
     /**

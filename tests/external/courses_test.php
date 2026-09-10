@@ -90,7 +90,7 @@ final class courses_test extends advanced_testcase {
         $this->assertSame($course->id, $item['id']);
         $this->assertSame('Physics 101', $item['name']);
         $this->assertSame('PHY101', $item['shortname']);
-        $this->assertStringContainsString('/course/view.php', $item['url']);
+        $this->assertContains('/course/view.php', $item['url']);
         $this->assertArrayHasKey('completionstatus', $item);
         $this->assertArrayHasKey('modules', $item);
     }
@@ -164,7 +164,7 @@ final class courses_test extends advanced_testcase {
 
         $cleaned = courses::clean_returnvalue(courses::execute_returns(), courses::execute());
 
-        $this->assertIsArray($cleaned);
+        $this->assertInternalType('array', $cleaned);
         $this->assertNotEmpty($cleaned);
     }
 

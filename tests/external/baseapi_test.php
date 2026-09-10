@@ -360,8 +360,8 @@ final class baseapi_test extends advanced_testcase {
 
         $url = baseapi::file_url_from_stored_file($file)->out(false);
 
-        $this->assertStringContainsString('/pluginfile.php/', $url);
-        $this->assertStringContainsString("/{$context->id}/mod_page/intro/", $url);
+        $this->assertContains('/pluginfile.php/', $url);
+        $this->assertContains("/{$context->id}/mod_page/intro/", $url);
         $this->assertStringEndsWith('doc.txt', $url);
     }
 
@@ -525,8 +525,8 @@ final class baseapi_test extends advanced_testcase {
 
         $cleaned = baseapi::clean_returnvalue(new external_value(PARAM_RAW, 'html'), $html);
 
-        $this->assertStringNotContainsString($CFG->wwwroot . '/pluginfile.php', $cleaned);
-        $this->assertStringNotContainsString($CFG->wwwroot . '/tokenpluginfile.php', $cleaned);
+        $this->assertNotContains($CFG->wwwroot . '/pluginfile.php', $cleaned);
+        $this->assertNotContains($CFG->wwwroot . '/tokenpluginfile.php', $cleaned);
         $this->assertSame(2, substr_count($cleaned, '/local/learnwise/api/file.php'));
     }
 

@@ -206,7 +206,7 @@ final class ws_proxy_test extends advanced_testcase {
 
         $this->assertSame(413, $response->getStatusCode());
         $this->assertSame('response_too_large', $response->getParameters()['error']);
-        $this->assertStringContainsString('10 MiB', $response->getParameters()['error_description']);
+        $this->assertContains('10 MiB', $response->getParameters()['error_description']);
     }
 
     /**

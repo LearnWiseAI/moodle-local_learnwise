@@ -88,6 +88,14 @@ class upsertlti extends baseapi {
         global $CFG;
         require_once($CFG->dirroot . '/mod/lti/lib.php');
         require_once($CFG->dirroot . '/mod/lti/locallib.php');
+
+        // Backword Compatibility.
+        defined('LTI_VERSION_1P3') || define('LTI_VERSION_1P3', '1.3.0');
+        defined('LTI_RSA_KEY') || define('LTI_RSA_KEY', 'RSA_KEY');
+        defined('LTI_JWK_KEYSET') || define('LTI_JWK_KEYSET', 'JWK_KEYSET');
+        defined('LTI_DEFAULT_ORGID_SITEID') || define('LTI_DEFAULT_ORGID_SITEID', 'SITEID');
+        defined('LTI_DEFAULT_ORGID_SITEHOST') || define('LTI_DEFAULT_ORGID_SITEHOST', 'SITEHOST');
+
         $params = self::validate_parameters(
             self::execute_parameters(),
             $params

@@ -22,6 +22,7 @@ use local_learnwise\external\baseapi;
 use local_learnwise\external\timestampvalue;
 use question_engine;
 use stdClass;
+use test_question_maker;
 
 /**
  * Tests for the quiz attempts API.
@@ -39,6 +40,7 @@ final class attempts_test extends advanced_testcase {
     protected function setUp(): void {
         global $CFG;
         require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+        require_once($CFG->dirroot . '/question/engine/tests/helpers.php');
 
         parent::setUp();
         $this->resetAfterTest();
@@ -120,12 +122,13 @@ final class attempts_test extends advanced_testcase {
         $this->setUser($user);
 
         $response = attempts::execute($course->id, $quiz->cmid);
+        $response = attempts::clean_returnvalue(attempts::execute_returns(), $response);
         $this->reset_deprecation_debugging();
 
         $this->assertCount(1, $response);
         $this->assertSame((int) $attempt->id, (int) $response[0]['id']);
         $this->assertSame('finished', $response[0]['state']);
-        $this->assertEqualsWithDelta(80.0, $response[0]['grade'], 0.001);
+        $this->assertEquals(80.0, $response[0]['grade'], '', 0.001);
     }
 
     /**
@@ -137,6 +140,7 @@ final class attempts_test extends advanced_testcase {
         $this->setUser($user);
 
         $response = attempts::execute($course->id, $quiz->cmid);
+        $response = attempts::clean_returnvalue(attempts::execute_returns(), $response);
         $this->reset_deprecation_debugging();
 
         $this->assertSame('inprogress', $response[0]['state']);
@@ -157,7 +161,7 @@ final class attempts_test extends advanced_testcase {
         $this->reset_deprecation_debugging();
 
         $this->assertSame((int) $second->id, (int) $response['id']);
-        $this->assertEqualsWithDelta(90.0, $response['grade'], 0.001);
+        $this->assertEquals(90.0, $response['grade'], '', 0.001);
     }
 
     /**
@@ -190,6 +194,8 @@ final class attempts_test extends advanced_testcase {
         $context = context_module::instance($quiz->cmid);
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $context);
         $quba->set_preferred_behaviour('deferredfeedback');
+        $slot = $quba->add_question(test_question_maker::make_question('truefalse', 'true'));
+        $quba->get_question_attempt($slot)->start('deferredfeedback', 1);
         question_engine::save_questions_usage_by_activity($quba);
 
         $attempt = (object) [

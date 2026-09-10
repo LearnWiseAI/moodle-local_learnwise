@@ -146,6 +146,7 @@ final class notifications_test extends advanced_testcase {
         $message->fullmessagehtml = '<p>' . $subject . '</p>';
         $message->smallmessage = $subject;
         $message->notification = 1;
+        $message->courseid = SITEID;
         message_send($message);
     }
 }

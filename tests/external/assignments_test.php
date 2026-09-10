@@ -163,8 +163,8 @@ final class assignments_test extends advanced_testcase {
 
         $response = assignments::execute($course->id);
 
-        $this->assertStringContainsString('500', $response[0]['description']);
-        $this->assertStringNotContainsString('<strong>', $response[0]['description']);
+        $this->assertContains('500', $response[0]['description']);
+        $this->assertNotContains('<strong>', $response[0]['description']);
         $this->assertSame([], $response[0]['descriptionfiles']);
         $this->assertSame([], $response[0]['additionalfiles']);
     }

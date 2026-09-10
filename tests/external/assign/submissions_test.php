@@ -167,7 +167,7 @@ final class submissions_test extends advanced_testcase {
             return $submission->body ?? '';
         }, $result);
 
-        $this->assertStringNotContainsString('Answer from student B', implode(' ', $bodies));
+        $this->assertNotContains('Answer from student B', implode(' ', $bodies));
     }
 
     /**
@@ -182,8 +182,8 @@ final class submissions_test extends advanced_testcase {
         }, $result);
         $joined = implode(' ', $bodies);
 
-        $this->assertStringContainsString('Answer from student A', $joined);
-        $this->assertStringContainsString('Answer from student B', $joined);
+        $this->assertContains('Answer from student A', $joined);
+        $this->assertContains('Answer from student B', $joined);
     }
 
     /**
@@ -238,7 +238,7 @@ final class submissions_test extends advanced_testcase {
 
         $result = submissions::execute($this->assign->cmid);
 
-        $this->assertIsObject($result);
+        $this->assertInternalType('object', $result);
         $this->assertEquals($this->studentb->id, $result->user_id);
     }
 
@@ -373,9 +373,9 @@ final class submissions_test extends advanced_testcase {
 
         $response = submissions::execute($cm->id);
 
-        $this->assertStringContainsString('My submitted', $response[0]->body);
-        $this->assertStringContainsString('here', $response[0]->body);
-        $this->assertStringNotContainsString('<strong>', $response[0]->body);
+        $this->assertContains('My submitted', $response[0]->body);
+        $this->assertContains('here', $response[0]->body);
+        $this->assertNotContains('<strong>', $response[0]->body);
     }
 
     /**
@@ -411,7 +411,7 @@ final class submissions_test extends advanced_testcase {
         $response = submissions::execute($cm->id);
 
         $this->assertCount(1, $response->submission_comments);
-        $this->assertStringContainsString('Well argued', $response->submission_comments[0]['comment']);
+        $this->assertContains('Well argued', $response->submission_comments[0]['comment']);
         $this->assertSame((int) $teacher->id, (int) $response->submission_comments[0]['author_id']);
         $this->assertSame(fullname($teacher), $response->submission_comments[0]['author_name']);
     }

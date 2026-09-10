@@ -103,7 +103,7 @@ final class hook_callbacks_test extends advanced_testcase {
         set_config('assistantid', 'assistant-123', 'local_learnwise');
         $this->make_page();
 
-        $this->assertStringNotContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+        $this->assertNotContains('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
     }
 
     /**
@@ -127,7 +127,7 @@ final class hook_callbacks_test extends advanced_testcase {
 
         $html = hook_callbacks::before_standard_top_of_body_html_generation();
 
-        $this->assertStringContainsString('assistant-123', $html);
+        $this->assertContains('assistant-123', $html);
     }
 
     /**
@@ -160,10 +160,10 @@ final class hook_callbacks_test extends advanced_testcase {
         set_config('courseids', (string) $allowed->id, 'local_learnwise');
 
         $this->make_page($allowed);
-        $this->assertStringContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+        $this->assertContains('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
 
         $this->make_page($blocked);
-        $this->assertStringNotContainsString(
+        $this->assertNotContains(
             'assistant-123',
             hook_callbacks::before_standard_top_of_body_html_generation()
         );
@@ -180,7 +180,7 @@ final class hook_callbacks_test extends advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $this->make_page($course);
 
-        $this->assertStringContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+        $this->assertContains('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
     }
 
     /**
@@ -194,8 +194,8 @@ final class hook_callbacks_test extends advanced_testcase {
 
         $html = hook_callbacks::before_standard_top_of_body_html_generation();
 
-        $this->assertStringContainsString('aiden.learnwise.ai', $html);
-        $this->assertStringContainsString('chat.learnwise.ai', $html);
+        $this->assertContains('aiden.learnwise.ai', $html);
+        $this->assertContains('chat.learnwise.ai', $html);
     }
 
     /**
@@ -211,8 +211,8 @@ final class hook_callbacks_test extends advanced_testcase {
 
         $html = hook_callbacks::before_standard_top_of_body_html_generation();
 
-        $this->assertStringContainsString('contentframe', $html);
-        $this->assertStringContainsString('<script>', $html);
+        $this->assertContains('contentframe', $html);
+        $this->assertContains('<script>', $html);
     }
 
     /**
@@ -222,7 +222,7 @@ final class hook_callbacks_test extends advanced_testcase {
         $this->setAdminUser();
         $this->make_page();
 
-        $this->assertStringNotContainsString(
+        $this->assertNotContains(
             'contentframe',
             (string) hook_callbacks::before_standard_top_of_body_html_generation()
         );

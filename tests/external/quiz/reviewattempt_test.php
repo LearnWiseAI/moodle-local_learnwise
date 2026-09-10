@@ -24,6 +24,7 @@ use local_learnwise\external\baseapi;
 use moodle_exception;
 use question_engine;
 use stdClass;
+use test_question_maker;
 
 /**
  * Tests for the quiz attempt review API.
@@ -41,6 +42,7 @@ final class reviewattempt_test extends advanced_testcase {
     protected function setUp(): void {
         global $CFG;
         require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+        require_once($CFG->dirroot . '/question/engine/tests/helpers.php');
 
         parent::setUp();
         $this->resetAfterTest();
@@ -114,7 +116,7 @@ final class reviewattempt_test extends advanced_testcase {
 
         $response = reviewattempt::execute($course->id, $quiz->cmid, $attempt->id);
 
-        $this->assertEqualsWithDelta(60.0, $response['grade'], 0.001);
+        $this->assertEquals(60.0, $response['grade'], '', 0.001);
         $this->assertSame([], $response['questions']);
     }
 
@@ -146,7 +148,7 @@ final class reviewattempt_test extends advanced_testcase {
 
         $response = reviewattempt::execute($course->id, $quiz->cmid, $attempt->id);
 
-        $this->assertEqualsWithDelta(60.0, $response['grade'], 0.001);
+        $this->assertEquals(60.0, $response['grade'], '', 0.001);
     }
 
     /**
@@ -188,6 +190,8 @@ final class reviewattempt_test extends advanced_testcase {
         $context = context_module::instance($quiz->cmid);
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $context);
         $quba->set_preferred_behaviour('deferredfeedback');
+        $slot = $quba->add_question(test_question_maker::make_question('truefalse', 'true'));
+        $quba->get_question_attempt($slot)->start('deferredfeedback', 1);
         question_engine::save_questions_usage_by_activity($quba);
 
         $attempt = (object) [
