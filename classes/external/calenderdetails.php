@@ -43,7 +43,9 @@ class calenderdetails extends baseapi {
      */
     public static $route = 'calendar';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get calender upcoming events';
     }

@@ -36,7 +36,9 @@ class scorms extends baseapi {
      */
     public static $route = 'scorms';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get scorms';
     }

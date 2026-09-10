@@ -43,7 +43,9 @@ class submissions extends baseapi {
      */
     public static $route = 'submissions';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get assign submissions';
     }

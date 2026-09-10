@@ -43,7 +43,9 @@ class modules extends baseapi {
      */
     public static $withcompletion = false;
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get module details';
     }

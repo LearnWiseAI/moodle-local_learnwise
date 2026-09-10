@@ -53,8 +53,12 @@ class api_response extends oauth2_response {
         $this->responseoversizedescription = $errordescription;
     }
 
-    #[\Override]
-    public function setParameters(array $parameters) {
+    /**
+     * {@inheritdoc}
+     *
+     * Retains the inherited OAuth2 method name.
+     */
+    public function setParameters(array $parameters) { // phpcs:ignore moodle.NamingConventions.ValidFunctionName.LowercaseMethod
         $encoded = json_encode($parameters);
         if (
             $this->maxresponsebytes !== null
@@ -79,8 +83,12 @@ class api_response extends oauth2_response {
         $this->emptyarrayresponse = $emptyarrayresponse;
     }
 
-    #[\Override]
-    public function getResponseBody($format = 'json') {
+    /**
+     * {@inheritdoc}
+     *
+     * Retains the inherited OAuth2 method name.
+     */
+    public function getResponseBody($format = 'json') { // phpcs:ignore moodle.NamingConventions.ValidFunctionName.LowercaseMethod
         if ($format === 'json' && $this->emptyarrayresponse && $this->getParameters() === []) {
             return '[]';
         }

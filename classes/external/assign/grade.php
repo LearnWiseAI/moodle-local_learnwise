@@ -45,12 +45,16 @@ class grade extends baseapi {
      */
     public static $route = 'grade';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function crudtype() {
         return 'write';
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Submit assignment grade';
     }

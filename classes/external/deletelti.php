@@ -40,7 +40,9 @@ use local_learnwise\util;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class deletelti extends baseapi {
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Delete lti configuration';
     }

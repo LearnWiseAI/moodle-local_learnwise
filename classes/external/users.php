@@ -31,7 +31,9 @@ class users extends userdetails {
      */
     public static $route = 'users';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get user info';
     }

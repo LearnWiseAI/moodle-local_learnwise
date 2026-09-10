@@ -38,7 +38,9 @@ class forums extends baseapi {
      */
     public static $route = 'forums';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get forums';
     }
