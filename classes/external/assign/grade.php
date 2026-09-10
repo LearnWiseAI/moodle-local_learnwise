@@ -136,107 +136,139 @@ class grade extends baseapi {
 
         $assignment->require_view_submission($params['user_id']);
 
-        $grade = $assignment->get_user_grade($params['user_id'], true);
-        $originalgrade = $grade->grade;
-        $gradingdisabled = $assignment->grading_disabled($params['user_id']);
+        if ($assignment->grading_disabled($params['user_id'])) {
+            return ['success' => false, 'error' => get_string('gradingdisabled', 'local_learnwise')];
+        }
+
+        // Workflow state belongs to the user's flags, not the assignment grade row.
+        if ($assignment->get_instance()->markingworkflow) {
+            $flags = $assignment->get_user_flags($params['user_id'], false);
+            if (
+                !empty($flags->workflowstate) && $flags->workflowstate !== ASSIGN_MARKING_WORKFLOW_STATE_NOTMARKED &&
+                    !array_key_exists($flags->workflowstate, $assignment->get_marking_workflow_states_for_current_user())
+            ) {
+                return ['success' => false, 'error' => get_string('gradingdisabled', 'local_learnwise')];
+            }
+        }
 
         $rubricassessment = (object) $params['rubric_assessment'];
         $gradingmanager = get_grading_manager($context, 'mod_assign', 'submissions');
-        $gradinginstance = null;
-        if ($gradingmethod = $gradingmanager->get_active_method()) {
-            $controller = $gradingmanager->get_controller($gradingmethod);
-            if ($controller->is_form_available()) {
-                $itemid = null;
-                if ($grade) {
-                    $itemid = $grade->id;
-                }
-                if ($gradingdisabled && $itemid) {
-                    $gradinginstance = $controller->get_current_instance($USER->id, $itemid);
-                } else if (!$gradingdisabled) {
+        $gradingmethod = $gradingmanager->get_active_method();
+        if (is_null($gradingmethod)) {
+            $mark = $rubricassessment->submission_grade;
+            $maximum = $assignment->get_instance()->grade;
+            $invalid = !is_finite($mark) || ($mark != -1 && ($mark < 0 || ($maximum >= 0 && $mark > $maximum)));
+            if ($maximum < 0 && $mark != -1) {
+                $scale = $DB->get_record('scale', ['id' => -$maximum], '*', MUST_EXIST);
+                $options = make_menu_from_list($scale->scale);
+                $invalid = $invalid || $mark != (int) $mark || !array_key_exists((int) $mark, $options);
+            }
+            if ($invalid) {
+                return ['success' => false, 'error' => get_string('gradingfailed', 'local_learnwise')];
+            }
+        }
+
+        if ($gradingmethod && !$gradingmanager->get_controller($gradingmethod)->is_form_available()) {
+            return ['success' => false, 'error' => get_string('gradingfailed', 'local_learnwise')];
+        }
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $grade = $assignment->get_user_grade($params['user_id'], true);
+            $originalgrade = $grade->grade;
+            $gradinginstance = null;
+            if ($gradingmethod) {
+                $controller = $gradingmanager->get_controller($gradingmethod);
+                if ($controller->is_form_available()) {
+                    $itemid = null;
+                    if ($grade) {
+                        $itemid = $grade->id;
+                    }
                     $gradinginstance = $controller->get_or_create_instance(
                         $params['advancedgradinginstanceid'],
                         $USER->id,
                         $itemid
                     );
                 }
+            } else if (is_null($gradingmethod)) {
+                $grade->grade = grade_floatval(unformat_float($rubricassessment->submission_grade));
             }
-        } else if (is_null($gradingmethod)) {
-            $grade->grade = grade_floatval(unformat_float($rubricassessment->submission_grade));
-        }
 
-        if ($gradinginstance) {
-            $grademenu = make_grades_menu($assignment->get_instance()->grade);
-            $allowgradedecimals = $assignment->get_instance()->grade > 0;
-            $gradinginstance->get_controller()->set_grade_range($grademenu, $allowgradedecimals);
-        }
+            if ($gradinginstance) {
+                $grademenu = make_grades_menu($assignment->get_instance()->grade);
+                $allowgradedecimals = $assignment->get_instance()->grade > 0;
+                $gradinginstance->get_controller()->set_grade_range($grademenu, $allowgradedecimals);
+            }
 
-        if (!$gradingdisabled && $gradinginstance) {
-            $criteria = [];
-            if (!empty($rubricassessment->rubric_assessments)) {
-                if (isset($rubricassessment->rubric_assessments['rubric_feedback_array'])) {
-                    foreach ($rubricassessment->rubric_assessments['rubric_feedback_array'] as $feedback) {
-                        $content = !empty($feedback['content']) ? $feedback['content'] : null;
-                        $criteria[$feedback['rubric_section_id']] = [
-                            'levelid' => $feedback['graded_lms_rubric_rating_id'],
-                            'remark' => $content,
-                            'grade' => !empty($feedback['graded_score']) ? $feedback['graded_score'] : 0,
-                        ];
+            if ($gradinginstance) {
+                $criteria = [];
+                if (!empty($rubricassessment->rubric_assessments)) {
+                    if (isset($rubricassessment->rubric_assessments['rubric_feedback_array'])) {
+                        foreach ($rubricassessment->rubric_assessments['rubric_feedback_array'] as $feedback) {
+                            $content = !empty($feedback['content']) ? $feedback['content'] : null;
+                            $criteria[$feedback['rubric_section_id']] = [
+                                'levelid' => $feedback['graded_lms_rubric_rating_id'] ?? null,
+                                'remark' => $content,
+                                'grade' => !empty($feedback['graded_score']) ? $feedback['graded_score'] : 0,
+                            ];
+                        }
+                    }
+                    if (isset($rubricassessment->rubric_assessments['guide_feedback_array'])) {
+                        foreach ($rubricassessment->rubric_assessments['guide_feedback_array'] as $feedback) {
+                            $content = !empty($feedback['content']) ? $feedback['content'] : null;
+                            $criteria[$feedback['rubric_section_id']] = [
+                                'remark' => $content,
+                                'score' => !empty($feedback['graded_score']) ? $feedback['graded_score'] : 0,
+                            ];
+                        }
                     }
                 }
-                if (isset($rubricassessment->rubric_assessments['guide_feedback_array'])) {
-                    foreach ($rubricassessment->rubric_assessments['guide_feedback_array'] as $feedback) {
-                        $content = !empty($feedback['content']) ? $feedback['content'] : null;
-                        $criteria[$feedback['rubric_section_id']] = [
-                            'remark' => $content,
-                            'score' => !empty($feedback['graded_score']) ? $feedback['graded_score'] : 0,
-                        ];
+                if (!empty($criteria)) {
+                    $advancegradingdata = ['criteria' => $criteria];
+                    if (!$gradinginstance->validate_grading_element($advancegradingdata)) {
+                        throw new \moodle_exception('gradingfailed', 'local_learnwise');
+                    }
+                    $grade->grade = $gradinginstance->submit_and_get_grade(
+                        $advancegradingdata,
+                        $grade->id
+                    );
+                }
+            }
+            $grade->grader = $USER->id;
+
+            $feedbackmodified = false;
+            $feedbackplugins = $assignment->load_plugins('assignfeedback');
+            foreach ($feedbackplugins as $plugin) {
+                if (isset($rubricassessment->general_feedback) && $plugin->is_enabled() && $plugin->is_visible()) {
+                    $formdata = new stdClass();
+                    $formdata->assignfeedbackcomments_editor = [
+                        'text' => $rubricassessment->general_feedback,
+                        'format' => 1,
+                    ];
+                    $gradingmodified = $plugin->is_feedback_modified($grade, $formdata);
+                    if ($gradingmodified) {
+                        if (!$plugin->save($grade, $formdata)) {
+                            throw new \moodle_exception('error', 'moodle', '', $plugin->get_error());
+                        }
+                        $feedbackmodified = true;
                     }
                 }
             }
-            if (!empty($criteria)) {
-                $advancegradingdata = ['criteria' => $criteria];
-                $grade->grade = $gradinginstance->submit_and_get_grade(
-                    $advancegradingdata,
-                    $grade->id
-                );
-            }
-        }
-        $grade->grader = $USER->id;
 
-        $feedbackmodified = false;
-        $feedbackplugins = $assignment->load_plugins('assignfeedback');
-        foreach ($feedbackplugins as $plugin) {
-            if ($plugin->is_enabled() && $plugin->is_visible()) {
-                $formdata = new stdClass();
-                $formdata->assignfeedbackcomments_editor = [
-                    'text' => $rubricassessment->general_feedback,
-                    'format' => 1,
-                ];
-                $gradingmodified = $plugin->is_feedback_modified($grade, $formdata);
-                if ($gradingmodified) {
-                    if (!$plugin->save($grade, $formdata)) {
-                        throw new \moodle_exception('error', 'moodle', '', $plugin->get_error());
-                    }
-                    $feedbackmodified = true;
+            if (
+                ($originalgrade !== null && $originalgrade != -1) ||
+                    ($grade->grade !== null && $grade->grade != -1) || $feedbackmodified
+            ) {
+                if (!$assignment->update_grade($grade)) {
+                    throw new \moodle_exception('gradingfailed', 'local_learnwise');
                 }
             }
-        }
 
-        if (
-            ($originalgrade !== null && $originalgrade != -1) ||
-                ($grade->grade !== null && $grade->grade != -1) || $feedbackmodified
-        ) {
-            $assignment->update_grade($grade);
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            $transaction->rollback($e);
         }
-
-        if ($grade->grade > 0) {
-            return ['success' => true];
-        } else {
-            return [
-                'success' => false,
-                'error' => get_string('gradingdisabled', 'local_learnwise'),
-            ];
-        }
+        return ['success' => true];
     }
 
     /**

@@ -69,7 +69,8 @@ final class grade_test extends advanced_testcase {
 
         $generator = $this->getDataGenerator();
         $this->course = $generator->create_course();
-        $this->assign = $generator->create_module('assign', ['course' => $this->course->id, 'grade' => 100]);
+        $this->assign = $generator->create_module('assign', ['course' => $this->course->id, 'grade' => 100,
+            'assignfeedback_comments_enabled' => 1]);
 
         $this->teacher = $generator->create_and_enrol($this->course, 'editingteacher');
         $this->student = $generator->create_and_enrol($this->course, 'student');
@@ -121,9 +122,9 @@ final class grade_test extends advanced_testcase {
     }
 
     /**
-     * A zero grade is reported as an unsuccessful grading rather than a silent success.
+     * A valid zero grade is saved and reported as successful.
      */
-    public function test_zero_grade_reports_failure(): void {
+    public function test_zero_grade_reports_success(): void {
         $this->setUser($this->teacher);
 
         $result = grade::execute(
@@ -133,8 +134,8 @@ final class grade_test extends advanced_testcase {
             $this->assessment(0.0)
         );
 
-        $this->assertFalse($result['success']);
-        $this->assertArrayHasKey('error', $result);
+        $this->assertTrue($result['success']);
+        $this->assertArrayNotHasKey('error', $result);
     }
 
     /**
@@ -495,9 +496,9 @@ final class grade_test extends advanced_testcase {
     }
 
     /**
-     * A grade of zero is reported as a failure, with the reason.
+     * A grade of zero is saved successfully.
      */
-    public function test_execute_reports_a_zero_grade_as_a_failure(): void {
+    public function test_execute_reports_a_zero_grade_as_success(): void {
         [$course, $cm, $assign, $teacher, $student] = $this->create_assignment();
         $this->setUser($teacher);
 
@@ -506,8 +507,11 @@ final class grade_test extends advanced_testcase {
             'general_feedback' => '',
         ], null);
 
-        $this->assertFalse($response['success']);
-        $this->assertSame(get_string('gradingdisabled', 'local_learnwise'), $response['error']);
+        $this->assertTrue($response['success']);
+        global $DB;
+        $this->assertEquals(0, $DB->get_field('assign_grades', 'grade', [
+            'assignment' => $assign->id, 'userid' => $student->id,
+        ]));
     }
 
     /**
@@ -566,6 +570,304 @@ final class grade_test extends advanced_testcase {
             'submission_grade' => 75.0,
             'general_feedback' => '',
         ], null);
+    }
+
+    /**
+     * Gradebook and workflow restrictions reject both grade and feedback edits.
+     *
+     * @dataProvider disabled_grading_provider
+     * @param string $restriction The restriction to apply.
+     */
+    public function test_disabled_grading_preserves_grade_and_feedback(string $restriction): void {
+        global $DB;
+        $this->setUser($this->teacher);
+        grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment(60));
+        $context = context_module::instance($this->assign->cmid);
+        if ($restriction === 'workflow') {
+            $DB->set_field('assign', 'markingworkflow', 1, ['id' => $this->assign->id]);
+            $assignment = new assign($context, get_coursemodule_from_id('assign', $this->assign->cmid), $this->course);
+            $flags = $assignment->get_user_flags($this->student->id, true);
+            $flags->workflowstate = ASSIGN_MARKING_WORKFLOW_STATE_INREVIEW;
+            $assignment->update_user_flags($flags);
+            $roleid = $DB->get_field('role', 'id', ['shortname' => 'editingteacher']);
+            foreach (['reviewgrades', 'managegrades', 'releasegrades'] as $capability) {
+                assign_capability('mod/assign:' . $capability, CAP_PREVENT, $roleid, $context->id, true);
+            }
+            accesslib_clear_all_caches_for_unit_testing();
+        } else {
+            $item = $DB->get_record('grade_items', ['itemmodule' => 'assign', 'iteminstance' => $this->assign->id]);
+            if ($restriction === 'itemlocked') {
+                $DB->set_field('grade_items', 'locked', time(), ['id' => $item->id]);
+            } else {
+                $DB->set_field('grade_grades', $restriction, time(), ['itemid' => $item->id, 'userid' => $this->student->id]);
+            }
+        }
+        $beforegrade = $DB->get_record('assign_grades', ['assignment' => $this->assign->id, 'userid' => $this->student->id]);
+        $beforefeedback = $DB->get_records('assignfeedback_comments', ['grade' => $beforegrade->id]);
+        $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, [
+            'submission_grade' => 90, 'general_feedback' => 'Must not be saved',
+        ]);
+        $this->assertFalse($result['success']);
+        $this->assertEquals($beforegrade, $DB->get_record('assign_grades', ['id' => $beforegrade->id]));
+        $this->assertEquals($beforefeedback, $DB->get_records('assignfeedback_comments', ['grade' => $beforegrade->id]));
+    }
+
+    /**
+     * Restrictions that must prevent all grading writes.
+     *
+     * @return array
+     */
+    public static function disabled_grading_provider(): array {
+        return [['locked'], ['overridden'], ['itemlocked'], ['workflow']];
+    }
+
+    /**
+     * A locked assignment cannot create a new grade as a side effect of a rejected request.
+     */
+    public function test_locked_assignment_does_not_create_a_grade(): void {
+        global $DB;
+        $DB->set_field('grade_items', 'locked', time(), ['itemmodule' => 'assign', 'iteminstance' => $this->assign->id]);
+        $this->setUser($this->teacher);
+        $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment(80));
+        $this->assertFalse($result['success']);
+        $this->assertFalse($DB->record_exists('assign_grades', ['assignment' => $this->assign->id]));
+    }
+
+    /**
+     * A rejected numeric mark does not create a grade or save feedback.
+     */
+    public function test_out_of_range_grade_saves_nothing(): void {
+        global $DB;
+        $this->setUser($this->teacher);
+        foreach ([101, -2] as $mark) {
+            $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment($mark));
+            $this->assertFalse($result['success']);
+            $this->assertFalse($DB->record_exists('assign_grades', ['assignment' => $this->assign->id]));
+            $this->assertSame(0, $DB->count_records('assignfeedback_comments'));
+        }
+    }
+
+    /**
+     * Feedback without an awarded mark is a valid successful operation.
+     */
+    public function test_feedback_only_reports_success(): void {
+        global $DB;
+        $this->setUser($this->teacher);
+        $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment(-1));
+        $this->assertTrue($result['success']);
+        $grade = $DB->get_record('assign_grades', ['assignment' => $this->assign->id, 'userid' => $this->student->id]);
+        $this->assertEquals(-1, $grade->grade);
+        $this->assertSame('Well done.', $DB->get_field('assignfeedback_comments', 'commenttext', ['grade' => $grade->id]));
+    }
+
+    /**
+     * Omitting optional feedback preserves the existing comment while updating the mark.
+     */
+    public function test_grade_without_feedback_preserves_comments(): void {
+        global $DB;
+        $this->setUser($this->teacher);
+        grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment(60));
+        $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, ['submission_grade' => 70]);
+        $this->assertTrue($result['success']);
+        $grade = $DB->get_record('assign_grades', ['assignment' => $this->assign->id, 'userid' => $this->student->id]);
+        $this->assertEquals(70, $grade->grade);
+        $this->assertSame('Well done.', $DB->get_field('assignfeedback_comments', 'commenttext', ['grade' => $grade->id]));
+    }
+
+    /**
+     * Rubric and guide grading still persist their criteria and comments.
+     *
+     * @dataProvider advanced_grading_provider
+     * @param string $method The grading method.
+     */
+    public function test_advanced_grading_saves_criteria(string $method): void {
+        global $DB;
+        $this->setUser($this->teacher);
+        $context = context_module::instance($this->assign->cmid);
+        $generator = $this->getDataGenerator()->get_plugin_generator('gradingform_' . $method);
+        $criteria = $method === 'rubric' ? ['Quality' => ['Poor' => 0, 'Good' => 10]] : [
+            'Quality' => ['description' => 'Quality', 'descriptionmarkers' => 'Quality', 'maxscore' => 10],
+        ];
+        $controller = $generator->create_instance($context, 'mod_assign', 'submissions', 'Assessment', '', $criteria);
+        $definition = $controller->get_definition();
+        $payload = $this->assessment(80);
+        if ($method === 'rubric') {
+            $criterion = reset($definition->rubric_criteria);
+            $level = end($criterion['levels']);
+            $payload['rubric_assessments']['rubric_feedback_array'] = [[
+                'rubric_section_id' => $criterion['id'], 'graded_lms_rubric_rating_id' => $level['id'], 'content' => 'Good',
+            ]];
+        } else {
+            $criterion = reset($definition->guide_criteria);
+            $payload['rubric_assessments']['guide_feedback_array'] = [[
+                'rubric_section_id' => $criterion['id'], 'graded_score' => 10, 'content' => 'Good',
+            ]];
+        }
+        $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $payload);
+        $this->assertTrue($result['success']);
+        $grade = $DB->get_record('assign_grades', ['assignment' => $this->assign->id, 'userid' => $this->student->id]);
+        $this->assertEquals(100, $grade->grade);
+        $instance = $DB->get_record('grading_instances', ['itemid' => $grade->id, 'definitionid' => $definition->id]);
+        $this->assertTrue($DB->record_exists('gradingform_' . $method . '_fillings', ['instanceid' => $instance->id]));
+        $beforefillings = $DB->get_records('gradingform_' . $method . '_fillings', ['instanceid' => $instance->id]);
+        $beforefeedback = $DB->get_records('assignfeedback_comments', ['grade' => $grade->id]);
+        $DB->set_field('grade_items', 'locked', time(), ['itemmodule' => 'assign', 'iteminstance' => $this->assign->id]);
+        $payload['general_feedback'] = 'Must not be saved';
+        $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $payload);
+        $this->assertFalse($result['success']);
+        $this->assertEquals($grade, $DB->get_record('assign_grades', ['id' => $grade->id]));
+        $this->assertEquals(
+            $beforefillings,
+            $DB->get_records('gradingform_' . $method . '_fillings', ['instanceid' => $instance->id])
+        );
+        $this->assertEquals($beforefeedback, $DB->get_records('assignfeedback_comments', ['grade' => $grade->id]));
+    }
+
+    /**
+     * Core rejection rolls back feedback and newly created advanced grading instances.
+     */
+    public function test_core_rejected_grade_rolls_back_feedback(): void {
+        global $DB;
+        $this->setUser($this->teacher);
+        grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment(80));
+        // A lower maximum leaves an existing mark outside the range accepted by core.
+        $DB->set_field('assign', 'grade', 50, ['id' => $this->assign->id]);
+        $generator = $this->getDataGenerator()->get_plugin_generator('gradingform_guide');
+        $generator->create_instance(
+            context_module::instance($this->assign->cmid),
+            'mod_assign',
+            'submissions',
+            'Assessment',
+            '',
+            ['Quality' => ['description' => 'Quality', 'descriptionmarkers' => 'Quality', 'maxscore' => 10]]
+        );
+        $beforegrade = $DB->get_record('assign_grades', ['assignment' => $this->assign->id, 'userid' => $this->student->id]);
+        $beforefeedback = $DB->get_records('assignfeedback_comments', ['grade' => $beforegrade->id]);
+        $beforeinstances = $DB->count_records('grading_instances');
+        $this->preventResetByRollback();
+        try {
+            grade::execute($this->course->id, $this->assign->cmid, $this->student->id, [
+                'submission_grade' => -1, 'general_feedback' => 'Must be rolled back',
+            ]);
+            $this->fail('Expected Moodle to reject the out-of-range retained grade');
+        } catch (moodle_exception $e) {
+            $this->assertSame('gradingfailed', $e->errorcode);
+        }
+        $this->assertEquals($beforegrade, $DB->get_record('assign_grades', ['id' => $beforegrade->id]));
+        $this->assertEquals($beforefeedback, $DB->get_records('assignfeedback_comments', ['grade' => $beforegrade->id]));
+        $this->assertSame($beforeinstances, $DB->count_records('grading_instances'));
+    }
+
+    /**
+     * Invalid guide criteria cannot create a grade, feedback or a grading instance.
+     */
+    public function test_invalid_advanced_criteria_roll_back_new_records(): void {
+        global $DB;
+        $this->setUser($this->teacher);
+        $generator = $this->getDataGenerator()->get_plugin_generator('gradingform_guide');
+        $controller = $generator->create_instance(
+            context_module::instance($this->assign->cmid),
+            'mod_assign',
+            'submissions',
+            'Assessment',
+            '',
+            ['Quality' => ['description' => 'Quality', 'descriptionmarkers' => 'Quality', 'maxscore' => 10]]
+        );
+        $definition = $controller->get_definition();
+        $criterion = reset($definition->guide_criteria);
+        $payload = $this->assessment(80);
+        $payload['rubric_assessments']['guide_feedback_array'] = [[
+            'rubric_section_id' => $criterion['id'], 'graded_score' => 11, 'content' => 'Invalid mark',
+        ]];
+        $this->preventResetByRollback();
+        try {
+            grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $payload);
+            $this->fail('Expected invalid guide criteria to be rejected');
+        } catch (moodle_exception $e) {
+            $this->assertSame('gradingfailed', $e->errorcode);
+        }
+        $this->assertFalse($DB->record_exists('assign_grades', ['assignment' => $this->assign->id]));
+        $this->assertSame(0, $DB->count_records('assignfeedback_comments'));
+        $this->assertSame(0, $DB->count_records('grading_instances'));
+        $this->assertSame(0, $DB->count_records('gradingform_guide_fillings'));
+    }
+
+    /**
+     * A permitted workflow state saves the mark without claiming that an unreleased grade failed.
+     */
+    public function test_permitted_workflow_state_reports_success(): void {
+        global $DB;
+        $DB->set_field('assign', 'markingworkflow', 1, ['id' => $this->assign->id]);
+        $this->setUser($this->teacher);
+        $assignment = new assign(
+            context_module::instance($this->assign->cmid),
+            get_coursemodule_from_id('assign', $this->assign->cmid),
+            $this->course
+        );
+        $flags = $assignment->get_user_flags($this->student->id, true);
+        $flags->workflowstate = ASSIGN_MARKING_WORKFLOW_STATE_INMARKING;
+        $assignment->update_user_flags($flags);
+        $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment(80));
+        $this->assertTrue($result['success']);
+        $this->assertEquals(80, $DB->get_field('assign_grades', 'grade', [
+            'assignment' => $this->assign->id, 'userid' => $this->student->id,
+        ]));
+    }
+
+    /**
+     * Valid scale selections still save, while invalid indices leave the grade untouched.
+     */
+    public function test_scale_grades_validate_the_selected_option(): void {
+        global $DB;
+        $scale = $this->getDataGenerator()->create_scale(['scale' => 'Needs work,Meets expectations']);
+        $DB->set_field('assign', 'grade', -$scale->id, ['id' => $this->assign->id]);
+        $this->setUser($this->teacher);
+        foreach ([1, 2] as $mark) {
+            $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment($mark));
+            $this->assertTrue($result['success']);
+        }
+        $before = $DB->get_record('assign_grades', ['assignment' => $this->assign->id, 'userid' => $this->student->id]);
+        $this->assertEquals(2, $before->grade);
+        foreach ([0, 3, 1.5] as $mark) {
+            $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment($mark));
+            $this->assertFalse($result['success']);
+            $this->assertEquals($before, $DB->get_record('assign_grades', ['id' => $before->id]));
+        }
+    }
+
+    /**
+     * An unavailable advanced grading form cannot report a successful grade save.
+     */
+    public function test_unavailable_advanced_form_saves_nothing(): void {
+        global $DB;
+        $this->setUser($this->teacher);
+        $generator = $this->getDataGenerator()->get_plugin_generator('gradingform_guide');
+        $controller = $generator->create_instance(
+            context_module::instance($this->assign->cmid),
+            'mod_assign',
+            'submissions',
+            'Assessment',
+            '',
+            ['Quality' => ['description' => 'Quality', 'descriptionmarkers' => 'Quality', 'maxscore' => 10]]
+        );
+        $DB->set_field(
+            'grading_definitions',
+            'status',
+            \gradingform_controller::DEFINITION_STATUS_DRAFT,
+            ['id' => $controller->get_definition()->id]
+        );
+        $result = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $this->assessment(80));
+        $this->assertFalse($result['success']);
+        $this->assertFalse($DB->record_exists('assign_grades', ['assignment' => $this->assign->id]));
+    }
+
+    /**
+     * Advanced grading methods supported by Moodle and the plugin.
+     *
+     * @return array
+     */
+    public static function advanced_grading_provider(): array {
+        return [['rubric'], ['guide']];
     }
 
     /**
