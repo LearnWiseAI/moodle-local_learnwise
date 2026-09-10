@@ -356,5 +356,4 @@ final class oauth_test extends \advanced_testcase {
     public static function upgrade_version_provider(): array {
         return [[2026090800], [2026091000]];
     }
-
 }

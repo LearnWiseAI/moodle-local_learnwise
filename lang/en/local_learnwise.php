@@ -189,6 +189,7 @@ $string['rotatetokenmodal_yes'] = 'Confirm';
 $string['savechanges'] = 'Save changes';
 $string['setuplti'] = 'LTI setup';
 $string['setuptoken'] = 'Setup webservice';
+$string['showclientsecret'] = 'Show client secret';
 $string['showdetails'] = 'Show Details';
 $string['showfloatingbutton'] = 'Show floating button';
 $string['showfloatingbuttontooltip'] = 'Please specify Assistant ID to enable floating button';
@@ -201,5 +202,3 @@ $string['toolnotconfigured'] = 'This tool is not configured correctly, please co
 $string['toomanycoursesmatchsearch'] = 'Too many courses match';
 $string['toomanycoursestoshow'] = 'Too many courses to show';
 $string['unsubmitted'] = 'unsubmitted';
-
-$string['showclientsecret'] = 'Show client secret';
