@@ -39,7 +39,9 @@ class notifications extends baseapi {
      */
     public static $route = 'notifications';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get notifications';
     }

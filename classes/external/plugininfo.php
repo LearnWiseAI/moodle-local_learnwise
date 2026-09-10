@@ -38,7 +38,9 @@ class plugininfo extends baseapi {
      */
     public static $route = 'plugininfo';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Returns information about a plugin setup';
     }

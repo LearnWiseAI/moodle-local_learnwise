@@ -39,7 +39,9 @@ class discussions extends baseapi {
      */
     public static $route = 'discussions';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get forum discussions';
     }

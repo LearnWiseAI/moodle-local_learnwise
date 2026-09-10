@@ -37,7 +37,9 @@ class course_modules extends baseapi {
      */
     public static $route = 'modules';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get course modules';
     }

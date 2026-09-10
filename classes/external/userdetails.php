@@ -42,7 +42,9 @@ class userdetails extends baseapi {
      */
     public static $route = 'me';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get user details';
     }

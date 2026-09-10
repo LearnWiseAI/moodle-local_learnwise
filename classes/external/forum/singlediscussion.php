@@ -36,12 +36,16 @@ class singlediscussion extends baseapi {
      */
     public static $route = 'discussions';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get single forum discussion';
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function execute_parameters() {
         return static::base_parameters([
             'id' => new external_value(PARAM_INT, 'Discussion id'),
@@ -67,7 +71,9 @@ class singlediscussion extends baseapi {
         return discussions::execute($cm->course, $cm->id);
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function single_structure() {
         $discussionstructure = new external_single_structure([
             'id' => new external_value(PARAM_INT, 'id of discussion'),
@@ -79,7 +85,9 @@ class singlediscussion extends baseapi {
         return $discussionstructure;
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function is_singleoperation() {
         return true;
     }

@@ -36,12 +36,16 @@ class sections extends baseapi {
      */
     public static $route = 'sections';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get sections';
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function execute_parameters() {
         return static::base_parameters([
             'courseid' => new external_value(PARAM_INT, 'Course id'),
@@ -104,7 +108,9 @@ class sections extends baseapi {
         return $sectioncontents;
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function single_structure() {
         $sectionstructure = new external_single_structure([
             'id' => new external_value(PARAM_INT, 'id of secion'),

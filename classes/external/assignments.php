@@ -39,7 +39,9 @@ class assignments extends baseapi {
      */
     public static $route = 'assignments';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get course assignments';
     }

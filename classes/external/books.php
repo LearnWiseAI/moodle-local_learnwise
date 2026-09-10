@@ -38,7 +38,9 @@ class books extends baseapi {
      */
     public static $route = 'books';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get books';
     }
