@@ -16,7 +16,6 @@
 
 namespace local_learnwise\privacy;
 
-use context_system;
 use context_user;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\writer;
@@ -163,11 +162,15 @@ class provider implements
     public static function get_users_in_context(\core_privacy\local\request\userlist $userlist): void {
         $context = $userlist->get_context();
 
-        if (!$context instanceof context_system && !$context instanceof context_user) {
+        if (!$context instanceof context_user) {
             return;
         }
 
-        $userlist->add_from_sql('userid', "SELECT DISTINCT userid FROM {local_learnwise_userauth}", []);
+        $userlist->add_from_sql(
+            'userid',
+            "SELECT DISTINCT userid FROM {local_learnwise_userauth} WHERE userid = :userid",
+            ['userid' => $context->instanceid]
+        );
     }
 
     /**
@@ -177,14 +180,9 @@ class provider implements
      * @return void
      */
     public static function delete_data_for_users(\core_privacy\local\request\approved_userlist $userlist): void {
-        global $DB;
         $context = $userlist->get_context();
-        if ($context->contextlevel == CONTEXT_USER) {
-            $userids = $userlist->get_userids();
-            if (!empty($userids)) {
-                [$sql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'userid');
-                self::delete_user_data($sql, $params);
-            }
+        if ($context instanceof context_user && in_array($context->instanceid, $userlist->get_userids())) {
+            self::delete_user_data((int) $context->instanceid);
         }
     }
 
@@ -227,7 +225,7 @@ class provider implements
             'refreshtokens' => 'local_learnwise_refreshtoken',
         ];
         foreach ($contextlist as $context) {
-            if ($context->contextlevel == CONTEXT_USER) {
+            if ($context instanceof context_user && $context->instanceid == $contextlist->get_user()->id) {
                 $userauths = $DB->get_records('local_learnwise_userauth', ['userid' => $context->instanceid]);
                 foreach ($userauths as $userauth) {
                     $userauth->clientid = $notexportedstr;
@@ -245,7 +243,7 @@ class provider implements
                             }
                         }
                     }
-                    writer::with_context($context)->export_data($subcontext, $userauth);
+                    writer::with_context($context)->export_data(array_merge($subcontext, [(string) $userauth->id]), $userauth);
                 }
             }
         }
@@ -258,9 +256,12 @@ class provider implements
      * @return void
      */
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
-        $userid = $contextlist->get_user()->id ?? null;
-        if ($userid) {
-            self::delete_user_data('= :userid', ['userid' => $userid]);
+        $userid = $contextlist->get_user()->id;
+        foreach ($contextlist as $context) {
+            if ($context instanceof context_user && $context->instanceid == $userid) {
+                self::delete_user_data((int) $userid);
+                return;
+            }
         }
     }
 
@@ -271,24 +272,27 @@ class provider implements
      * @return void
      */
     public static function delete_data_for_all_users_in_context(\context $context): void {
-        self::delete_user_data('IS NOT NULL', []);
+        if ($context instanceof context_user) {
+            self::delete_user_data((int) $context->instanceid);
+        }
     }
 
     /**
      * Helper to delete user data.
      *
-     * @param string $where
-     * @param array $params
+     * @param int $userid The owner whose authorizations and tokens should be deleted.
      * @return void
      */
-    protected static function delete_user_data(string $where, array $params): void {
+    protected static function delete_user_data(int $userid): void {
         global $DB;
-        $userauths = $DB->get_records_select('local_learnwise_userauth', "userid {$where}", $params);
+        $transaction = $DB->start_delegated_transaction();
+        $userauths = $DB->get_records('local_learnwise_userauth', ['userid' => $userid]);
         foreach ($userauths as $userauth) {
             $DB->delete_records('local_learnwise_authcode', ['authid' => $userauth->id]);
             $DB->delete_records('local_learnwise_accesstoken', ['authid' => $userauth->id]);
             $DB->delete_records('local_learnwise_refreshtoken', ['authid' => $userauth->id]);
         }
-        $DB->delete_records_select('local_learnwise_userauth', "userid {$where}", $params);
+        $DB->delete_records('local_learnwise_userauth', ['userid' => $userid]);
+        $transaction->allow_commit();
     }
 }
