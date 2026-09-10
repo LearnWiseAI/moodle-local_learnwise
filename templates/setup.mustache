@@ -346,11 +346,17 @@
                     <div class="field-input copy-field">
                         <input
                             id="liveApiConfigClientSecret"
-                            type="text"
+                            type="password"
                             class="input readonly mono small-text"
-                            value="{{{liveApiConfigClientSecret}}}"
+                            value="{{liveApiConfigClientSecret}}"
                             readonly
                         >
+                        <button id="clientSecretVisibilityBtn" type="button" class="styled-icon-btn visibility-control-btn"
+                                aria-controls="liveApiConfigClientSecret" aria-pressed="false"
+                                aria-label="{{#str}} showclientsecret, local_learnwise {{/str}}">
+                            <span data-secret-hidden>{{#pix}} hidden-token, local_learnwise {{/pix}}</span>
+                            <span data-secret-shown class="hidden">{{#pix}} seen-token, local_learnwise {{/pix}}</span>
+                        </button>
                         <button type="button" class="styled-icon-btn copy-btn" data-clipboard-target="#liveApiConfigClientSecret">
                             <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>

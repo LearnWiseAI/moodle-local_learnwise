@@ -103,7 +103,7 @@ final class storage_test extends advanced_testcase {
         $later = time() + 7200;
         $this->storage->setAccessToken('tok-abc', $this->client->uniqid, $this->user->id, $later);
 
-        $this->assertSame(1, $DB->count_records('local_learnwise_accesstoken', ['token' => 'tok-abc']));
+        $this->assertSame(1, $DB->count_records('local_learnwise_accesstoken', ['token' => hash('sha256', 'tok-abc')]));
         $this->assertEquals($later, $this->storage->getAccessToken('tok-abc')['expires']);
     }
 
@@ -181,7 +181,7 @@ final class storage_test extends advanced_testcase {
             time() + 120
         );
 
-        $this->assertSame(1, $DB->count_records('local_learnwise_authcode', ['code' => 'code-1']));
+        $this->assertSame(1, $DB->count_records('local_learnwise_authcode', ['code' => hash('sha256', 'code-1')]));
         $this->assertSame('https://example.test/b', $this->storage->getAuthorizationCode('code-1')['redirect_uri']);
     }
 
@@ -336,5 +336,75 @@ final class storage_test extends advanced_testcase {
         $this->assertFalse($this->storage->scopeExists('admin'));
         $this->assertFalse($this->storage->scopeExists(''));
         $this->assertFalse($this->storage->scopeExists('webservice extra'));
+    }
+
+    /**
+     * Stored digests must never authenticate as credentials, and revocation uses original values.
+     */
+    public function test_hashes_are_not_bearer_credentials(): void {
+        global $DB;
+        $storage = new storage();
+        $client = util::get_or_generate_client();
+        $user = $this->getDataGenerator()->create_user();
+        $expires = time() + 3600;
+        $storage->setAccessToken('raw-access', $client->uniqid, $user->id, $expires);
+        $storage->setRefreshToken('raw-refresh', $client->uniqid, $user->id, $expires);
+        $storage->setAuthorizationCode('raw-code', $client->uniqid, $user->id, 'https://example.test', $expires);
+        foreach (['accesstoken' => 'raw-access', 'refreshtoken' => 'raw-refresh', 'authcode' => 'raw-code'] as $type => $raw) {
+            $field = $type === 'authcode' ? 'code' : 'token';
+            $this->assertFalse($DB->record_exists('local_learnwise_' . $type, [$field => $raw]));
+            $this->assertTrue($DB->record_exists('local_learnwise_' . $type, [
+                $field => hash('sha256', $raw), 'tokenhashed' => 1,
+            ]));
+        }
+        $this->assertSame('raw-access', $storage->getAccessToken('raw-access')['access_token']);
+        $this->assertSame('raw-refresh', $storage->getRefreshToken('raw-refresh')['refresh_token']);
+        $this->assertSame('raw-code', $storage->getAuthorizationCode('raw-code')['authorization_code']);
+        $this->assertFalse($storage->getAccessToken(hash('sha256', 'raw-access')));
+        $this->assertFalse($storage->getRefreshToken(hash('sha256', 'raw-refresh')));
+        $this->assertFalse($storage->getAuthorizationCode(hash('sha256', 'raw-code')));
+        $storage->unsetRefreshToken('raw-refresh');
+        $storage->expireAuthorizationCode('raw-code');
+        $this->assertFalse($storage->getRefreshToken('raw-refresh'));
+        $this->assertFalse($storage->getAuthorizationCode('raw-code'));
+    }
+
+    /**
+     * Batched migration resumes among converted rows and preserves client/service credentials.
+     */
+    public function test_hash_migration_is_batched_and_idempotent(): void {
+        global $DB, $CFG;
+        require_once($CFG->libdir . '/upgradelib.php');
+        require_once($CFG->dirroot . '/local/learnwise/db/upgradelib.php');
+        set_config('upgraderunning', time() + 3600);
+        $auth = $this->storage->get_userauth($this->client->uniqid, $this->user->id);
+        $expires = time() + 3600;
+        $this->storage->setAccessToken('already-hashed', $this->client->uniqid, $this->user->id, $expires);
+        for ($i = 0; $i < 501; $i++) {
+            $DB->insert_record('local_learnwise_accesstoken', (object) [
+                'authid' => $auth->id, 'token' => 'legacy-' . $i, 'timeexpiry' => $expires,
+            ]);
+        }
+        $serviceid = $DB->get_field('external_services', 'id', ['shortname' => 'local_learnwise'], MUST_EXIST);
+        $DB->insert_record('external_tokens', (object) [
+            'token' => 'unchanged-service-token', 'tokentype' => EXTERNAL_TOKEN_PERMANENT,
+            'userid' => $this->user->id, 'externalserviceid' => $serviceid,
+            'contextid' => \context_system::instance()->id, 'creatorid' => $this->user->id,
+            'timecreated' => time(),
+        ]);
+        $servicebefore = $DB->get_records('external_tokens');
+        $clientbefore = $DB->get_records('local_learnwise_clients');
+        local_learnwise_upgrade_hash_user_tokens();
+        $after = $DB->get_records('local_learnwise_accesstoken');
+        $this->assertCount(502, $after);
+        $this->assertFalse($DB->record_exists('local_learnwise_accesstoken', ['tokenhashed' => 0]));
+        local_learnwise_upgrade_hash_user_tokens();
+        $this->assertEquals($after, $DB->get_records('local_learnwise_accesstoken'));
+        $this->assertEquals($servicebefore, $DB->get_records('external_tokens'));
+        $this->assertEquals($clientbefore, $DB->get_records('local_learnwise_clients'));
+        foreach (['already-hashed', 'legacy-0', 'legacy-499', 'legacy-500'] as $raw) {
+            $this->assertSame($raw, $this->storage->getAccessToken($raw)['access_token']);
+        }
+        $this->assertSame('unchanged-service-token', $this->storage->getAccessToken('unchanged-service-token')['access_token']);
     }
 }

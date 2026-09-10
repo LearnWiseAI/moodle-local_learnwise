@@ -224,5 +224,17 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026091001, 'local', 'learnwise');
     }
 
+    if ($oldversion < 2026091002) {
+        foreach (['local_learnwise_authcode', 'local_learnwise_accesstoken', 'local_learnwise_refreshtoken'] as $name) {
+            $table = new xmldb_table($name);
+            $field = new xmldb_field('tokenhashed', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        local_learnwise_upgrade_hash_user_tokens();
+        upgrade_plugin_savepoint(true, 2026091002, 'local', 'learnwise');
+    }
+
     return true;
 }
