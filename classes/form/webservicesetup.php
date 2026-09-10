@@ -18,7 +18,6 @@ namespace local_learnwise\form;
 
 defined('MOODLE_INTERNAL') || die();
 
-use context_system;
 use Exception;
 use local_learnwise\constants;
 use local_learnwise\util;
@@ -109,11 +108,6 @@ class webservicesetup extends moodleform {
 
             if (!empty($updateprotocol)) {
                 set_config('webserviceprotocols', implode(',', $activeprotocols));
-            }
-
-            if (!empty($CFG->defaultuserroleid)) {
-                $systemcontext = context_system::instance();
-                assign_capability('webservice/rest:use', CAP_ALLOW, $CFG->defaultuserroleid, $systemcontext->id, true);
             }
 
             if (!empty($formdata->rotatewebservicetoken)) {
