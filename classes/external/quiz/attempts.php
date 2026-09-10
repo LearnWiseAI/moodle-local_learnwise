@@ -37,7 +37,9 @@ class attempts extends baseapi {
      */
     public static $route = 'attempts';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get quiz attempts';
     }

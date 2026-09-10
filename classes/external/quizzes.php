@@ -40,7 +40,9 @@ class quizzes extends baseapi {
      */
     public static $route = 'quizzes';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Get quizzes';
     }

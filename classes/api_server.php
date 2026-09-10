@@ -181,7 +181,9 @@ class api_server extends webservice_base_server {
         $this->functionname = $functionname;
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public function authenticate_by_token($tokentype) {
         if ($tokentype == EXTERNAL_TOKEN_EMBEDDED) {
             if (!get_config(constants::COMPONENT, 'liveapi')) {

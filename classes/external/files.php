@@ -37,12 +37,16 @@ class files extends baseapi {
      */
     public static $route = 'files/access';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Check file is accessible or not';
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function execute_parameters() {
         return self::base_parameters([
             'path' => new external_value(PARAM_PATH, 'filepath'),
@@ -93,12 +97,16 @@ class files extends baseapi {
         return $response;
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function is_singleoperation() {
         return true;
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function single_structure() {
         return new external_single_structure([
             'accessible' => new external_value(PARAM_BOOL, 'file is accessible or not'),

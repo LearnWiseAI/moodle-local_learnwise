@@ -224,19 +224,25 @@ abstract class baseapi extends external_api implements api_route {
         );
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function function_name() {
         $nameparts = explode('\\', get_called_class());
         $nameparts = array_diff($nameparts, ['external']);
         return join('_', $nameparts);
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function crudtype() {
         return 'read';
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function function_info() {
         $nameparts = explode('\\', get_called_class());
         return [

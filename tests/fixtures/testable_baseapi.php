@@ -39,19 +39,25 @@ class testable_baseapi extends baseapi {
     /** @var string */
     public static $route = 'testable';
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function description() {
         return 'Endpoint used by unit tests';
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function execute_parameters() {
         return static::base_parameters([
             'id' => new external_value(PARAM_INT, 'Record id'),
         ]);
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function single_structure() {
         return new external_single_structure([
             'id' => new external_value(PARAM_INT, 'Record id'),
@@ -61,7 +67,9 @@ class testable_baseapi extends baseapi {
         ]);
     }
 
-    #[\Override]
+    /**
+     * {@inheritdoc}
+     */
     public static function get_unixtimestamp_fields() {
         return ['timecreated'];
     }
