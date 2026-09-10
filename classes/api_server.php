@@ -182,7 +182,10 @@ class api_server extends webservice_base_server {
     }
 
     /**
-     * {@inheritdoc}
+     * Authenticate plugin OAuth credentials or delegate other token types to Moodle.
+     *
+     * @param mixed $tokentype Moodle external token type, passed unchanged to core.
+     * @return \stdClass Authenticated user.
      */
     public function authenticate_by_token($tokentype) {
         if ($tokentype == EXTERNAL_TOKEN_EMBEDDED) {
