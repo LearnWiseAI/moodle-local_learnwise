@@ -236,5 +236,17 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026091002, 'local', 'learnwise');
     }
 
+    if ($oldversion < 2026091003) {
+        // Previously an empty selection enabled every course. Preserve existing visibility explicitly.
+        if (empty(get_config('local_learnwise', 'courseids'))) {
+            $courseids = $DB->get_fieldset_sql(
+                'SELECT id FROM {course} WHERE id <> :siteid ORDER BY id',
+                ['siteid' => SITEID]
+            );
+            set_config('courseids', implode(',', $courseids), 'local_learnwise');
+        }
+        upgrade_plugin_savepoint(true, 2026091003, 'local', 'learnwise');
+    }
+
     return true;
 }
