@@ -170,9 +170,9 @@ final class hook_callbacks_test extends advanced_testcase {
     }
 
     /**
-     * An empty allowlist means the widget shows everywhere.
+     * An empty allowlist hides the widget in courses.
      */
-    public function test_empty_allowlist_shows_everywhere(): void {
+    public function test_empty_allowlist_hides_in_courses(): void {
         $this->setAdminUser();
         $this->enable_widget();
         set_config('courseids', '', 'local_learnwise');
@@ -180,7 +180,7 @@ final class hook_callbacks_test extends advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $this->make_page($course);
 
-        $this->assertStringContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+        $this->assertStringNotContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
     }
 
     /**
@@ -275,6 +275,7 @@ final class hook_callbacks_test extends advanced_testcase {
         set_config('showincoursesonly', 1, 'local_learnwise');
 
         $course = $this->getDataGenerator()->create_course();
+        util::add_courses((string) $course->id);
         $this->make_page($course);
 
         $html = hook_callbacks::before_standard_top_of_body_html_generation();
@@ -311,21 +312,48 @@ final class hook_callbacks_test extends advanced_testcase {
     }
 
     /**
-     * An empty course list means every course gets the widget under either operation.
+     * Excluding the last enabled course hides every course; adding one back restores only that course.
      */
-    public function test_empty_course_list_shows_in_every_course(): void {
+    public function test_remove_all_courses_and_enable_one_again(): void {
         $this->setAdminUser();
         $this->enable_widget();
-        set_config('courseids', '', 'local_learnwise');
+        $first = $this->getDataGenerator()->create_course();
+        $second = $this->getDataGenerator()->create_course();
+        $ids = $first->id . ',' . $second->id;
+        util::add_courses($ids);
+        foreach ([$first, $second] as $course) {
+            $this->make_page($course);
+            $this->assertStringContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+        }
+        util::remove_courses($ids);
+        $this->assertSame('', get_config('local_learnwise', 'courseids'));
+        foreach ([0, 1] as $coursesonly) {
+            set_config('showincoursesonly', $coursesonly, 'local_learnwise');
+            foreach ([$first, $second] as $course) {
+                $this->make_page($course);
+                $this->assertStringNotContainsString(
+                    'assistant-123',
+                    hook_callbacks::before_standard_top_of_body_html_generation()
+                );
+            }
+        }
+        util::add_courses((string) $first->id);
+        $this->make_page($first);
+        $this->assertStringContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+        $this->make_page($second);
+        $this->assertStringNotContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+    }
 
+    /**
+     * A fresh installation without a course selection does not enable newly created courses.
+     */
+    public function test_unset_allowlist_hides_in_courses(): void {
+        $this->setAdminUser();
+        $this->enable_widget();
+        unset_config('courseids', 'local_learnwise');
         $course = $this->getDataGenerator()->create_course();
         $this->make_page($course);
-
-        $html = hook_callbacks::before_standard_top_of_body_html_generation();
-        $this->assertTrue(
-            strpos($html, 'assistant-123') !== false,
-            'assistant-123 should be found when course list is empty (shows in all courses)'
-        );
+        $this->assertStringNotContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
     }
 
     /**
@@ -336,6 +364,7 @@ final class hook_callbacks_test extends advanced_testcase {
         $this->enable_widget();
 
         $course = $this->getDataGenerator()->create_course();
+        util::add_courses((string) $course->id);
         $this->make_page($course);
 
         $html = hook_callbacks::before_standard_top_of_body_html_generation();
@@ -350,5 +379,65 @@ final class hook_callbacks_test extends advanced_testcase {
             strpos($html, 'courseId: null') !== false,
             'courseId: null should be found on site course'
         );
+    }
+
+    /**
+     * Legacy course selection states to preserve during upgrade.
+     *
+     * @return array
+     */
+    public static function legacy_course_selection_provider(): array {
+        return [
+            'unset' => [null],
+            'empty' => [''],
+            'selected' => ['selected'],
+        ];
+    }
+
+    /**
+     * Upgrade preserves visibility once, while subsequent empty selections remain empty.
+     *
+     * @dataProvider legacy_course_selection_provider
+     * @param string|null $selection Legacy selection state.
+     */
+    public function test_upgrade_preserves_course_visibility(?string $selection): void {
+        global $CFG;
+        require_once($CFG->libdir . '/upgradelib.php');
+        require_once($CFG->dirroot . '/local/learnwise/db/upgrade.php');
+        $this->setAdminUser();
+        $this->enable_widget();
+        $first = $this->getDataGenerator()->create_course();
+        $second = $this->getDataGenerator()->create_course(['visible' => 0]);
+        if ($selection === null) {
+            unset_config('courseids', 'local_learnwise');
+        } else {
+            set_config('courseids', $selection === 'selected' ? (string) $first->id : '', 'local_learnwise');
+        }
+        set_config('version', 2026091002, 'local_learnwise');
+        $this->assertTrue(xmldb_local_learnwise_upgrade(2026091002));
+        $expected = $selection === 'selected' ? (string) $first->id : $first->id . ',' . $second->id;
+        $this->assertSame($expected, get_config('local_learnwise', 'courseids'));
+        $this->make_page($first);
+        $this->assertStringContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+        $this->make_page($second);
+        $html = hook_callbacks::before_standard_top_of_body_html_generation();
+        if ($selection === 'selected') {
+            $this->assertStringNotContainsString('assistant-123', $html);
+        } else {
+            $this->assertStringContainsString('assistant-123', $html);
+        }
+
+        // New courses must be explicitly enabled after the migration.
+        $newcourse = $this->getDataGenerator()->create_course();
+        $this->make_page($newcourse);
+        $this->assertStringNotContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+
+        util::remove_courses($expected);
+        $installedversion = (int) get_config('local_learnwise', 'version');
+        $this->assertSame(2026091003, $installedversion);
+        $this->assertTrue(xmldb_local_learnwise_upgrade($installedversion));
+        $this->assertSame('', get_config('local_learnwise', 'courseids'));
+        $this->make_page($first);
+        $this->assertStringNotContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
     }
 }
