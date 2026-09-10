@@ -86,6 +86,24 @@ final class webservice_permissions_test extends \advanced_testcase {
     }
 
     /**
+     * The token-created event includes the complete database row on every Moodle version.
+     */
+    public function test_token_created_event_has_complete_snapshot(): void {
+        global $DB;
+        $sink = $this->redirectEvents();
+        $token = $this->setup_service();
+        $events = array_values(array_filter($sink->get_events(), function ($event) {
+            return $event instanceof \core\event\webservice_token_created;
+        }));
+        $this->assertCount(1, $events);
+        $this->assertEquals(
+            $DB->get_record('external_tokens', ['id' => $token->id], '*', MUST_EXIST),
+            $events[0]->get_record_snapshot('external_tokens', $token->id)
+        );
+        $sink->close();
+    }
+
+    /**
      * Setup grants REST only to the dedicated service identity and preserves existing tokens on rerun.
      */
     public function test_setup_keeps_default_role_unchanged_and_service_rest_works(): void {

@@ -57,6 +57,9 @@ class api_response extends oauth2_response {
      * {@inheritdoc}
      *
      * Retains the inherited OAuth2 method name.
+     *
+     * @param array $parameters Response parameters.
+     * @return void
      */
     public function setParameters(array $parameters) { // phpcs:ignore moodle.NamingConventions.ValidFunctionName.LowercaseMethod
         $encoded = json_encode($parameters);
@@ -87,6 +90,9 @@ class api_response extends oauth2_response {
      * {@inheritdoc}
      *
      * Retains the inherited OAuth2 method name.
+     *
+     * @param string $format Response serialization format.
+     * @return string Serialized response body.
      */
     public function getResponseBody($format = 'json') { // phpcs:ignore moodle.NamingConventions.ValidFunctionName.LowercaseMethod
         if ($format === 'json' && $this->emptyarrayresponse && $this->getParameters() === []) {

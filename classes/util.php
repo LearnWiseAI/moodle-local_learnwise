@@ -186,8 +186,8 @@ class util {
             $token->validuntil = $token->iprestriction = $token->sid = $token->lastaccess = null;
             $token->id = $DB->insert_record('external_tokens', $token);
 
-            $eventtoken = clone $token;
-            $eventtoken->privatetoken = null;
+            // Read the complete row, including fields added by newer Moodle versions.
+            $eventtoken = $DB->get_record('external_tokens', ['id' => $token->id], '*', MUST_EXIST);
             $params = [
                 'objectid' => $eventtoken->id,
                 'relateduserid' => $tokenuser->id,
