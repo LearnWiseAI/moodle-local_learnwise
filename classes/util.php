@@ -235,7 +235,7 @@ class util {
      * @return string
      */
     public static function get_env() {
-        $env = get_config('local_learnwise', 'environment');
+        $env = get_config(constants::COMPONENT, 'environment');
         if (self::valid_env($env)) {
             return $env;
         }
@@ -288,7 +288,7 @@ class util {
             ['lti.', 'lti-sbx'],
             self::get_ltitoolurl($env)
         );
-        $region = get_config('local_learnwise', 'region');
+        $region = get_config(constants::COMPONENT, 'region');
         if (empty($region)) {
             $region = constants::REGION;
         }
@@ -367,7 +367,7 @@ class util {
 
         $role = self::get_or_create_role();
         $systemcontext = context_system::instance();
-        $existuserid = get_config('local_learnwise', 'tokenuserid');
+        $existuserid = get_config(constants::COMPONENT, 'tokenuserid');
         $existuser = $DB->get_record('user', ['id' => (int) $existuserid, 'deleted' => 0]);
         if (!empty($existuser)) {
             if ($role && !user_has_role_assignment($existuser->id, $role->id, $systemcontext->id)) {
@@ -393,7 +393,7 @@ class util {
             false
         );
 
-        set_config('tokenuserid', $user->id, 'local_learnwise');
+        set_config('tokenuserid', $user->id, constants::COMPONENT);
 
         if ($role) {
             $systemcontext = context_system::instance();
@@ -567,13 +567,13 @@ class util {
         if (!empty($courseids)) {
             $selectedcourses = explode(',', $courseids);
         }
-        $exstingcourses = get_config('local_learnwise', 'courseids');
+        $exstingcourses = get_config(constants::COMPONENT, 'courseids');
         $newcourseids = $selectedcourses;
         if (!empty($exstingcourses)) {
             $exstingcourses = explode(',', $exstingcourses);
             $newcourseids = array_unique(array_merge($exstingcourses, $selectedcourses));
         }
-        set_config('courseids', implode(',', $newcourseids), 'local_learnwise');
+        set_config('courseids', implode(',', $newcourseids), constants::COMPONENT);
     }
 
     /**
@@ -586,11 +586,11 @@ class util {
         if (!empty($courseids)) {
             $selectedcourses = explode(',', $courseids);
         }
-        $exstingcourses = get_config('local_learnwise', 'courseids');
+        $exstingcourses = get_config(constants::COMPONENT, 'courseids');
         if (!empty($exstingcourses)) {
             $exstingcourses = explode(',', $exstingcourses);
             $newcourseids = array_diff($exstingcourses, $selectedcourses);
-            set_config('courseids', implode(',', $newcourseids), 'local_learnwise');
+            set_config('courseids', implode(',', $newcourseids), constants::COMPONENT);
         }
     }
 

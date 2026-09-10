@@ -127,11 +127,14 @@ JS;
         }
         if (!empty($settings->showassistantwidget) && !empty($settings->assistantid)) {
             $configcourseids = !empty($settings->courseids) ? explode(',', $settings->courseids) : [];
-            if (empty($configcourseids) || in_array($PAGE->course->id, $configcourseids)) {
-                $sitecourseid = get_site()->id;
+            $showincoursesonly = !empty($settings->showincoursesonly);
+            $sitecourseid = get_site()->id;
+            $currentcourseid = $COURSE->id > $sitecourseid ? $COURSE->id : null;
+            $showincoursecheck = in_array($currentcourseid, $configcourseids);
+            if (isset($currentcourseid) ? (empty($configcourseids) || $showincoursecheck) : !$showincoursesonly) {
                 $html .= $renderer->render_from_template('local_learnwise/assistantwidget', [
                     'assistantid' => $settings->assistantid,
-                    'courseid' => $COURSE->id > $sitecourseid ? $COURSE->id : null,
+                    'courseid' => $currentcourseid,
                     'userid' => $USER->id,
                     'userfullname' => fullname($USER),
                     'useremail' => $USER->email,
