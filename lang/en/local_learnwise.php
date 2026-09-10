@@ -67,6 +67,7 @@ $string['fieldvalidationerror'] = 'The value of "{$a->field}" is not valid';
 $string['floatingbuttonconfig'] = 'Floating Button Configuration';
 $string['floatingbuttonconfigdesc'] = 'This allows showing the Learnwise assistant as a floating chat button that opens a small frame on the bottom of the screen.';
 $string['gradingdisabled'] = 'Grading disabled';
+$string['gradingfailed'] = 'The grade could not be saved. Check the grade value and assignment grading settings.';
 $string['integration_listpage'] = 'Learnwise Integration';
 $string['learnwise:plugininfo'] = 'Read plugin configuration';
 $string['learnwise:roledescription'] = 'Role for Learnwise AI Assistant integration';
