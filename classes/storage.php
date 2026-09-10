@@ -112,7 +112,7 @@ class storage implements
                 'scope' => $this->getDefaultScope(),
             ];
         }
-        $token = $this->db->get_record('local_learnwise_accesstoken', ['token' => $oauthtoken]);
+        $token = $this->db->get_record('local_learnwise_accesstoken', ['token' => hash('sha256', $oauthtoken), 'tokenhashed' => 1]);
         if (!$token) {
             return false;
         }
@@ -125,7 +125,7 @@ class storage implements
             return false;
         }
         return [
-            'access_token' => $token->token,
+            'access_token' => $oauthtoken,
             'client_id' => $client->uniqid,
             'user_id' => $userauth->userid,
             'expires' => $token->timeexpiry,
@@ -144,7 +144,7 @@ class storage implements
      * @return bool
      */
     public function setAccessToken($oauthtoken, $clientid, $userid, $expires, $scope = null) {
-        $params = ['token' => $oauthtoken];
+        $params = ['token' => hash('sha256', $oauthtoken), 'tokenhashed' => 1];
         $record = $this->db->get_record('local_learnwise_accesstoken', $params);
         $userauth = $this->get_userauth($clientid, $userid);
         if (!$record) {
@@ -168,7 +168,7 @@ class storage implements
      * @return array|false
      */
     public function getAuthorizationCode($code) {
-        $authcode = $this->db->get_record('local_learnwise_authcode', ['code' => $code]);
+        $authcode = $this->db->get_record('local_learnwise_authcode', ['code' => hash('sha256', $code), 'tokenhashed' => 1]);
         if (!$authcode) {
             return false;
         }
@@ -181,7 +181,7 @@ class storage implements
             return false;
         }
         return [
-            'authorization_code' => $authcode->code,
+            'authorization_code' => $code,
             'client_id' => $client->uniqid,
             'user_id' => $userauth->userid,
             'redirect_uri' => $authcode->redirecturi,
@@ -220,12 +220,13 @@ class storage implements
         $userauth = $this->get_userauth($clientid, $userid);
         $record = new stdClass();
         $record->authid = $userauth->id;
-        $record->code = $code;
+        $record->code = hash('sha256', $code);
+        $record->tokenhashed = 1;
         $record->codechallenge = $codechallenge;
         $record->codechallengemethod = $codechallengemethod;
         $record->redirecturi = $redirecturi;
         $record->timeexpiry = $expires;
-        if ($id = $this->db->get_field('local_learnwise_authcode', 'id', ['code' => $code])) {
+        if ($id = $this->db->get_field('local_learnwise_authcode', 'id', ['code' => hash('sha256', $code), 'tokenhashed' => 1])) {
             $record->id = $id;
             $this->db->update_record('local_learnwise_authcode', $record);
         } else {
@@ -239,7 +240,7 @@ class storage implements
      * @param string $code
      */
     public function expireAuthorizationCode($code) {
-        $this->db->delete_records('local_learnwise_authcode', ['code' => $code]);
+        $this->db->delete_records('local_learnwise_authcode', ['code' => hash('sha256', $code), 'tokenhashed' => 1]);
     }
 
     /**
@@ -323,7 +324,9 @@ class storage implements
      * @return array|false
      */
     public function getRefreshToken($refreshtoken) {
-        $token = $this->db->get_record('local_learnwise_refreshtoken', ['token' => $refreshtoken]);
+        $token = $this->db->get_record('local_learnwise_refreshtoken', [
+            'token' => hash('sha256', $refreshtoken), 'tokenhashed' => 1,
+        ]);
         if (!$token) {
             return false;
         }
@@ -336,7 +339,7 @@ class storage implements
             return false;
         }
         return [
-            'refresh_token' => $token->token,
+            'refresh_token' => $refreshtoken,
             'client_id' => $client->uniqid,
             'user_id' => $userauth->userid,
             'expires' => $token->timeexpiry,
@@ -358,7 +361,8 @@ class storage implements
         $userauth = $this->get_userauth($clientid, $userid);
         $record = new stdClass();
         $record->authid = $userauth->id;
-        $record->token = $refreshtoken;
+        $record->token = hash('sha256', $refreshtoken);
+        $record->tokenhashed = 1;
         $record->timeexpiry = $expires;
         $record->id = $this->db->insert_record('local_learnwise_refreshtoken', $record);
     }
@@ -370,7 +374,7 @@ class storage implements
      * @return void
      */
     public function unsetRefreshToken($refreshtoken) {
-        $this->db->delete_records('local_learnwise_refreshtoken', ['token' => $refreshtoken]);
+        $this->db->delete_records('local_learnwise_refreshtoken', ['token' => hash('sha256', $refreshtoken), 'tokenhashed' => 1]);
     }
 
     /**

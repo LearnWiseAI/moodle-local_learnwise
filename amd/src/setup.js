@@ -207,6 +207,18 @@ define(
             }
         });
 
+        var secretVisibilityBtn = document.getElementById('clientSecretVisibilityBtn');
+        var secretInput = document.getElementById('liveApiConfigClientSecret');
+        if (secretVisibilityBtn && secretInput) {
+            secretVisibilityBtn.addEventListener('click', function() {
+                var shown = secretInput.type === 'password';
+                secretInput.type = shown ? 'text' : 'password';
+                secretVisibilityBtn.setAttribute('aria-pressed', String(shown));
+                secretVisibilityBtn.querySelector('[data-secret-hidden]').classList.toggle('hidden', shown);
+                secretVisibilityBtn.querySelector('[data-secret-shown]').classList.toggle('hidden', !shown);
+            });
+        }
+
         // Initialize clipboard functionality
         var clipboardInstance = new ClipboardJS('.copy-btn', {
             text: function(trigger) {

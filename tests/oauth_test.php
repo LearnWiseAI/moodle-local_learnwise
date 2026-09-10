@@ -270,29 +270,48 @@ final class oauth_test extends \advanced_testcase {
     public function test_expired_code_is_rejected(): void {
         global $DB;
         $code = $this->authorize(['code_challenge' => self::CHALLENGE, 'code_challenge_method' => 'S256']);
-        $DB->set_field('local_learnwise_authcode', 'timeexpiry', time() - 60, ['code' => $code]);
+        $DB->set_field('local_learnwise_authcode', 'timeexpiry', time() - 60, ['code' => hash('sha256', $code)]);
         $response = $this->exchange(['code' => $code, 'code_verifier' => self::VERIFIER]);
         $this->assertSame(400, $response->getStatusCode());
         $this->assertNull($response->getParameter('access_token'));
     }
 
     /**
-     * Nullable schema upgrades preserve all pre-existing credentials and consent.
+     * Schema upgrades from older releases and current main preserve credentials and consent.
+     *
+     * @dataProvider upgrade_version_provider
+     * @param int $oldversion Installed version before the security upgrade.
      */
-    public function test_upgrade_preserves_legacy_credentials(): void {
+    public function test_upgrade_preserves_legacy_credentials(int $oldversion): void {
         global $DB, $CFG;
         require_once($CFG->libdir . '/upgradelib.php');
         require_once($CFG->dirroot . '/local/learnwise/db/upgrade.php');
         $code = $this->authorize();
         $this->storage->setAccessToken('existing-access', $this->client->uniqid, $this->user->id, time() + 3600);
         $this->storage->setRefreshToken('existing-refresh', $this->client->uniqid, $this->user->id, time() + 3600);
+        // Recreate the actual pre-upgrade storage format, including the absent hash marker.
+        $legacy = [
+            'local_learnwise_authcode' => ['code', $code],
+            'local_learnwise_accesstoken' => ['token', 'existing-access'],
+            'local_learnwise_refreshtoken' => ['token', 'existing-refresh'],
+        ];
         $manager = $DB->get_manager();
+        foreach ($legacy as $name => [$field, $value]) {
+            $DB->set_field($name, $field, $value);
+            $manager->drop_field(new \xmldb_table($name), new \xmldb_field('tokenhashed'));
+        }
         $table = new \xmldb_table('local_learnwise_authcode');
         $manager->drop_field($table, new \xmldb_field('codechallengemethod'));
         $manager->drop_field($table, new \xmldb_field('codechallenge'));
-        set_config('version', 2026090800, 'local_learnwise');
+        set_config('version', $oldversion, 'local_learnwise');
         set_config('upgraderunning', time() + 3600);
-        $this->assertTrue(xmldb_local_learnwise_upgrade(2026090800));
+        $this->assertTrue(xmldb_local_learnwise_upgrade($oldversion));
+        foreach ($legacy as $name => [$field, $value]) {
+            $record = $DB->get_record($name, [], '*', MUST_EXIST);
+            $this->assertSame(hash('sha256', $value), $record->$field);
+            $this->assertEquals(1, $record->tokenhashed);
+            $this->assertFalse($DB->record_exists($name, [$field => $value]));
+        }
         $this->assertNull($this->storage->getAuthorizationCode($code)['code_challenge']);
         $this->assertSame(
             $this->client->secret,
@@ -305,7 +324,37 @@ final class oauth_test extends \advanced_testcase {
         $refreshed = $this->exchange(['grant_type' => 'refresh_token', 'refresh_token' => 'existing-refresh']);
         $this->assertSame(200, $refreshed->getStatusCode());
         // An interrupted upgrade with the fields already present can resume safely.
-        set_config('version', 2026090800, 'local_learnwise');
-        $this->assertTrue(xmldb_local_learnwise_upgrade(2026090800));
+        set_config('version', $oldversion, 'local_learnwise');
+        $this->assertTrue(xmldb_local_learnwise_upgrade($oldversion));
     }
+
+    /**
+     * Migrating an in-flight S256 code preserves its verifier requirement and expiry.
+     */
+    public function test_hash_upgrade_preserves_pkce(): void {
+        global $DB, $CFG;
+        require_once($CFG->libdir . '/upgradelib.php');
+        require_once($CFG->dirroot . '/local/learnwise/db/upgradelib.php');
+        $code = $this->authorize(['code_challenge' => self::CHALLENGE, 'code_challenge_method' => 'S256']);
+        $record = $DB->get_record('local_learnwise_authcode', [], '*', MUST_EXIST);
+        $record->code = $code;
+        $record->tokenhashed = 0;
+        $DB->update_record('local_learnwise_authcode', $record);
+        set_config('upgraderunning', time() + 3600);
+        local_learnwise_upgrade_hash_user_tokens();
+        $this->assertEquals($record->timeexpiry, $this->storage->getAuthorizationCode($code)['expires']);
+        $this->assertSame(self::CHALLENGE, $this->storage->getAuthorizationCode($code)['code_challenge']);
+        $this->assertSame(400, $this->exchange(['code' => $code])->getStatusCode());
+        $this->assertSame(200, $this->exchange(['code' => $code, 'code_verifier' => self::VERIFIER])->getStatusCode());
+        $this->assertSame(400, $this->exchange(['code' => $code, 'code_verifier' => self::VERIFIER])->getStatusCode());
+    }
+    /**
+     * Releases before PKCE, including main's chat-display setting release.
+     *
+     * @return array
+     */
+    public static function upgrade_version_provider(): array {
+        return [[2026090800], [2026091000]];
+    }
+
 }
