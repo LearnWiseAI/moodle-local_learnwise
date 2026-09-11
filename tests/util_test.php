@@ -33,7 +33,6 @@ use context_system;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class util_test extends advanced_testcase {
-
     /**
      * Load PHP 8.1 pollyfill.
      */

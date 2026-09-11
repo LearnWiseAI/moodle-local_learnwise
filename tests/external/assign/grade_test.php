@@ -74,6 +74,20 @@ final class grade_test extends advanced_testcase {
 
         $this->teacher = $generator->create_and_enrol($this->course, 'editingteacher');
         $this->student = $generator->create_and_enrol($this->course, 'student');
+
+        $prop = new \ReflectionProperty($generator, 'generators');
+        $prop->setAccessible(true);
+        $componentgenerators = $prop->getValue($generator);
+        $currentcomponentdir = \core_component::get_component_directory(\local_learnwise\constants::COMPONENT);
+        foreach (['core_grading', 'gradingform_guide', 'gradingform_rubric'] as $component) {
+            $componentdir = \core_component::get_component_directory($component);
+            if (!file_exists("{$componentdir}/tests/generator/lib.php")) {
+                require_once("{$currentcomponentdir}/tests/generator/{$component}/lib.php");
+                $generatorclassname = "{$component}_generator";
+                $componentgenerators[$component] = new $generatorclassname($generator);
+            }
+        }
+        $prop->setValue($generator, $componentgenerators);
     }
 
     /**

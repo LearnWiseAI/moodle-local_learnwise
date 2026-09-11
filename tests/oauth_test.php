@@ -242,9 +242,9 @@ final class oauth_test extends \advanced_testcase {
         $PAGE->set_url($url);
         $form = new \local_learnwise\form\permission($url);
         $html = $form->render();
-        $this->assertStringContainsString(self::CHALLENGE, $html);
-        $this->assertStringContainsString('code_challenge_method', $html);
-        $this->assertStringContainsString('S256', $html);
+        $this->assertContains(self::CHALLENGE, $html);
+        $this->assertContains('code_challenge_method', $html);
+        $this->assertContains('S256', $html);
         unset($_POST['code_challenge'], $_POST['code_challenge_method']);
     }
 
