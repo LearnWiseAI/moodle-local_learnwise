@@ -745,14 +745,11 @@ final class grade_test extends advanced_testcase {
         $beforefeedback = $DB->get_records('assignfeedback_comments', ['grade' => $beforegrade->id]);
         $beforeinstances = $DB->count_records('grading_instances');
         $this->preventResetByRollback();
-        try {
-            grade::execute($this->course->id, $this->assign->cmid, $this->student->id, [
-                'submission_grade' => -1, 'general_feedback' => 'Must be rolled back',
-            ]);
-            $this->fail('Expected Moodle to reject the out-of-range retained grade');
-        } catch (moodle_exception $e) {
-            $this->assertSame('gradingfailed', $e->errorcode);
-        }
+        $response = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, [
+            'submission_grade' => -1, 'general_feedback' => 'Must be rolled back',
+        ]);
+        $this->assertFalse($response['success']);
+        $this->assertSame(get_string('gradingfailed', 'local_learnwise'), $response['error']);
         $this->assertEquals($beforegrade, $DB->get_record('assign_grades', ['id' => $beforegrade->id]));
         $this->assertEquals($beforefeedback, $DB->get_records('assignfeedback_comments', ['grade' => $beforegrade->id]));
         $this->assertSame($beforeinstances, $DB->count_records('grading_instances'));
@@ -780,12 +777,9 @@ final class grade_test extends advanced_testcase {
             'rubric_section_id' => $criterion['id'], 'graded_score' => 11, 'content' => 'Invalid mark',
         ]];
         $this->preventResetByRollback();
-        try {
-            grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $payload);
-            $this->fail('Expected invalid guide criteria to be rejected');
-        } catch (moodle_exception $e) {
-            $this->assertSame('gradingfailed', $e->errorcode);
-        }
+        $response = grade::execute($this->course->id, $this->assign->cmid, $this->student->id, $payload);
+        $this->assertFalse($response['success']);
+        $this->assertSame(get_string('gradingfailed', 'local_learnwise'), $response['error']);
         $this->assertFalse($DB->record_exists('assign_grades', ['assignment' => $this->assign->id]));
         $this->assertSame(0, $DB->count_records('assignfeedback_comments'));
         $this->assertSame(0, $DB->count_records('grading_instances'));

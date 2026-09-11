@@ -270,7 +270,11 @@ class grade extends baseapi {
 
             $transaction->allow_commit();
         } catch (\Throwable $e) {
-            $transaction->rollback($e);
+            try {
+                $transaction->rollback($e);
+            } catch (\Throwable $e) {
+                return ['success' => false, 'error' => $e->getMessage()];
+            }
         }
         return ['success' => true];
     }
