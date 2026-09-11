@@ -130,7 +130,7 @@ JS;
             $showincoursesonly = !empty($settings->showincoursesonly);
             $sitecourseid = get_site()->id;
             $currentcourseid = $COURSE->id > $sitecourseid ? $COURSE->id : null;
-            $showincoursecheck = in_array($currentcourseid, $configcourseids);
+            $showincoursecheck = !$showincoursesonly || in_array($currentcourseid, $configcourseids);
             if (isset($currentcourseid) ? $showincoursecheck : !$showincoursesonly) {
                 $html .= $renderer->render_from_template('local_learnwise/assistantwidget', [
                     'assistantid' => $settings->assistantid,
