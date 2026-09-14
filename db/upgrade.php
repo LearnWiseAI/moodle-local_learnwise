@@ -236,5 +236,10 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026091002, 'local', 'learnwise');
     }
 
+    if ($oldversion < 2026091501) {
+        local_learnwise_upgrade_restrict_service_role();
+        upgrade_plugin_savepoint(true, 2026091501, 'local', 'learnwise');
+    }
+
     return true;
 }
