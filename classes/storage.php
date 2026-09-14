@@ -106,6 +106,7 @@ class storage implements
             }
             return [
                 'access_token' => $token->token,
+                'service_token' => true,
                 'client_id' => $client->uniqid,
                 'user_id' => $token->userid,
                 'expires' => $token->validuntil > 0 ? $token->validuntil : time() + 5,

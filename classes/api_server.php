@@ -66,6 +66,9 @@ class api_server extends webservice_base_server {
      */
     public $server;
 
+    /** @var bool Whether the authenticated credential is a permanent service token. */
+    protected $servicetoken = false;
+
     /**
      * The current request object.
      *
@@ -199,9 +202,36 @@ class api_server extends webservice_base_server {
 
             // Authenticate user.
             $token = $this->server->getAccessTokenData($this->request);
+            if (!empty($token['service_token'])) {
+                $this->token = $token['access_token'];
+                return $this->authenticate_by_token(EXTERNAL_TOKEN_PERMANENT);
+            }
             return get_complete_user_data('id', $token['user_id'], null, true);
         }
-        return parent::authenticate_by_token($tokentype);
+        global $DB;
+        $user = parent::authenticate_by_token($tokentype);
+        $this->servicetoken = true;
+        $service = $DB->get_record('external_services', [
+            'id' => $this->restricted_serviceid, 'shortname' => constants::COMPONENT, 'enabled' => 1,
+        ]);
+        if (!$service) {
+            throw new \webservice_access_exception('The LearnWise service is not enabled for this token.');
+        }
+        if ($service->restrictedusers) {
+            $authorised = $DB->get_record('external_services_users', [
+                'externalserviceid' => $service->id, 'userid' => $user->id,
+            ]);
+            if (
+                !$authorised || (!empty($authorised->validuntil) && $authorised->validuntil < time()) ||
+                    (!empty($authorised->iprestriction) && !address_in_subnet(getremoteaddr(), $authorised->iprestriction))
+            ) {
+                throw new \webservice_access_exception('The user is not authorised for the LearnWise service.');
+            }
+        }
+        if (!empty($service->requiredcapability)) {
+            require_capability($service->requiredcapability, \context::instance_by_id($this->restricted_context->id), $user->id);
+        }
+        return $user;
     }
 
     /**
@@ -403,6 +433,10 @@ class api_server extends webservice_base_server {
             throw new invalid_parameter_exception('Missing function name');
         }
 
+        if ($this->servicetoken) {
+            $this->require_service_read();
+        }
+
         if (isset($this->externalcallbacks[$this->functionname])) {
             $this->function = baseapi::external_function_info((object) $this->externalcallbacks[$this->functionname]);
             $this->parameters = baseapi::clean_returnvalue(
@@ -417,6 +451,34 @@ class api_server extends webservice_base_server {
 
         // We have all we need now.
         $this->function = $function;
+    }
+
+    /**
+     * Limit permanent credentials to integration reads, including the generic WS proxy.
+     *
+     * User OAuth credentials continue to use Moodle's per-user capability checks.
+     */
+    protected function require_service_read(): void {
+        global $DB;
+        $callbacks = [
+            courses::function_name(), assignments::function_name(), books::function_name(),
+            plugininfo::function_name(), files::function_name(),
+        ];
+        if (in_array($this->functionname, $callbacks, true)) {
+            return;
+        }
+        // Core reads must also belong to the token's restricted external service.
+        if (
+            $DB->record_exists('external_services_functions', [
+                'externalserviceid' => $this->restricted_serviceid, 'functionname' => $this->functionname,
+            ])
+        ) {
+            $function = baseapi::external_function_info($this->functionname);
+            if (isset($function->type) && $function->type === 'read') {
+                return;
+            }
+        }
+        throw new \webservice_access_exception('The LearnWise service token only permits integration read operations.');
     }
 
     /**
