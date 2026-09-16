@@ -16,12 +16,12 @@
 
 namespace local_learnwise\external;
 
-use core\files\curl_security_helper;
-use curl;
+use core_useragent;
 use external_single_structure;
 use external_value;
 use local_learnwise\constants;
 use moodle_url;
+use stdClass;
 
 /**
  * Class files
@@ -60,8 +60,7 @@ class files extends baseapi {
      * @return array
      */
     public static function execute($path) {
-        global $CFG, $USER;
-        require_once($CFG->libdir . '/filelib.php');
+        global $USER;
         $params = self::validate_parameters(
             self::execute_parameters(),
             ['path' => $path]
@@ -73,26 +72,19 @@ class files extends baseapi {
         $scriptkey = constants::COMPONENT . '_' . sha1($filteredpath);
         $token = get_user_key($scriptkey, $USER->id, null, null, strtotime('+5 secs'));
         $urlbase = new moodle_url('/tokenpluginfile.php', ['key' => $token, 'file' => $filteredpath]);
-        $urlbase = $urlbase->out(false);
 
         $urlbase = self::clean_returnvalue(
             new external_value(PARAM_URL),
-            $urlbase
+            $urlbase->out(false)
         );
 
-        $securityhelper = new curl_security_helper();
-        $ignoresecurity = $securityhelper->url_is_blocked($urlbase);
-
-        $curl = new curl(['ignoresecurity' => $ignoresecurity]);
-        $curl->head($urlbase);
+        $curlreturn = self::send_head_request($urlbase);
 
         delete_user_key($scriptkey, $USER->id);
 
-        $curlresponse = (array) $curl->response;
-        $curlinfo = (array) $curl->info;
-
-        $response['accessible'] = empty($curl->error) && $curlinfo['http_code'] === 200 &&
-            !empty($curlresponse['Content-Disposition']);
+        $response['accessible'] = empty($curlreturn->error) &&
+            $curlreturn->info['http_code'] === 200 &&
+            !empty($curlreturn->response['Content-Disposition']);
 
         return $response;
     }
@@ -111,5 +103,150 @@ class files extends baseapi {
         return new external_single_structure([
             'accessible' => new external_value(PARAM_BOOL, 'file is accessible or not'),
         ]);
+    }
+
+    /**
+     * Send head request with php's native curl
+     *
+     * @param string $url
+     * @return stdClass Information get from running curl_* functions
+     */
+    public static function send_head_request($url) {
+        $curlreturn = new stdClass();
+        $curlreturn->responsefinished = false;
+        $curlreturn->response = [];
+        $curlreturn->info = [];
+        $curlreturn->error = '';
+        $curlreturn->errno = 0;
+
+        $useragent = core_useragent::get_moodlebot_useragent();
+        $emulateredirects = ini_get('open_basedir');
+
+        $curloptions = [
+            CURLOPT_URL => $url,
+            CURLOPT_HTTPGET => false,
+            CURLOPT_HEADER => true,
+            CURLOPT_NOBODY => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_CONNECTTIMEOUT => 30,
+            CURLOPT_PROTOCOLS => (CURLPROTO_HTTP | CURLPROTO_HTTPS),
+            CURLOPT_REDIR_PROTOCOLS => (CURLPROTO_HTTP | CURLPROTO_HTTPS),
+            CURLOPT_USERAGENT => $useragent,
+            CURLOPT_HTTPHEADER => [
+                'User-Agent: ' . $useragent,
+            ],
+        ];
+
+        $curl = curl_init();
+        curl_setopt_array($curl, $curloptions);
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($h, $header) use ($curlreturn) {
+            return self::format_header($header, $curlreturn);
+        });
+
+        curl_exec($curl);
+        $curlreturn->info  = curl_getinfo($curl);
+        $curlreturn->error = curl_error($curl);
+        $curlreturn->errno = curl_errno($curl);
+
+        if ($emulateredirects && $curlreturn->info['http_code'] != 200) {
+            $redirects = 0;
+            while ($redirects <= $curloptions[CURLOPT_MAXREDIRS]) {
+                if (!in_array($curlreturn->info['http_code'], [301, 302, 307, 308, 303])) {
+                    break;
+                }
+                $redirects++;
+                $redirecturl = null;
+                if (isset($curlreturn->info['redirect_url']) && preg_match('|^https?://|i', $curlreturn->info['redirect_url'])) {
+                    $redirecturl = $curlreturn->info['redirect_url'];
+                }
+                if (!$redirecturl) {
+                    /* @phpstan-ignore foreach.emptyArray */
+                    foreach ($curlreturn->response as $k => $v) {
+                        if (strtolower($k) === 'location') {
+                            $redirecturl = $v;
+                            break;
+                        }
+                    }
+                    /* @phpstan-ignore booleanAnd.leftAlwaysFalse */
+                    if ($redirecturl && !preg_match('|^https?://|i', $redirecturl)) {
+                        $current = curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
+                        if (strpos($redirecturl, '/') === 0) {
+                            $pos = strpos('/', $current, 8);
+                            if ($pos === false) {
+                                $redirecturl = $current . $redirecturl;
+                            } else {
+                                $redirecturl = substr($current, 0, $pos) . $redirecturl;
+                            }
+                        } else {
+                            $redirecturl = dirname($current) . '/' . $redirecturl;
+                        }
+                    }
+                }
+
+                curl_setopt($curl, CURLOPT_URL, $redirecturl);
+                curl_exec($curl);
+
+                $curlreturn->info  = curl_getinfo($curl);
+                $curlreturn->error = curl_error($curl);
+                $curlreturn->errno = curl_errno($curl);
+
+                $curlreturn->info['redirect_count'] = $redirects;
+
+                if ($curlreturn->info['http_code'] === 200) {
+                    break;
+                }
+                if ($curlreturn->errno != CURLE_OK) {
+                    break;
+                }
+            }
+            if ($redirects > $curloptions[CURLOPT_MAXREDIRS]) {
+                $curlreturn->errno = CURLE_TOO_MANY_REDIRECTS;
+                $curlreturn->error = 'Maximum (' . $curloptions[CURLOPT_MAXREDIRS] . ') redirects followed';
+            }
+        }
+
+        curl_close($curl);
+
+        return $curlreturn;
+    }
+
+    /**
+     * Curl response header formatter
+     *
+     * @param string $header
+     * @param stdClass $curlreturn
+     * @return int The length of the header
+     */
+    protected static function format_header($header, $curlreturn) {
+        if (trim($header, "\r\n") === '') {
+            $curlreturn->responsefinished = true;
+        }
+
+        if (strlen($header) > 2) {
+            if ($curlreturn->responsefinished) {
+                $curlreturn->responsefinished = false;
+                $curlreturn->response = [];
+            }
+            $parts = explode(" ", rtrim($header, "\r\n"), 2);
+            $key = rtrim($parts[0], ':');
+            $value = isset($parts[1]) ? $parts[1] : null;
+            if (!empty($curlreturn->response[$key])) {
+                if (is_array($curlreturn->response[$key])) {
+                    $curlreturn->response[$key][] = $value;
+                } else {
+                    $tmp = $curlreturn->response[$key];
+                    $curlreturn->response[$key] = [];
+                    $curlreturn->response[$key][] = $tmp;
+                    $curlreturn->response[$key][] = $value;
+                }
+            } else {
+                $curlreturn->response[$key] = $value;
+            }
+        }
+        return strlen($header);
     }
 }
