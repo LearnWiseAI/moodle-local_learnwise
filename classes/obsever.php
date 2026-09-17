@@ -14,19 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_learnwise;
+
+use assignsubmission_comments\event\comment_deleted;
+
 /**
- * Version information for Learnwise
+ * Class observer
  *
  * @package    local_learnwise
- * @copyright  2025 LearnWise <help@learnwise.ai>
+ * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component    = 'local_learnwise';
-$plugin->release      = '1.4.9a';
-$plugin->version      = 2026091502;
-$plugin->requires     = 2020061500;
-$plugin->supported    = [39, 502];
-$plugin->maturity     = MATURITY_STABLE;
+class obsever {
+    /**
+     * Delete comment
+     * @param comment_deleted $event
+     */
+    public static function delete_comment_track(comment_deleted $event) {
+        global $DB;
+        $DB->delete_records('local_learnwise_comnt_tracks', ['commentid' => $event->objectid]);
+    }
+}

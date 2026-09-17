@@ -241,5 +241,27 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026091501, 'local', 'learnwise');
     }
 
+    if ($oldversion < 2026091502) {
+        // Define table local_learnwise_com_tracks to be created.
+        $table = new xmldb_table('local_learnwise_comnt_tracks');
+
+        // Adding fields to table local_learnwise_com_tracks.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('commentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timeupdated', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+
+        // Adding keys to table local_learnwise_com_tracks.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('fkcommentid', XMLDB_KEY_FOREIGN, ['commentid'], 'comments', ['id']);
+
+        // Conditionally launch create table for local_learnwise_com_tracks.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Learnwise savepoint reached.
+        upgrade_plugin_savepoint(true, 2026091502, 'local', 'learnwise');
+    }
+
     return true;
 }
