@@ -15,18 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for Learnwise
+ * Event observers for Learnwise
  *
  * @package    local_learnwise
- * @copyright  2025 LearnWise <help@learnwise.ai>
+ * @category   event
+ * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component    = 'local_learnwise';
-$plugin->release      = '1.4.9b';
-$plugin->version      = 2026091502;
-$plugin->requires     = 2017111309;
-$plugin->supported    = [34, 38];
-$plugin->maturity     = MATURITY_STABLE;
+$observers = [
+    [
+        'eventname' => '\assignsubmission_comments\event\comment_deleted',
+        'callback' => '\local_learnwise\obsever::delete_comment_track',
+    ],
+];

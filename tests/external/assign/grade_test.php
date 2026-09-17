@@ -18,6 +18,8 @@ namespace local_learnwise\external\assign;
 
 use advanced_testcase;
 use assign;
+use cm_info;
+use comment;
 use context_module;
 use dml_missing_record_exception;
 use invalid_parameter_exception;
@@ -897,5 +899,314 @@ final class grade_test extends advanced_testcase {
         $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
         $cm = get_coursemodule_from_id('assign', $assign->cmid, 0, false, MUST_EXIST);
         return [$course, $cm, $assign, $teacher, $student];
+    }
+
+    /**
+     * Test that comment tracking works with feedback plugin enabled.
+     */
+    public function test_comment_uses_feedback_plugin_when_enabled(): void {
+        global $DB;
+
+        [$course, $cm, $assign, $teacher, $student] = $this->create_assignment();
+        $this->setUser($teacher);
+        $result = grade::execute(
+            $course->id,
+            $assign->cmid,
+            $student->id,
+            [
+                'submission_grade' => 80.0,
+                'general_feedback' => 'Via feedback plugin',
+            ]
+        );
+
+        $this->assertTrue($result['success']);
+
+        // Verify comment was saved via feedback plugin, not tracking table.
+        $assigncontext = context_module::instance($cm->id);
+        $grade = new assign($assigncontext, $cm, $course);
+        $usergrade = $grade->get_user_grade($student->id, false);
+
+        if ($usergrade) {
+            $feedbackcomment = $DB->get_record('assignfeedback_comments', ['grade' => $usergrade->id]);
+            $this->assertNotNull($feedbackcomment);
+            $this->assertStringContainsString('Via feedback plugin', $feedbackcomment->commenttext);
+        }
+    }
+
+    /**
+     * Test that a comment is created and tracked when feedback comments are disabled.
+     */
+    public function test_comment_created_and_tracked_when_plugin_disabled(): void {
+        [$comment, $track, $result, , $assign] = $this->create_comment_with_tracking();
+        $this->assertTrue($result['success']);
+        $this->assertNotEmpty($comment, 'No comments found in database');
+        $this->assertStringContainsString('Great submission!', $comment->content);
+        $this->assertNotNull($track, 'Comment not tracked in local_learnwise_comnt_tracks');
+        $this->assertEquals($comment->id, $track->commentid);
+        $assigncontext = context_module::instance($assign->cmid);
+        $this->assertEquals($assigncontext->id, $comment->contextid);
+        $this->assertEquals($comment->commentarea, 'submission_comments');
+        $assignobject = new assign($assigncontext, null, null);
+        $submission = $assignobject->get_user_submission($this->student->id, false);
+        $this->assertIsObject($submission);
+        $this->assertEquals($submission->id, $comment->itemid);
+    }
+
+    /**
+     * Test that an existing tracked comment is updated on subsequent grade submission.
+     */
+    public function test_existing_tracked_comment_is_updated(): void {
+        global $DB;
+        [$comment1, $track, $result1, $course, $assign] = $this->create_comment_with_tracking();
+        $this->assertTrue($result1['success']);
+        $this->assertNotEmpty($comment1);
+        $comment1id = $comment1->id;
+        $originaltime = $comment1->timecreated;
+
+        // Wait a moment to ensure time difference.
+        sleep(1);
+
+        // Second submission with updated comment.
+        $result2 = grade::execute(
+            $course->id,
+            $assign->cmid,
+            $this->student->id,
+            [
+                'submission_grade' => 85.0,
+                'general_feedback' => 'Updated feedback',
+            ]
+        );
+        $this->assertTrue($result2['success']);
+
+        $countcomments = $DB->count_records('comments', [
+            'userid' => $this->teacher->id,
+            'component' => 'assignsubmission_comments',
+        ]);
+        $this->assertSame(1, $countcomments, 'Multiple comments created instead of updating existing');
+        $updatedcomment = $DB->get_record('comments', ['id' => $comment1id]);
+        $this->assertNotNull($updatedcomment);
+        $this->assertStringContainsString('Updated feedback', $updatedcomment->content);
+        $this->assertEquals($originaltime, $updatedcomment->timecreated);
+
+        // Verify track record was updated.
+        $track = $DB->get_record('local_learnwise_comnt_tracks', [
+            'commentid' => $comment1id,
+        ]);
+        $this->assertNotNull($track);
+        $this->assertGreaterThanOrEqual($originaltime, $track->timeupdated);
+    }
+
+    /**
+     * Test that comment deletion removes tracking record.
+     */
+    public function test_comment_deletion_removes_track_record(): void {
+        global $DB;
+
+        [$comment, $track, , $course, $assign] = $this->create_comment_with_tracking();
+
+        // Verify both exist before deletion.
+        $this->assertNotNull($comment);
+        $this->assertNotNull($track);
+        $commentid = $comment->id;
+        $trackid = $track->id;
+
+        $cm = get_fast_modinfo($course)->get_cm($assign->cmid);
+
+        $comment = $DB->get_record('comments', ['id' => $commentid]);
+        $this->assertNotEmpty($comment, 'Comment not exist');
+
+        // Delete the comment.
+        $args = new stdClass();
+        $args->course = $course;
+        $args->cm = $cm;
+        $args->itemid = $comment->itemid;
+        $args->contextid = $comment->contextid;
+        $args->area = $comment->commentarea;
+        $args->component = $comment->component;
+
+        $manager = new comment($args);
+        $manager->delete($commentid);
+
+        // Verify comment is deleted.
+        $deletedcomment = $DB->get_record('comments', ['id' => $commentid]);
+        $this->assertFalse($deletedcomment);
+
+        // Verify track record is also deleted by observer.
+        $deletedtrack = $DB->get_record('local_learnwise_comnt_tracks', ['id' => $trackid]);
+        $this->assertFalse($deletedtrack, 'Track record was not deleted when comment was deleted');
+    }
+
+    /**
+     * Test that observer gracefully handles deletion of non-existent comment ID.
+     */
+    public function test_observer_handles_non_existent_comment_id(): void {
+        global $DB;
+
+        // Create a valid event with non-existent comment ID.
+        $fakecommentid = 999999;
+
+        $event = \assignsubmission_comments\event\comment_deleted::create([
+            'objectid' => $fakecommentid,
+            'context' => context_module::instance($this->assign->cmid),
+            'other' => [
+                'itemid' => $fakecommentid,
+            ],
+        ]);
+
+        // Should not throw exception.
+        try {
+            $event->trigger();
+            $this->assertTrue(true);
+        } catch (\Exception $e) {
+            $this->fail("Observer failed on non-existent comment ID: " . $e->getMessage());
+        }
+
+        // Verify database is unchanged.
+        $this->assertFalse($DB->record_exists('local_learnwise_comnt_tracks', [
+            'commentid' => $fakecommentid,
+        ]));
+    }
+
+    /**
+     * Create a comment and return both comment and track records.
+     *
+     * @return array [comment, track, $result, $course, $assign]
+     */
+    protected function create_comment_with_tracking(): array {
+        global $DB;
+        $course = $this->getDataGenerator()->create_course();
+        $assign = $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id,
+            'grade' => 100,
+            'assignfeedback_comments_enabled' => 0,
+        ]);
+        $this->getDataGenerator()->enrol_user($this->student->id, $course->id, 'student');
+        $this->getDataGenerator()->enrol_user($this->teacher->id, $course->id, 'editingteacher');
+        $this->setUser($this->teacher);
+
+        $result = grade::execute(
+            $course->id,
+            $assign->cmid,
+            $this->student->id,
+            [
+                'submission_grade' => 80.0,
+                'general_feedback' => 'Great submission!',
+            ]
+        );
+
+        $assigncontext = context_module::instance($assign->cmid);
+        $assignment = new assign($assigncontext, null, null);
+        $submission = $assignment->get_user_submission($this->student->id, true);
+        $comment = $DB->get_record('comments', [
+            'userid' => $this->teacher->id,
+            'contextid' => context_module::instance($assign->cmid)->id,
+            'commentarea' => 'submission_comments',
+            'itemid' => $submission->id,
+        ]);
+
+        $track = $DB->get_record('local_learnwise_comnt_tracks', [
+            'commentid' => $comment->id,
+        ]);
+
+        return [$comment, $track, $result, $course, $assign];
+    }
+
+    /**
+     * Test that a comment is created and tracked for the same user on a second assignment in the same course.
+     */
+    public function test_comment_created_and_tracked_for_same_user_on_second_assignment(): void {
+        global $DB;
+        // Create the first assignment and comment.
+        [$firstcomment, $firsttrack, $firstresult, $firstcourse, ] =
+            $this->create_comment_with_tracking();
+
+        $this->assertTrue($firstresult['success']);
+        $this->assertNotEmpty($firstcomment, 'No comment found for the first assignment');
+        $this->assertNotNull(
+            $firsttrack,
+            'First comment not tracked in local_learnwise_comnt_tracks'
+        );
+
+        // Create a second assignment in the same course for the same user.
+        $secondassign = $this->getDataGenerator()->create_module('assign', [
+            'course' => $firstcourse->id,
+            'grade' => 100,
+            'assignfeedback_comments_enabled' => 0,
+        ]);
+
+        $secondresult = grade::execute(
+            $firstcourse->id,
+            $secondassign->cmid,
+            $this->student->id,
+            [
+                'submission_grade' => 70.0,
+                'general_feedback' => 'second assignment!',
+            ]
+        );
+
+        $assignmentcontext = context_module::instance($secondassign->cmid);
+        $submissionassignment = new assign($assignmentcontext, null, null);
+        $secondsubmission = $submissionassignment->get_user_submission($this->student->id, true);
+
+        $secondcomment = $DB->get_record('comments', [
+            'userid' => $this->teacher->id,
+            'contextid' => $assignmentcontext->id,
+            'commentarea' => 'submission_comments',
+            'itemid' => $secondsubmission->id,
+        ]);
+
+        $this->assertIsObject($secondcomment, 'No comment found for the second assignment');
+
+        $secondtrack = $DB->get_record('local_learnwise_comnt_tracks', [
+            'commentid' => $secondcomment->id,
+        ]);
+
+        $this->assertTrue($secondresult['success']);
+        $this->assertNotEmpty($secondcomment, 'No comment found for the second assignment');
+        $this->assertStringContainsString('second assignment!', $secondcomment->content);
+
+        // Verify that the second comment was tracked.
+        $this->assertIsObject($secondtrack);
+        $this->assertEquals($secondcomment->id, $secondtrack->commentid);
+
+        // Verify that the second comment belongs to the second assignment context.
+        $this->assertEquals(
+            $assignmentcontext->id,
+            $secondcomment->contextid
+        );
+        $this->assertEquals(
+            'submission_comments',
+            $secondcomment->commentarea
+        );
+
+        $this->assertIsObject($secondsubmission);
+        $this->assertEquals(
+            $secondsubmission->id,
+            $secondcomment->itemid
+        );
+
+        // Ensure the second comment is distinct from the first comment.
+        $this->assertNotEquals(
+            $firstcomment->id,
+            $secondcomment->id
+        );
+
+        // Ensure the second comment has its own tracking record.
+        $this->assertNotEquals(
+            $firsttrack->id,
+            $secondtrack->id
+        );
+
+        // Confirm both comments belong to the same user.
+        $this->assertEquals(
+            $firstcomment->userid,
+            $secondcomment->userid
+        );
+
+        // Confirm the comments belong to different assignments.
+        $this->assertNotEquals(
+            $firstcomment->contextid,
+            $secondcomment->contextid
+        );
     }
 }

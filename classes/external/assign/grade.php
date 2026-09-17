@@ -17,6 +17,7 @@
 namespace local_learnwise\external\assign;
 
 use assign;
+use comment;
 use context_module;
 use external_function_parameters;
 use external_multiple_structure;
@@ -245,20 +246,62 @@ class grade extends baseapi {
             $grade->grader = $USER->id;
 
             $feedbackmodified = false;
-            $feedbackplugins = $assignment->load_plugins('assignfeedback');
-            foreach ($feedbackplugins as $plugin) {
-                if (isset($rubricassessment->general_feedback) && $plugin->is_enabled() && $plugin->is_visible()) {
+            if (isset($rubricassessment->general_feedback)) {
+                $commentfeedback = $assignment->get_feedback_plugin_by_type('comments');
+                if ($commentfeedback->is_enabled() && $commentfeedback->is_visible()) {
                     $formdata = new stdClass();
                     $formdata->assignfeedbackcomments_editor = [
                         'text' => $rubricassessment->general_feedback,
                         'format' => 1,
                     ];
-                    $gradingmodified = $plugin->is_feedback_modified($grade, $formdata);
+                    $gradingmodified = $commentfeedback->is_feedback_modified($grade, $formdata);
                     if ($gradingmodified) {
-                        if (!$plugin->save($grade, $formdata)) {
-                            throw new \moodle_exception('error', 'moodle', '', $plugin->get_error());
+                        if (!$commentfeedback->save($grade, $formdata)) {
+                            throw new \moodle_exception('error', 'moodle', '', $commentfeedback->get_error());
                         }
                         $feedbackmodified = true;
+                    }
+                } else {
+                    $commentsubmission = $assignment->get_submission_plugin_by_type('comments');
+                    if (!empty($commentsubmission) && $commentsubmission->is_enabled()) {
+                        $usersubmission = $assignment->get_user_submission($params['user_id'], false);
+                        $cmt = new stdClass();
+                        $cmt->contextid = $context->id;
+                        $cmt->courseid = $course->id;
+                        $cmt->cm = $cm;
+                        $cmt->itemid = $usersubmission->id;
+                        $cmt->area = 'submission_comments';
+                        $cmt->component = 'assignsubmission_comments';
+                        $comment = new comment($cmt);
+                        if ($comment->can_post()) {
+                            $sql = "SELECT c.*,t.id as trackid FROM {comments} c
+                            JOIN {local_learnwise_comnt_tracks} t ON t.commentid = c.id
+                            WHERE c.userid = :userid AND c.contextid = :contextid
+                                AND c.commentarea = :commentarea AND c.itemid = :itemid";
+                            $existcomment = $DB->get_record_sql($sql, [
+                                'userid' => $USER->id,
+                                'contextid' => $cmt->contextid,
+                                'commentarea' => $cmt->area,
+                                'itemid' => $cmt->itemid,
+                            ]);
+                            if ($existcomment) {
+                                $existcomment->content = $rubricassessment->general_feedback;
+                                $DB->update_record('comments', $existcomment);
+                                $DB->set_field(
+                                    'local_learnwise_comnt_tracks',
+                                    'timeupdated',
+                                    time(),
+                                    ['id' => $existcomment->trackid]
+                                );
+                            } else {
+                                $comnt = $comment->add($rubricassessment->general_feedback);
+                                if (!empty($comnt) && is_object($comnt)) {
+                                    $data = new stdClass();
+                                    $data->commentid = $comnt->id;
+                                    $DB->insert_record('local_learnwise_comnt_tracks', $data);
+                                }
+                            }
+                        }
                     }
                 }
             }
