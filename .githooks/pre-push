@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#
+# Blocks a push whose PHP changes would fail CI's "Moodle Code Checker" step.
+#
+# Enable with:
+#     git config core.hooksPath .githooks
+#
+# Bypass a single push with:
+#     git push --no-verify
+
+set -euo pipefail
+
+exec "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/moodle-phpcs.sh"
