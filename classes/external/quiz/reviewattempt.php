@@ -16,6 +16,7 @@
 
 namespace local_learnwise\external\quiz;
 
+use context_module;
 use external_function_parameters;
 use external_multiple_structure;
 use external_single_structure;
@@ -81,16 +82,19 @@ class reviewattempt extends baseapi {
             throw new moodle_exception('invalidcoursemodule');
         }
 
-        // validate_context() is what applies the external service context restriction and runs
-        // require_login() for the course and the activity, so enrolment status, activity visibility
-        // and availability restrictions are enforced before anything is read back.
-        static::validate_context($attemptobj->get_context());
+        // Validation through validate_context() applies the external service context restriction and
+        // runs require_login() for the course and the activity, so enrolment status, activity
+        // visibility and availability restrictions are enforced before anything is read back.
+        // quiz_attempt::get_context() only exists from Moodle 4.2, so resolve the context from the
+        // course module id, which every supported version exposes.
+        static::validate_context(context_module::instance($attemptobj->get_cmid()));
 
         $attemptobj->check_review_capability();
 
-        // check_review_capability() only asks whether the caller may review their own attempts, it
-        // never asks whose attempt this is. mod/quiz/review.php pairs it with an ownership check,
-        // and without that any student on the course can read another student's review.
+        // Reviewing rights are only half the check: check_review_capability() asks whether the
+        // caller may review their own attempts, never whose attempt this is. mod/quiz/review.php
+        // pairs it with an ownership check, and without that any student on the course can read
+        // another student's review.
         if (!$attemptobj->is_own_attempt() && !$attemptobj->is_review_allowed()) {
             throw new moodle_exception('noreviewattempt', 'quiz');
         }
