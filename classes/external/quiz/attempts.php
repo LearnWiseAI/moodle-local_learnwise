@@ -16,6 +16,7 @@
 
 namespace local_learnwise\external\quiz;
 
+use context_module;
 use external_function_parameters;
 use external_single_structure;
 use external_value;
@@ -70,8 +71,12 @@ class attempts extends baseapi {
         ]);
         $params['userid'] = $USER->id;
 
-        $modinfo = get_fast_modinfo($params['courseid'], $params['userid']);
-        $cm = $modinfo->get_cm($params['quizid']);
+        $cm = get_coursemodule_from_id('quiz', $params['quizid'], $params['courseid'], false, MUST_EXIST);
+
+        // Validate the context before reading the quiz, so enrolment status, activity visibility and
+        // availability restrictions are enforced first.
+        static::validate_context(context_module::instance($cm->id));
+
         $quiz = $DB->get_record('quiz', ['id' => $cm->instance], '*', MUST_EXIST);
         $result = mod_quiz_external::get_user_attempts($cm->instance, $params['userid'], 'all', true);
 

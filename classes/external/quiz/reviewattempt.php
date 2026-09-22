@@ -21,6 +21,7 @@ use external_multiple_structure;
 use external_single_structure;
 use external_value;
 use local_learnwise\external\baseapi;
+use moodle_exception;
 
 /**
  * Class reviewattempt
@@ -76,7 +77,23 @@ class reviewattempt extends baseapi {
         $params['userid'] = $USER->id;
 
         $attemptobj = quiz_create_attempt_handling_errors($params['attemptid'], $params['quizid']);
+        if ($attemptobj->get_courseid() != $params['courseid']) {
+            throw new moodle_exception('invalidcoursemodule');
+        }
+
+        // validate_context() is what applies the external service context restriction and runs
+        // require_login() for the course and the activity, so enrolment status, activity visibility
+        // and availability restrictions are enforced before anything is read back.
+        static::validate_context($attemptobj->get_context());
+
         $attemptobj->check_review_capability();
+
+        // check_review_capability() only asks whether the caller may review their own attempts, it
+        // never asks whose attempt this is. mod/quiz/review.php pairs it with an ownership check,
+        // and without that any student on the course can read another student's review.
+        if (!$attemptobj->is_own_attempt() && !$attemptobj->is_review_allowed()) {
+            throw new moodle_exception('noreviewattempt', 'quiz');
+        }
 
         $options = $attemptobj->get_display_options(true);
 
