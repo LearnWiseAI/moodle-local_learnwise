@@ -133,22 +133,79 @@ final class reviewattempt_test extends advanced_testcase {
     }
 
     /**
-     * Documents current behaviour: the API guards the review with
-     * quiz_attempt::check_review_capability() only, which asks whether the caller may review
-     * their own attempts. It never asks whose attempt this is, so any student enrolled on the
-     * course can read another student's review. Moodle's own mod/quiz/review.php adds an
-     * is_review_allowed() check for attempts the caller does not own.
+     * check_review_capability() only asks whether the caller may review their own attempts, so a
+     * second student on the same course passes it. The ownership check is what stops them reading
+     * someone else's review.
      */
-    public function test_execute_does_not_check_who_owns_the_attempt(): void {
+    public function test_execute_refuses_another_students_attempt(): void {
         [$course, $quiz, $user] = $this->create_quiz(['grade' => 100, 'sumgrades' => 10]);
         $attempt = $this->create_attempt($quiz, $user, 6.0);
         $other = $this->getDataGenerator()->create_user();
         $this->getDataGenerator()->enrol_user($other->id, $course->id, 'student');
         $this->setUser($other);
 
+        $this->expectException(moodle_exception::class);
+        reviewattempt::execute($course->id, $quiz->cmid, $attempt->id);
+    }
+
+    /**
+     * A teacher holds mod/quiz:viewreports, so is_review_allowed() lets them review the attempt.
+     */
+    public function test_execute_allows_a_teacher_to_review_a_students_attempt(): void {
+        [$course, $quiz, $user] = $this->create_quiz(['grade' => 100, 'sumgrades' => 10]);
+        $attempt = $this->create_attempt($quiz, $user, 6.0);
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $course->id, 'editingteacher');
+        $this->setUser($teacher);
+
         $response = reviewattempt::execute($course->id, $quiz->cmid, $attempt->id);
 
         $this->assertEquals(60.0, $response['grade'], '', 0.001);
+    }
+
+    /**
+     * A student cannot review their own attempt at an activity they can no longer see. Only
+     * validate_context() catches this, because the capability still applies in the module context.
+     */
+    public function test_execute_refuses_an_attempt_at_a_hidden_activity(): void {
+        [$course, $quiz, $user] = $this->create_quiz(['grade' => 100, 'sumgrades' => 10]);
+        $attempt = $this->create_attempt($quiz, $user, 6.0);
+        set_coursemodule_visible($quiz->cmid, 0);
+        rebuild_course_cache($course->id, true);
+        $this->setUser($user);
+
+        $this->expectException(moodle_exception::class);
+        reviewattempt::execute($course->id, $quiz->cmid, $attempt->id);
+    }
+
+    /**
+     * A student whose enrolment has been suspended is refused.
+     */
+    public function test_execute_refuses_a_suspended_student(): void {
+        global $DB;
+
+        [$course, $quiz, $user] = $this->create_quiz(['grade' => 100, 'sumgrades' => 10]);
+        $attempt = $this->create_attempt($quiz, $user, 6.0);
+        $instance = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'manual'], '*', MUST_EXIST);
+        enrol_get_plugin('manual')->update_user_enrol($instance, $user->id, ENROL_USER_SUSPENDED);
+        $this->setUser($user);
+
+        $this->expectException(moodle_exception::class);
+        reviewattempt::execute($course->id, $quiz->cmid, $attempt->id);
+    }
+
+    /**
+     * The attempt has to belong to the course named in the route.
+     */
+    public function test_execute_rejects_an_attempt_from_another_course(): void {
+        [, $quiz, $user] = $this->create_quiz(['grade' => 100, 'sumgrades' => 10]);
+        $attempt = $this->create_attempt($quiz, $user, 6.0);
+        $othercourse = $this->getDataGenerator()->create_course();
+        $this->getDataGenerator()->enrol_user($user->id, $othercourse->id, 'student');
+        $this->setUser($user);
+
+        $this->expectException(moodle_exception::class);
+        reviewattempt::execute($othercourse->id, $quiz->cmid, $attempt->id);
     }
 
     /**

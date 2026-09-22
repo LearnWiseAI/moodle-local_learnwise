@@ -20,6 +20,7 @@ use advanced_testcase;
 use context_module;
 use local_learnwise\external\baseapi;
 use local_learnwise\external\timestampvalue;
+use moodle_exception;
 use question_engine;
 use stdClass;
 use test_question_maker;
@@ -162,6 +163,43 @@ final class attempts_test extends advanced_testcase {
 
         $this->assertSame((int) $second->id, (int) $response['id']);
         $this->assertEquals(90.0, $response['grade'], '', 0.001);
+    }
+
+    /**
+     * A user who is not on the course is refused before the quiz is read.
+     */
+    public function test_execute_refuses_a_user_outside_the_course(): void {
+        [$course, $quiz] = $this->create_quiz();
+        $this->setUser($this->getDataGenerator()->create_user());
+
+        $this->expectException(moodle_exception::class);
+        attempts::execute($course->id, $quiz->cmid);
+    }
+
+    /**
+     * A student cannot list attempts at an activity they can no longer see.
+     */
+    public function test_execute_refuses_a_hidden_activity(): void {
+        [$course, $quiz, $user] = $this->create_quiz();
+        set_coursemodule_visible($quiz->cmid, 0);
+        rebuild_course_cache($course->id, true);
+        $this->setUser($user);
+
+        $this->expectException(moodle_exception::class);
+        attempts::execute($course->id, $quiz->cmid);
+    }
+
+    /**
+     * A quiz belonging to a different course is not reachable through this course's route.
+     */
+    public function test_execute_rejects_a_quiz_from_another_course(): void {
+        [, $quiz, $user] = $this->create_quiz();
+        $othercourse = $this->getDataGenerator()->create_course();
+        $this->getDataGenerator()->enrol_user($user->id, $othercourse->id, 'student');
+        $this->setUser($user);
+
+        $this->expectException(moodle_exception::class);
+        attempts::execute($othercourse->id, $quiz->cmid);
     }
 
     /**

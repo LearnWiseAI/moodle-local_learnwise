@@ -21,6 +21,7 @@ use dml_missing_record_exception;
 use external_multiple_structure;
 use external_single_structure;
 use local_learnwise\external\baseapi;
+use moodle_exception;
 
 /**
  * Tests for the single forum discussion API.
@@ -128,6 +129,28 @@ final class singlediscussion_test extends advanced_testcase {
         $response = singlediscussion::execute($wanted->id);
 
         $this->assertSame('Wanted', $response['name']);
+    }
+
+    /**
+     * A discussion in a hidden forum is refused, even though the row itself can be read.
+     */
+    public function test_execute_refuses_a_discussion_in_a_hidden_activity(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $forum = $this->getDataGenerator()->create_module('forum', ['course' => $course->id]);
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, 'student');
+        $discussion = $this->getDataGenerator()->get_plugin_generator('mod_forum')->create_discussion([
+            'course' => $course->id,
+            'forum' => $forum->id,
+            'userid' => $user->id,
+            'name' => 'Only topic',
+        ]);
+        set_coursemodule_visible($forum->cmid, 0);
+        rebuild_course_cache($course->id, true);
+        $this->setUser($user);
+
+        $this->expectException(moodle_exception::class);
+        singlediscussion::execute($discussion->id);
     }
 
     /**

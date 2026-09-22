@@ -16,6 +16,7 @@
 
 namespace local_learnwise\external\forum;
 
+use context_module;
 use external_multiple_structure;
 use external_single_structure;
 use external_value;
@@ -66,6 +67,11 @@ class singlediscussion extends baseapi {
 
         $discussion = $DB->get_record('forum_discussions', ['id' => $params['id']], '*', MUST_EXIST);
         $cm = get_coursemodule_from_instance('forum', $discussion->forum, $discussion->course, false, MUST_EXIST);
+
+        // The discussion row has to be read to resolve its course module, so validate the context as
+        // soon as the context is known and before any of it is handed back to the caller.
+        static::validate_context(context_module::instance($cm->id));
+
         discussions::set_id($discussion->id);
 
         return discussions::execute($cm->course, $cm->id);

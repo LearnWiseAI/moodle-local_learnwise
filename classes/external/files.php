@@ -16,6 +16,7 @@
 
 namespace local_learnwise\external;
 
+use context_system;
 use core_useragent;
 use external_single_structure;
 use external_value;
@@ -65,6 +66,10 @@ class files extends baseapi {
             self::execute_parameters(),
             ['path' => $path]
         );
+
+        // The probe itself is answered by core file serving as $USER, but this route still has to
+        // honour the context restriction carried by the calling token.
+        self::validate_context(context_system::instance());
 
         $filteredpathparts = explode('file.php', $params['path'], 2);
         $filteredpath = array_pop($filteredpathparts);
