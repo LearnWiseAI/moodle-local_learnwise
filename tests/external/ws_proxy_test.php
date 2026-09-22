@@ -210,7 +210,7 @@ final class ws_proxy_test extends advanced_testcase {
     }
 
     /**
-     * The whitelist is built from the web service functions Moodle knows about.
+     * The whitelist is the LearnWise service's declared function list.
      */
     public function test_get_allowed_functions_covers_registered_functions(): void {
         $allowed = ws_proxy::get_allowed_functions();
@@ -219,6 +219,30 @@ final class ws_proxy_test extends advanced_testcase {
         $this->assertArrayHasKey('mod_assign_get_assignments', $allowed);
         $this->assertArrayNotHasKey('core_course_not_a_real_function', $allowed);
         $this->assertSame('core_course_get_courses', $allowed['core_course_get_courses']->name);
+    }
+
+    /**
+     * Functions registered elsewhere on the site are not reachable through the
+     * proxy just because they exist: they must be in the LearnWise service.
+     */
+    public function test_get_allowed_functions_excludes_functions_outside_the_service(): void {
+        global $DB;
+
+        $allowed = ws_proxy::get_allowed_functions();
+
+        // Registered by core, deliberately absent from the LearnWise service.
+        $this->assertTrue($DB->record_exists('external_functions', ['name' => 'core_user_create_users']));
+        $this->assertArrayNotHasKey('core_user_create_users', $allowed);
+        $this->assertArrayNotHasKey('core_role_assign_roles', $allowed);
+    }
+
+    /**
+     * A registered function outside the service is refused by dispatch itself.
+     */
+    public function test_dispatch_refuses_a_function_outside_the_service(): void {
+        $response = $this->dispatch(['core_user', 'create_users']);
+
+        $this->assertSame(403, $response->getStatusCode());
     }
 
     /**

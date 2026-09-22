@@ -19,6 +19,7 @@ namespace local_learnwise\external;
 use core_component;
 use core_plugin_manager;
 use local_learnwise\api_server;
+use local_learnwise\constants;
 
 /**
  * Generic WS proxy - translates REST-style JSON requests into Moodle WS function calls.
@@ -119,11 +120,16 @@ class ws_proxy {
     }
 
     /**
-     * Get the list of allowed WS function names.
+     * Get the list of allowed WS function names, keyed by function name.
      *
-     * This is the security whitelist. Only functions listed here can be called
-     * through the proxy. The list is intentionally broad; Moodle capabilities
-     * provide the real per-user access control.
+     * This is the security whitelist. It is the function list declared by the
+     * LearnWise external service in db/services.php - not every web service
+     * function installed on the site. Moodle capabilities still apply on top,
+     * but they are not the only boundary: a privileged user must not be able to
+     * reach unrelated site functions just because they are registered.
+     *
+     * Widening what the proxy can call is therefore a deliberate edit to the
+     * service definition, not a side effect of installing another plugin.
      *
      * @return object[]
      */
@@ -134,13 +140,15 @@ class ws_proxy {
             return $cache;
         }
 
+        $sql = "SELECT f.*
+                  FROM {external_functions} f
+                  JOIN {external_services_functions} sf ON sf.functionname = f.name
+                  JOIN {external_services} s ON s.id = sf.externalserviceid
+                 WHERE s.shortname = :shortname AND s.enabled = 1";
+
         $cache = [];
-        $functionrecords = $DB->get_records_select('external_functions', 'component IS NOT NULL');
-        foreach ($functionrecords as $functionrecord) {
-            $plugindir = core_component::get_component_directory($functionrecord->component);
-            if (file_exists($plugindir . '/db/services.php')) {
-                $cache[$functionrecord->name] = $functionrecord;
-            }
+        foreach ($DB->get_records_sql($sql, ['shortname' => constants::COMPONENT]) as $functionrecord) {
+            $cache[$functionrecord->name] = $functionrecord;
         }
         return $cache;
     }
