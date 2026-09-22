@@ -47,18 +47,15 @@ class potential_course_selector extends course_selector_base {
             $params['fullname'] = '%' . $search . '%';
         }
 
-        $in = ' NOT IN ';
-        if ($this->current) {
-            $in = ' IN ';
-        }
-
-        $existingcourses = get_config('local_learnwise', 'courseids');
+        $existingcourses = $this->get_configured_courseids();
         if (!empty($existingcourses)) {
-            $sql .= " AND c.id $in (" . $existingcourses . ")";
-        } else {
-            if ($this->current) {
-                return [];
-            }
+            // The ids come out of plugin config, so they are bound as parameters rather than pasted
+            // into the query. That keeps the SQL safe whatever ends up in the stored value.
+            [$insql, $inparams] = $DB->get_in_or_equal($existingcourses, SQL_PARAMS_NAMED, 'courseid', $this->current);
+            $sql .= " AND c.id $insql";
+            $params += $inparams;
+        } else if ($this->current) {
+            return [];
         }
 
         if (!$this->is_validating()) {
@@ -87,5 +84,25 @@ class potential_course_selector extends course_selector_base {
         }
 
         return [$groupname => $availableusers];
+    }
+
+    /**
+     * The configured course ids, as integers.
+     *
+     * The setting is a comma separated string written by the course selector page. Anything that is
+     * not a positive integer is dropped, so a value that was stored by some other route cannot reach
+     * the query.
+     *
+     * @return int[]
+     */
+    protected function get_configured_courseids() {
+        $stored = get_config('local_learnwise', 'courseids');
+        if (empty($stored)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('intval', explode(',', $stored)), function ($courseid) {
+            return $courseid > 0;
+        }));
     }
 }
