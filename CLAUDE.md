@@ -53,6 +53,37 @@ moodle-plugin-ci phpunit --fail-on-warning
 moodle-plugin-ci behat --profile chrome
 ```
 
+### 5. Fast local style check (recommended)
+
+`moodle-plugin-ci phpcs --max-warnings 0` runs in **every one of the 14 CI
+matrix jobs**, so one style slip — a missing space in `function ()`, a
+lowercase inline comment — turns the whole matrix red. Checking locally takes
+under a second and needs no Moodle install:
+
+```bash
+scripts/moodle-phpcs.sh          # PHP files changed against main
+scripts/moodle-phpcs.sh --all    # the whole plugin
+```
+
+On first run it installs `moodlehq/moodle-cs` (the standard moodle-plugin-ci
+uses, at the same version) into `.tools/`, which is gitignored.
+
+To have it block bad pushes automatically:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Bypass once with `git push --no-verify`. Most violations are auto-fixable:
+
+```bash
+.tools/phpcs/vendor/bin/phpcbf --standard=moodle <file>
+```
+
+Note: sniffs that key off the running PHP version can report things CI never
+sees when your local PHP is newer than CI's highest (8.4); the script warns
+when that applies.
+
 ## Architecture
 
 ### Plugin entry points
