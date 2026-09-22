@@ -1,6 +1,19 @@
 name: Moodle Plugin CI
 
-on: [push, pull_request]
+# Documentation-only changes do not affect the plugin code, so they skip CI.
+on:
+  push:
+    paths-ignore:
+      - '**/*.md'
+      - 'pix/**'
+      - 'LICENSE'
+      - '.gitignore'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'pix/**'
+      - 'LICENSE'
+      - '.gitignore'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

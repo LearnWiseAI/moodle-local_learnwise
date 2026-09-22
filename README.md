@@ -14,6 +14,26 @@ Note that this plugin requires an existing organizational account within the Lea
 
 ### Optional Feature Requirements
 - **Live API Integration**: Requires a server that passes the Authorization header
+- **Course Content Ingestion**: Requires Moodle's web services to be enabled (see the note below)
+
+### A note on web services
+
+Course content ingestion (step 3 below) is connected the way any Moodle integration is: over web
+services. When you press **Setup webservice** on the LearnWise Integration page, the plugin will:
+
+- enable web services (`enablewebservices`)
+- add `rest` to the enabled protocols, keeping any protocols you already use
+- enable the LearnWise external service and issue its access token
+
+These are site-wide Moodle settings shared with any other integrations you run, so it is worth
+knowing they change. If web services are already in use on your site, nothing changes for them.
+
+**Remove webservice** deletes the LearnWise token and disables the LearnWise service. It leaves web
+services and the `rest` protocol on, in case other integrations rely on them — you can switch those
+off under *Site administration > Server > Web services* if LearnWise was the only one using them.
+
+Keep the access token somewhere safe, as you would any API credential: paste it into the LearnWise
+Admin Panel and use **Rotate Access Token** if you ever need to replace it.
 
 ## Installation steps
 1. Download the plugin from [Moodle plugins directory](https://moodle.org/plugins/local_learnwise) or from [GitHub](https://github.com/LearnWiseAI/moodle-local_learnwise/) repository.
