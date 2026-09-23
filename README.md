@@ -151,3 +151,13 @@ This allows the assistant to assist in assignment grading
 3. Select **LearnWise** from the list of external tools.
    (If it is not listed, ensure it is toggled on as an option under LTI external tools)
 4. Save and return to course.
+
+
+## Contributing
+
+### Commit conventions
+
+- Do **not** add AI co-author trailers to commit messages or pull request
+  descriptions — no `Co-Authored-By: Claude …` (or any other AI tool) lines,
+  and no "Generated with Claude Code" footers. Commits are attributed to the
+  human who authored them.
