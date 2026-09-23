@@ -39,8 +39,8 @@ final class util_test extends advanced_testcase {
     public function setUp(): void {
         global $CFG;
         parent::setUp();
-        require_once($CFG->dirroot . '/local/learnwise/tests/polyfill/bootstrap.php');
-        require_once($CFG->dirroot . '/local/learnwise/tests/polyfill/Php81.php');
+        require_once($CFG->dirroot . '/local/learnwise/tests/vendor/polyfill-php81/bootstrap.php');
+        require_once($CFG->dirroot . '/local/learnwise/tests/vendor/polyfill-php81/Php81.php');
     }
 
     /**

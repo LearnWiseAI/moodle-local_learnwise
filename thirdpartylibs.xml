@@ -17,7 +17,7 @@
         <repository>https://github.com/zenorocha/clipboard.js</repository>
     </library>
     <library>
-        <location>tests/polyfill</location>
+        <location>tests/vendor/polyfill-php81</location>
         <name>polyfill-php81</name>
         <description>Symfony polyfill backporting some PHP 8.1+ features to lower PHP versions</description>
         <version>v1.38.1</version>
