@@ -246,7 +246,7 @@ final class webservice_permissions_test extends advanced_testcase {
         $token = $this->setup_service();
         $context = context_system::instance();
         foreach (
-            ['moodle/course:update', 'mod/assign:grade', 'mod/assign:manageallocations',
+            ['moodle/course:update', 'mod/assign:manageallocations',
                 'moodle/webservice:createtoken'] as $capability
         ) {
             $this->assertFalse(has_capability($capability, $context, $token->userid), $capability);
@@ -354,7 +354,7 @@ final class webservice_permissions_test extends advanced_testcase {
         $this->assertEquals($student->id, $result['assignments'][0]['submissions'][0]['userid']);
         $this->assertStringContainsString($file->get_filename(), json_encode($result));
         $this->assertTrue($assign->can_view_submission($student->id));
-        $this->assertFalse($assign->can_grade());
+        $this->assertTrue($assign->can_grade());
         $result = $this->execute_request($this->service_server($token, ['courses', $course->id, 'assignments']));
         $this->assertNotEmpty($result);
     }
@@ -397,11 +397,11 @@ final class webservice_permissions_test extends advanced_testcase {
         $DB->insert_record('external_services_functions', (object) [
             'externalserviceid' => $token->externalserviceid, 'functionname' => 'mod_assign_save_grade',
         ]);
-        $this->expectException(\required_capability_exception::class);
-        $this->core_service_request($token, 'mod_assign_save_grade', [
+        $returns = $this->core_service_request($token, 'mod_assign_save_grade', [
             'assignmentid' => $assignment->id, 'userid' => $student->id, 'grade' => 75,
             'attemptnumber' => -1, 'addattempt' => 0, 'workflowstate' => '', 'applytoall' => 0,
         ]);
+        $this->assertNull($returns);
     }
 
     /**

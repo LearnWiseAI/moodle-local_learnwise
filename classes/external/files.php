@@ -17,7 +17,7 @@
 namespace local_learnwise\external;
 
 use context_system;
-use core_useragent;
+use local_learnwise\useragent as core_useragent;
 use external_single_structure;
 use external_value;
 use local_learnwise\constants;

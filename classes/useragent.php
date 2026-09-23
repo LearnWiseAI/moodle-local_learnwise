@@ -14,19 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_learnwise;
+
 /**
- * Version information for Learnwise
+ * Class useragent
  *
  * @package    local_learnwise
- * @copyright  2025 LearnWise <help@learnwise.ai>
+ * @copyright  2026 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class useragent extends \core_useragent {
+    /**
+     * Get the MoodleBot UserAgent for this site.
+     *
+     * @return string UserAgent
+     */
+    public static function get_moodlebot_useragent() {
+        global $CFG;
 
-defined('MOODLE_INTERNAL') || die();
+        if (method_exists(parent::class, 'get_moodlebot_useragent')) {
+            return call_user_func([parent::class, 'get_moodlebot_useragent']);
+        }
 
-$plugin->component    = 'local_learnwise';
-$plugin->release      = '1.4.9b';
-$plugin->version      = 2026091503;
-$plugin->requires     = 2017111309;
-$plugin->supported    = [34, 38];
-$plugin->maturity     = MATURITY_STABLE;
+        $version = moodle_major_version(); // Only major version for security.
+        return "MoodleBot/$version (+{$CFG->wwwroot})";
+    }
+}

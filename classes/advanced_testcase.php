@@ -34,17 +34,17 @@ require_once($CFG->dirroot . '/local/learnwise/tests/vendor/phpunit-polyfills/ph
  */
 class advanced_testcase extends \advanced_testcase {
     use Helpers\AssertAttributeHelper;
-	use Polyfills\AssertClosedResource;
-	use Polyfills\AssertEqualsSpecializations;
-	use Polyfills\AssertFileEqualsSpecializations;
-	use Polyfills\AssertIgnoringLineEndings;
-	use Polyfills\AssertionRenames;
-	use Polyfills\AssertIsList;
-	use Polyfills\AssertIsType;
-	use Polyfills\AssertObjectEquals;
-	use Polyfills\AssertObjectProperty;
-	use Polyfills\AssertStringContains;
-	use Polyfills\EqualToSpecializations;
-	use Polyfills\ExpectExceptionMessageMatches;
-	use Polyfills\ExpectExceptionObject;
+    use Polyfills\AssertClosedResource;
+    use Polyfills\AssertEqualsSpecializations;
+    use Polyfills\AssertFileEqualsSpecializations;
+    use Polyfills\AssertIgnoringLineEndings;
+    use Polyfills\AssertionRenames;
+    use Polyfills\AssertIsList;
+    use Polyfills\AssertIsType;
+    use Polyfills\AssertObjectEquals;
+    use Polyfills\AssertObjectProperty;
+    use Polyfills\AssertStringContains;
+    use Polyfills\EqualToSpecializations;
+    use Polyfills\ExpectExceptionMessageMatches;
+    use Polyfills\ExpectExceptionObject;
 }

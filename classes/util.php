@@ -48,6 +48,7 @@ class util {
         'moodle/course:ignoreavailabilityrestrictions',
         'mod/assign:view',
         'mod/quiz:view',
+        'mod/assign:grade',
         'mod/assign:viewgrades',
         'moodle/user:viewdetails',
         'mod/book:read',
