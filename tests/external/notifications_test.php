@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use core\message\message;
 use external_multiple_structure;
 

@@ -16,7 +16,7 @@
 
 namespace local_learnwise\local\courseselector;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 
 /**
  * Tests for the course selectors that read the configured course id list.

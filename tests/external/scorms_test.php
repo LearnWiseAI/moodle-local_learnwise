@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 
 /**
  * Tests for the SCORM packages API.

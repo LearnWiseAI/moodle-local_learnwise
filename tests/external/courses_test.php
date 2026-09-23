@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use external_function_parameters;
 use external_multiple_structure;
 
@@ -90,7 +90,7 @@ final class courses_test extends advanced_testcase {
         $this->assertSame($course->id, $item['id']);
         $this->assertSame('Physics 101', $item['name']);
         $this->assertSame('PHY101', $item['shortname']);
-        $this->assertContains('/course/view.php', $item['url']);
+        $this->assertStringContainsString('/course/view.php', $item['url']);
         $this->assertArrayHasKey('completionstatus', $item);
         $this->assertArrayHasKey('modules', $item);
     }
@@ -164,7 +164,7 @@ final class courses_test extends advanced_testcase {
 
         $cleaned = courses::clean_returnvalue(courses::execute_returns(), courses::execute());
 
-        $this->assertInternalType('array', $cleaned);
+        $this->assertIsArray($cleaned);
         $this->assertNotEmpty($cleaned);
     }
 

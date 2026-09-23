@@ -32,7 +32,7 @@ use local_learnwise\local\OAuth2\GrantType\RefreshToken;
  * @copyright 2026 LearnWise <help@learnwise.ai>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class oauth_test extends \advanced_testcase {
+final class oauth_test extends advanced_testcase {
     /** @var storage OAuth storage. */
     protected $storage;
     /** @var \stdClass Client credentials. */
@@ -242,9 +242,9 @@ final class oauth_test extends \advanced_testcase {
         $PAGE->set_url($url);
         $form = new \local_learnwise\form\permission($url);
         $html = $form->render();
-        $this->assertContains(self::CHALLENGE, $html);
-        $this->assertContains('code_challenge_method', $html);
-        $this->assertContains('S256', $html);
+        $this->assertStringContainsString(self::CHALLENGE, $html);
+        $this->assertStringContainsString('code_challenge_method', $html);
+        $this->assertStringContainsString('S256', $html);
         unset($_POST['code_challenge'], $_POST['code_challenge_method']);
     }
 

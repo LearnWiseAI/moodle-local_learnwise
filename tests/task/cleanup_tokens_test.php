@@ -16,7 +16,7 @@
 
 namespace local_learnwise\task;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use local_learnwise\storage;
 use local_learnwise\util;
 use stdClass;

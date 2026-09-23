@@ -16,7 +16,7 @@
 
 namespace local_learnwise;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use coding_exception;
 use context_system;
 use required_capability_exception;
@@ -151,8 +151,8 @@ final class lib_test extends advanced_testcase {
 
         $stored = get_config('local_learnwise', 'courseids');
         $this->assertSame(1, preg_match('/^[\d,]*$/', $stored), 'Only digits and commas may be stored');
-        $this->assertNotContains('script', $stored);
-        $this->assertNotContains('DROP', $stored);
+        $this->assertStringNotContainsString('script', $stored);
+        $this->assertStringNotContainsString('DROP', $stored);
     }
 
     /**
@@ -169,7 +169,7 @@ final class lib_test extends advanced_testcase {
 
         $stored = get_config('local_learnwise', 'courseids');
         $this->assertSame(1, preg_match('/^[\d,]*$/', (string) $stored));
-        $this->assertNotContains('abc', (string) $stored);
+        $this->assertStringNotContainsString('abc', (string) $stored);
     }
 
     /**
@@ -300,7 +300,7 @@ final class lib_test extends advanced_testcase {
             'formdata' => http_build_query([]),
         ]);
 
-        $this->assertInternalType('string', $result);
+        $this->assertIsString($result);
     }
 
     /**
@@ -312,6 +312,6 @@ final class lib_test extends advanced_testcase {
         $this->setAdminUser();
         $PAGE->set_url('/course/view.php');
 
-        $this->assertInternalType('string', local_learnwise_before_standard_top_of_body_html());
+        $this->assertIsString(local_learnwise_before_standard_top_of_body_html());
     }
 }

@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 
 /**
  * Tests for the course sections API.
@@ -114,7 +114,7 @@ final class sections_test extends advanced_testcase {
 
         $this->assertSame('Week one', $section['name']);
         $this->assertSame(1, (int) $section['visible']);
-        $this->assertContains('Getting started', $section['summary']);
+        $this->assertStringContainsString('Getting started', $section['summary']);
         $this->assertEquals(FORMAT_HTML, $section['summaryformat']);
         $this->assertTrue((bool) $section['uservisible']);
         $this->assertTrue((bool) $section['useravailable']);

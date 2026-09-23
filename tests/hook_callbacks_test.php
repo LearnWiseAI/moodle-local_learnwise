@@ -16,7 +16,7 @@
 
 namespace local_learnwise;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use moodle_page;
 use stdClass;
 
@@ -103,7 +103,7 @@ final class hook_callbacks_test extends advanced_testcase {
         set_config('assistantid', 'assistant-123', 'local_learnwise');
         $this->make_page();
 
-        $this->assertNotContains('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
+        $this->assertStringNotContainsString('assistant-123', hook_callbacks::before_standard_top_of_body_html_generation());
     }
 
     /**
@@ -127,7 +127,7 @@ final class hook_callbacks_test extends advanced_testcase {
 
         $html = hook_callbacks::before_standard_top_of_body_html_generation();
 
-        $this->assertContains('assistant-123', $html);
+        $this->assertStringContainsString('assistant-123', $html);
     }
 
     /**
@@ -159,8 +159,8 @@ final class hook_callbacks_test extends advanced_testcase {
 
         $html = hook_callbacks::before_standard_top_of_body_html_generation();
 
-        $this->assertContains('aiden.learnwise.ai', $html);
-        $this->assertContains('chat.learnwise.ai', $html);
+        $this->assertStringContainsString('aiden.learnwise.ai', $html);
+        $this->assertStringContainsString('chat.learnwise.ai', $html);
     }
 
     /**
@@ -176,8 +176,8 @@ final class hook_callbacks_test extends advanced_testcase {
 
         $html = hook_callbacks::before_standard_top_of_body_html_generation();
 
-        $this->assertContains('contentframe', $html);
-        $this->assertContains('<script>', $html);
+        $this->assertStringContainsString('contentframe', $html);
+        $this->assertStringContainsString('<script>', $html);
     }
 
     /**
@@ -187,7 +187,7 @@ final class hook_callbacks_test extends advanced_testcase {
         $this->setAdminUser();
         $this->make_page();
 
-        $this->assertNotContains(
+        $this->assertStringNotContainsString(
             'contentframe',
             (string) hook_callbacks::before_standard_top_of_body_html_generation()
         );

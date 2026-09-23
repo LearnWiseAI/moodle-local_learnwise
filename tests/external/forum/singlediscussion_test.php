@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external\forum;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use dml_missing_record_exception;
 use external_multiple_structure;
 use external_single_structure;

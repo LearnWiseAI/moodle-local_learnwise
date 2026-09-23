@@ -16,7 +16,7 @@
 
 namespace local_learnwise;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 
 /**
  * Tests for the plugin constants and redirect URL handling.

@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external\assign;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use assign;
 use context_module;
 use dml_missing_record_exception;

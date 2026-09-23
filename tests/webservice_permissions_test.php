@@ -30,7 +30,7 @@ use local_learnwise\local\OAuth2\Request;
  * @copyright 2026 LearnWise <help@learnwise.ai>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class webservice_permissions_test extends \advanced_testcase {
+final class webservice_permissions_test extends advanced_testcase {
     /**
      * Start without the default role's REST permission.
      */

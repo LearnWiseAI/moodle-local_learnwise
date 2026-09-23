@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external\quiz;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use context_module;
 use local_learnwise\external\baseapi;
 use local_learnwise\external\timestampvalue;
@@ -162,7 +162,7 @@ final class attempts_test extends advanced_testcase {
         $this->reset_deprecation_debugging();
 
         $this->assertSame((int) $second->id, (int) $response['id']);
-        $this->assertEquals(90.0, $response['grade'], '', 0.001);
+        $this->assertEqualsWithDelta(90.0, $response['grade'], 0.001);
     }
 
     /**

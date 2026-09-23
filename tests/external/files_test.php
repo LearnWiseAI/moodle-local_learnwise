@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use context_module;
 use core\event\url_blocked;
 use core\files\curl_security_helper;

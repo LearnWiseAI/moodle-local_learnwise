@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use core_plugin_manager;
 use local_learnwise\api_response;
 use local_learnwise\api_server;
@@ -206,7 +206,7 @@ final class ws_proxy_test extends advanced_testcase {
 
         $this->assertSame(413, $response->getStatusCode());
         $this->assertSame('response_too_large', $response->getParameters()['error']);
-        $this->assertContains('10 MiB', $response->getParameters()['error_description']);
+        $this->assertStringContainsString('10 MiB', $response->getParameters()['error_description']);
     }
 
     /**

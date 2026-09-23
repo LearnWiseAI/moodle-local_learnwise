@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external\forum;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use local_learnwise\external\baseapi;
 use local_learnwise\external\timestampvalue;
 use stdClass;

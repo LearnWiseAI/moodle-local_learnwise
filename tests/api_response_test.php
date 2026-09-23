@@ -16,7 +16,7 @@
 
 namespace local_learnwise;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 
 /**
  * Tests for the plugin API response.
@@ -30,7 +30,7 @@ final class api_response_test extends advanced_testcase {
     /**
      * Responses at the configured byte limit remain unchanged.
      */
-    public function test_response_at_size_limit_is_preserved() {
+    public function test_response_at_size_limit_is_preserved(): void {
         $response = new api_response();
         $parameters = ['a' => 1];
         $response->set_response_size_limit(7, 'Too large');
@@ -44,7 +44,7 @@ final class api_response_test extends advanced_testcase {
     /**
      * Responses beyond the configured byte limit become a concise HTTP 413 error.
      */
-    public function test_response_beyond_size_limit_is_rejected() {
+    public function test_response_beyond_size_limit_is_rejected(): void {
         $response = new api_response();
         $response->set_response_size_limit(6, 'Narrow the Moodle request.');
 

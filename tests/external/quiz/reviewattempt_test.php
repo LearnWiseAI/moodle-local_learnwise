@@ -16,7 +16,7 @@
 
 namespace local_learnwise\external\quiz;
 
-use advanced_testcase;
+use local_learnwise\advanced_testcase;
 use context_module;
 use external_multiple_structure;
 use external_single_structure;
@@ -116,7 +116,7 @@ final class reviewattempt_test extends advanced_testcase {
 
         $response = reviewattempt::execute($course->id, $quiz->cmid, $attempt->id);
 
-        $this->assertEquals(60.0, $response['grade'], '', 0.001);
+        $this->assertEqualsWithDelta(60.0, $response['grade'], 0.001);
         $this->assertSame([], $response['questions']);
     }
 
@@ -160,7 +160,7 @@ final class reviewattempt_test extends advanced_testcase {
 
         $response = reviewattempt::execute($course->id, $quiz->cmid, $attempt->id);
 
-        $this->assertEquals(60.0, $response['grade'], '', 0.001);
+        $this->assertEqualsWithDelta(60.0, $response['grade'], 0.001);
     }
 
     /**
