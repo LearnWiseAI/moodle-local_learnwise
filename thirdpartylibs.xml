@@ -24,4 +24,12 @@
         <license>MIT</license>
         <repository>https://github.com/symfony/polyfill-php81</repository>
     </library>
+    <library>
+        <location>tests/vendor/phpunit-polyfills</location>
+        <name>phpunit-polyfills</name>
+        <description>Set of polyfills for changed PHPUnit functionality to allow for creating PHPUnit cross-version compatible tests</description>
+        <version>v2.0.5</version>
+        <license>BSD</license>
+        <repository>https://github.com/Yoast/PHPUnit-Polyfills</repository>
+    </library>
 </libraries>
