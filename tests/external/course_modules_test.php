@@ -18,6 +18,10 @@ namespace local_learnwise\external;
 
 use advanced_testcase;
 use completion_info;
+use grade_item;
+use question_engine;
+use quiz;
+use quiz_attempt;
 
 /**
  * Tests for the course modules API.
@@ -126,18 +130,23 @@ final class course_modules_test extends advanced_testcase {
         $this->setUser($user);
 
         $without = course_modules::execute($course->id);
+        $this->assertArrayNotHasKey('completion', $without[0]);
         $this->assertArrayNotHasKey('completionstatus', $without[0]);
+        $this->assertArrayNotHasKey('timemodified', $without[0]);
 
         course_modules::$withcompletion = true;
         $with = course_modules::execute($course->id);
         // Moodle 5.x flags the argument the plugin passes to completion_info::get_data().
         $this->resetDebugging();
+        $this->assertArrayHasKey('completion', $with[0]);
         $this->assertArrayHasKey('completionstatus', $with[0]);
-        $this->assertNull($with[0]['completionstatus']);
+        $this->assertEquals(COMPLETION_TRACKING_MANUAL, $with[0]['completion']);
+        $this->assertEquals(COMPLETION_INCOMPLETE, $with[0]['completionstatus']);
+        $this->assertArrayNotHasKey('timemodified', $with[0]);
     }
 
     /**
-     * A completed activity is reported as completed.
+     * A completed activity is reported with completion state, mode, and timemodified timestamp.
      */
     public function test_execute_reports_a_completed_module(): void {
         $course = $this->getDataGenerator()->create_course(['enablecompletion' => 1]);
@@ -150,14 +159,86 @@ final class course_modules_test extends advanced_testcase {
         $this->setUser($user);
 
         $completion = new completion_info(get_course($course->id));
-        $completion->update_state(get_fast_modinfo($course->id)->get_cm($page->cmid), COMPLETION_COMPLETE, $user->id);
+        $cm = get_fast_modinfo($course->id)->get_cm($page->cmid);
+        $completion->update_state($cm, COMPLETION_COMPLETE, $user->id);
 
         course_modules::$withcompletion = true;
         $response = course_modules::execute($course->id);
         // Moodle 5.x flags the argument the plugin passes to completion_info::get_data().
         $this->resetDebugging();
 
-        $this->assertSame(get_string('completed', 'local_learnwise'), $response[0]['completionstatus']);
+        $this->assertEquals(COMPLETION_TRACKING_MANUAL, $response[0]['completion']);
+        $this->assertEquals(COMPLETION_COMPLETE, $response[0]['completionstatus']);
+        $this->assertArrayHasKey('timemodified', $response[0]);
+        $this->assertNotEmpty($response[0]['timemodified']);
+    }
+
+    /**
+     * A failed activity is reported with the failed completion state, mode, and timemodified timestamp.
+     */
+    public function test_execute_reports_a_failed_module(): void {
+        $course = $this->getDataGenerator()->create_course(['enablecompletion' => 1]);
+        $quiz = $this->getDataGenerator()->create_module(
+            'quiz',
+            [
+                'course' => $course->id,
+                'name' => 'Quiz Reading',
+                'completion' => COMPLETION_TRACKING_AUTOMATIC,
+                'completionpass' => 1,
+                'sumgrades' => 1,
+                'completionusegrade' => 1,
+                'grade' => 100.0,
+            ]
+        );
+
+        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $cat = $questiongenerator->create_question_category();
+        $question = $questiongenerator->create_question('numerical', null, ['category' => $cat->id]);
+        quiz_add_quiz_question($question->id, $quiz);
+
+        $item = grade_item::fetch(['courseid' => $course->id, 'itemtype' => 'mod',
+                                        'itemmodule' => 'quiz', 'iteminstance' => $quiz->id, 'outcomeid' => null]);
+        $item->gradepass = 80;
+        $item->update();
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        $this->setUser($user);
+
+        if (class_exists(\mod_quiz\quiz_settings::class)) {
+            class_alias(\mod_quiz\quiz_settings::class, \quiz::class);
+        }
+
+        if (class_exists(\mod_quiz\quiz_attempt::class)) {
+            class_alias(\mod_quiz\quiz_attempt::class, \quiz_attempt::class);
+        }
+
+        $quizobj = quiz::create($quiz->id, $user->id);
+        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+        $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
+
+        $timenow = time();
+        $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
+        quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
+        quiz_attempt_save_started($quizobj, $quba, $attempt);
+
+        $attemptobj = quiz_attempt::create($attempt->id);
+        $tosubmit = [1 => ['answer' => '0']];
+        $attemptobj->process_submitted_actions($timenow, false, $tosubmit);
+
+        $attemptobj = quiz_attempt::create($attempt->id);
+        $this->assertTrue($attemptobj->has_response_to_at_least_one_graded_question());
+        $attemptobj->process_finish($timenow, false);
+
+        $completion = new completion_info($course);
+        $cm = get_fast_modinfo($course->id)->get_cm($quiz->cmid);
+        $completionstate = $completion->get_data($cm, false, $user->id)->completionstate;
+
+        course_modules::$withcompletion = true;
+        $response = course_modules::execute($course->id);
+        $this->resetDebugging();
+        $this->assertEquals(COMPLETION_TRACKING_AUTOMATIC, $response[0]['completion']);
+        $this->assertEquals($completionstate, $response[0]['completionstatus']);
     }
 
     /**
@@ -177,13 +258,27 @@ final class course_modules_test extends advanced_testcase {
     }
 
     /**
-     * The completion field is only declared when completion is being reported.
+     * The completion, completionstatus, and timemodified fields are only declared when completion is being reported.
      */
     public function test_single_structure_declares_completion_on_demand(): void {
-        $this->assertArrayNotHasKey('completionstatus', course_modules::single_structure()->keys);
+        $structurewithout = course_modules::single_structure();
+        $this->assertArrayNotHasKey('completion', $structurewithout->keys);
+        $this->assertArrayNotHasKey('completionstatus', $structurewithout->keys);
+        $this->assertArrayNotHasKey('timemodified', $structurewithout->keys);
 
         course_modules::$withcompletion = true;
 
-        $this->assertArrayHasKey('completionstatus', course_modules::single_structure()->keys);
+        $structurewith = course_modules::single_structure();
+        $this->assertArrayHasKey('completion', $structurewith->keys);
+        $this->assertArrayHasKey('completionstatus', $structurewith->keys);
+        $this->assertArrayHasKey('timemodified', $structurewith->keys);
+    }
+
+    /**
+     * Test get_unixtimestamp_fields returns timemodified.
+     */
+    public function test_get_unixtimestamp_fields(): void {
+        $fields = course_modules::get_unixtimestamp_fields();
+        $this->assertContains('timemodified', $fields);
     }
 }
