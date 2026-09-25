@@ -20,6 +20,7 @@ use completion_completion;
 use completion_info;
 use context_course;
 use context_user;
+use core_completion\progress;
 use core_course_category;
 use external_single_structure;
 use external_value;
@@ -107,9 +108,10 @@ class courses extends baseapi {
                 ]);
                 $courseitem['completionstatus'] = $courseitem['completiondate'] = null;
                 if ($completion->is_complete()) {
-                    $courseitem['completionstatus'] = get_string('completed', 'local_learnwise');
+                    $courseitem['completionstatus'] = 'completed';
                     $courseitem['completiondate'] = $completion->timecompleted;
                 }
+                $courseitem['progress'] = progress::get_course_progress_percentage($course, $USER->id);
             }
             if ($isenrolled) {
                 $courseitem['modules'] = course_modules::execute($course->id);
@@ -139,7 +141,8 @@ class courses extends baseapi {
             'enddate' => new external_value(PARAM_INT, 'start date of course in unix format'),
             'participants' => new external_value(PARAM_INT, 'count of participants', VALUE_DEFAULT, 0),
             'completionstatus' => new external_value(PARAM_TEXT, 'completion status'),
-            'completiondate' => new external_value(PARAM_INT, 'completion date of course in unix format'),
+            'completiondate' => new external_value(PARAM_INT, 'completion date of course in unix format', VALUE_DEFAULT),
+            'progress' => new external_value(PARAM_FLOAT, 'completion progress of course', VALUE_DEFAULT, 0.0),
             'url' => new external_value(PARAM_URL, 'url of course'),
             'modules' => $modulestructure,
         ]);
@@ -148,7 +151,8 @@ class courses extends baseapi {
         } else {
             unset(
                 $structure->keys['completionstatus'],
-                $structure->keys['completiondate']
+                $structure->keys['completiondate'],
+                $structure->keys['progress']
             );
         }
         return $structure;
@@ -160,6 +164,6 @@ class courses extends baseapi {
      * @return array
      */
     public static function get_unixtimestamp_fields() {
-        return ['startdate', 'enddate'];
+        return ['startdate', 'enddate', 'completiondate'];
     }
 }

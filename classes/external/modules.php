@@ -16,10 +16,7 @@
 
 namespace local_learnwise\external;
 
-use completion_info;
 use context_module;
-use external_single_structure;
-use external_value;
 
 /**
  * Class modules
@@ -35,13 +32,6 @@ class modules extends baseapi {
      * @var string
      */
     public static $route = 'modules';
-
-    /**
-     * Indicates whether course modules should include completion information.
-     *
-     * @var bool
-     */
-    public static $withcompletion = false;
 
     /**
      * {@inheritdoc}
@@ -74,7 +64,6 @@ class modules extends baseapi {
         static::validate_context($context);
 
         $courseid = $context->get_course_context()->instanceid;
-        $course = get_course($courseid);
         $modinfo = get_fast_modinfo($courseid);
         $cm = $modinfo->get_cm($moduleid);
 
@@ -82,20 +71,7 @@ class modules extends baseapi {
             return [];
         }
 
-        $moduleinfo = [
-            'id' => $cm->id,
-            'name' => $cm->get_formatted_name(),
-            'type' => $cm->modname,
-        ];
-        if (!empty(self::$withcompletion)) {
-            $moduleinfo['completionstatus'] = null;
-            $completioninfo = new completion_info($course);
-            $completiondata = $completioninfo->get_data($cm, true, 0, $modinfo);
-            if (in_array($completiondata->completionstate, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS])) {
-                $moduleinfo['completionstatus'] = get_string('completed', 'local_learnwise');
-            }
-        }
-        return $moduleinfo;
+        return course_modules::extract_moduleinfo($cm);
     }
 
     /**
@@ -104,16 +80,7 @@ class modules extends baseapi {
      * @return \external_single_structure The structure describing a single course module.
      */
     public static function single_structure() {
-        $structure = new external_single_structure([
-            'id' => new external_value(PARAM_INT, 'id of module'),
-            'name' => new external_value(PARAM_TEXT, 'name of module'),
-            'type' => new external_value(PARAM_COMPONENT, 'type of module'),
-            'completionstatus' => new external_value(PARAM_TEXT, 'completion status'),
-        ]);
-        if (empty(self::$withcompletion)) {
-            unset($structure->keys['completionstatus']);
-        }
-        return $structure;
+        return course_modules::single_structure();
     }
 
     /**
@@ -123,5 +90,14 @@ class modules extends baseapi {
      */
     public static function is_singleoperation() {
         return true;
+    }
+
+    /**
+     * Returns the fields that should be treated as Unix timestamps.
+     *
+     * @return array
+     */
+    public static function get_unixtimestamp_fields() {
+        return course_modules::get_unixtimestamp_fields();
     }
 }

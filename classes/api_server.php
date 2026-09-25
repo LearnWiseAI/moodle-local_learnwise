@@ -284,6 +284,7 @@ class api_server extends webservice_base_server {
         } else if ($nextroute === calenderdetails::$route) {
             $this->functionname = calenderdetails::function_name();
         } else if ($nextroute === courses::$route) {
+            course_modules::$withcompletion = !empty(baseapi::$my);
             $nextroute = array_shift($this->urlparts);
             if (is_null($nextroute)) {
                 $this->functionname = courses::function_name();
@@ -330,7 +331,6 @@ class api_server extends webservice_base_server {
                             }
                         }
                     } else if ($nextroute === course_modules::$route) {
-                        course_modules::$withcompletion = !empty(baseapi::$my);
                         $nextroute = array_shift($this->urlparts);
                         if (is_null($nextroute)) {
                             $this->functionname = course_modules::function_name();
@@ -412,7 +412,7 @@ class api_server extends webservice_base_server {
                 }
             }
         } else if ($nextroute === modules::$route) {
-            modules::$withcompletion = !empty(baseapi::$my);
+            course_modules::$withcompletion = !empty(baseapi::$my);
             $nextroute = array_shift($this->urlparts);
             if (is_numeric($nextroute)) {
                 modules::set_id((int) $nextroute);

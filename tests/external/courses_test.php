@@ -19,6 +19,7 @@ namespace local_learnwise\external;
 use advanced_testcase;
 use external_function_parameters;
 use external_multiple_structure;
+use local_learnwise\api_server;
 
 /**
  * Tests for the courses endpoint.
@@ -92,6 +93,7 @@ final class courses_test extends advanced_testcase {
         $this->assertSame('PHY101', $item['shortname']);
         $this->assertStringContainsString('/course/view.php', $item['url']);
         $this->assertArrayHasKey('completionstatus', $item);
+        $this->assertArrayHasKey('progress', $item);
         $this->assertArrayHasKey('modules', $item);
     }
 
@@ -134,7 +136,7 @@ final class courses_test extends advanced_testcase {
      * Timestamp fields are declared so they get ISO 8601 conversion.
      */
     public function test_unixtimestamp_fields_are_declared(): void {
-        $this->assertSame(['startdate', 'enddate'], courses::get_unixtimestamp_fields());
+        $this->assertSame(['startdate', 'enddate', 'completiondate'], courses::get_unixtimestamp_fields());
     }
 
     /**
@@ -191,7 +193,7 @@ final class courses_test extends advanced_testcase {
      * Start and end dates are reported as ISO 8601.
      */
     public function test_dates_are_declared_as_timestamps(): void {
-        $this->assertSame(['startdate', 'enddate'], courses::get_unixtimestamp_fields());
+        $this->assertSame(['startdate', 'enddate', 'completiondate'], courses::get_unixtimestamp_fields());
     }
 
     /**
@@ -232,8 +234,98 @@ final class courses_test extends advanced_testcase {
         $this->assertArrayHasKey('completionstatus', $courseitem);
         $this->assertNull($courseitem['completionstatus']);
         $this->assertNull($courseitem['completiondate']);
+        $this->assertArrayHasKey('progress', $courseitem);
         $this->assertArrayNotHasKey('participants', $courseitem);
         $this->assertSame($CFG->wwwroot . '/course/view.php?id=' . $course->id, $courseitem['url']);
+    }
+
+    /**
+     * When a course is completed, completionstatus returns "completed", completiondate
+     * returns a timestamp, and progress is calculated.
+     */
+    public function test_execute_reports_completed_status_and_progress_when_course_completed(): void {
+        $course = $this->getDataGenerator()->create_course(['enablecompletion' => 1]);
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        $this->setUser($user);
+
+        $cc = new \completion_completion([
+            'course' => $course->id,
+            'userid' => $user->id,
+        ]);
+        $cc->mark_complete();
+
+        baseapi::$my = true;
+        courses::set_id($course->id);
+
+        $response = courses::execute();
+
+        $this->assertSame('completed', $response['completionstatus']);
+        $this->assertNotNull($response['completiondate']);
+        $this->assertNotEmpty($response['completiondate']);
+        $this->assertArrayHasKey('progress', $response);
+    }
+
+    /**
+     * An incomplete course with 2 modules where 1 module is completed reports 50% progress.
+     */
+    public function test_execute_reports_partial_progress_for_incomplete_course(): void {
+        $course = $this->getDataGenerator()->create_course(['enablecompletion' => 1]);
+        $page1 = $this->getDataGenerator()->create_module(
+            'page',
+            ['course' => $course->id, 'name' => 'Page 1', 'completion' => COMPLETION_TRACKING_MANUAL]
+        );
+        $this->getDataGenerator()->create_module(
+            'page',
+            ['course' => $course->id, 'name' => 'Page 2', 'completion' => COMPLETION_TRACKING_MANUAL]
+        );
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        $this->setUser($user);
+
+        // Complete only the first module out of 2.
+        $completion = new \completion_info(get_course($course->id));
+        $cm1 = get_fast_modinfo($course->id)->get_cm($page1->cmid);
+        $completion->update_state($cm1, COMPLETION_COMPLETE, $user->id);
+
+        baseapi::$my = true;
+        courses::set_id($course->id);
+
+        $response = courses::execute();
+
+        $this->assertNull($response['completionstatus']);
+        $this->assertNull($response['completiondate']);
+        $this->assertEquals(50.0, $response['progress']);
+    }
+
+    /**
+     * An incomplete course with 2 modules where 1 module is completed reports 50% progress.
+     */
+    public function test_execute_reports_api_serve_completed_status_and_progress_when_course_completed(): void {
+        $course = $this->getDataGenerator()->create_course(['enablecompletion' => 1]);
+        $page1 = $this->getDataGenerator()->create_module(
+            'page',
+            ['course' => $course->id, 'name' => 'Page 1', 'completion' => COMPLETION_TRACKING_MANUAL]
+        );
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        $this->setUser($user);
+
+        // Complete only the first module out of 2.
+        $completion = new \completion_info(get_course($course->id));
+        $cm1 = get_fast_modinfo($course->id)->get_cm($page1->cmid);
+        $completion->update_state($cm1, COMPLETION_COMPLETE, $user->id);
+
+        $_GET['file'] = join('/', [userdetails::$route, courses::$route, $course->id]);
+        $server = new api_server();
+        $this->call_method($server, 'parse_request');
+        $this->call_method($server, 'load_function_info');
+        $this->call_method($server, 'execute');
+        $response = $this->get_property($server, 'returns');
+
+        $this->assertArrayHasKey('completion', $response['modules'][0]);
+        $this->assertArrayHasKey('completionstatus', $response['modules'][0]);
+        unset($_GET['file']);
     }
 
     /**
@@ -258,6 +350,7 @@ final class courses_test extends advanced_testcase {
         $this->assertNotNull($found);
         $this->assertArrayHasKey('participants', $found);
         $this->assertArrayNotHasKey('completionstatus', $found);
+        $this->assertArrayNotHasKey('progress', $found);
     }
 
     /**
@@ -328,6 +421,7 @@ final class courses_test extends advanced_testcase {
         $this->assertArrayNotHasKey('participants', $mystructure->keys);
         $this->assertArrayHasKey('completionstatus', $mystructure->keys);
         $this->assertArrayHasKey('completiondate', $mystructure->keys);
+        $this->assertArrayHasKey('progress', $mystructure->keys);
 
         baseapi::$my = null;
         $sitestructure = courses::single_structure();
@@ -335,6 +429,7 @@ final class courses_test extends advanced_testcase {
         $this->assertArrayHasKey('participants', $sitestructure->keys);
         $this->assertArrayNotHasKey('completionstatus', $sitestructure->keys);
         $this->assertArrayNotHasKey('completiondate', $sitestructure->keys);
+        $this->assertArrayNotHasKey('progress', $sitestructure->keys);
     }
 
     /**
@@ -345,5 +440,31 @@ final class courses_test extends advanced_testcase {
 
         $this->assertInstanceOf(external_multiple_structure::class, $structure->keys['modules']);
         $this->assertSame(VALUE_OPTIONAL, $structure->keys['modules']->required);
+    }
+
+    /**
+     * Invokes a non-public method on an object.
+     *
+     * @param object $instance The object whose method should be invoked.
+     * @param string $method The method name.
+     * @return mixed The method's return value.
+     */
+    protected function call_method($instance, $method) {
+        $reflmethod = new \ReflectionMethod($instance, $method);
+        $reflmethod->setAccessible(true);
+        return $reflmethod->invoke($instance);
+    }
+
+    /**
+     * Retrieves a non-public property from an object.
+     *
+     * @param object $instance The object containing the property.
+     * @param string $property The property name.
+     * @return mixed The property's value.
+     */
+    protected function get_property($instance, $property) {
+        $reflmethod = new \ReflectionProperty($instance, $property);
+        $reflmethod->setAccessible(true);
+        return $reflmethod->getValue($instance);
     }
 }

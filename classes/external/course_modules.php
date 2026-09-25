@@ -97,19 +97,7 @@ class course_modules extends baseapi {
             } else if (!$cm->is_visible_on_course_page()) {
                 continue;
             }
-            $moduleinfo = [
-                'id' => $cm->id,
-                'name' => $cm->get_formatted_name(),
-                'type' => $cm->modname,
-            ];
-            if (!empty(self::$withcompletion)) {
-                $moduleinfo['completionstatus'] = null;
-                $completioninfo = new completion_info($course);
-                $completiondata = $completioninfo->get_data($cm, true, 0, $modinfo);
-                if (in_array($completiondata->completionstate, [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS])) {
-                    $moduleinfo['completionstatus'] = get_string('completed', 'local_learnwise');
-                }
-            }
+            $moduleinfo = self::extract_moduleinfo($cm);
             if (static::is_singleoperation()) {
                 return $moduleinfo;
             }
@@ -128,11 +116,49 @@ class course_modules extends baseapi {
             'id' => new external_value(PARAM_INT, 'id of module'),
             'name' => new external_value(PARAM_TEXT, 'name of module'),
             'type' => new external_value(PARAM_COMPONENT, 'type of module'),
-            'completionstatus' => new external_value(PARAM_TEXT, 'completion status'),
+            'completion' => new external_value(PARAM_INT, 'completion tracking mode'),
+            'completionstatus' => new external_value(PARAM_INT, 'completion status'),
+            'timemodified' => new external_value(PARAM_INT, 'completion time modified', VALUE_DEFAULT),
         ]);
         if (empty(self::$withcompletion)) {
-            unset($structure->keys['completionstatus']);
+            unset(
+                $structure->keys['completionstatus'],
+                $structure->keys['completion'],
+                $structure->keys['timemodified']
+            );
         }
         return $structure;
+    }
+
+    /**
+     * Returns the fields that should be treated as Unix timestamps.
+     * @return array
+     */
+    public static function get_unixtimestamp_fields() {
+        return ['timemodified'];
+    }
+
+    /**
+     * Extract common info that sended in modules api.
+     * @param \cm_info $cm
+     * @return array
+     */
+    public static function extract_moduleinfo($cm) {
+        $moduleinfo = [
+            'id' => $cm->id,
+            'name' => $cm->get_formatted_name(),
+            'type' => $cm->modname,
+        ];
+        if (!empty(self::$withcompletion)) {
+            $modinfo = $cm->get_modinfo();
+            $completioninfo = new completion_info($modinfo->get_course());
+            $completiondata = $completioninfo->get_data($cm, true, 0);
+            $moduleinfo['completion'] = $cm->completion;
+            $moduleinfo['completionstatus'] = $completiondata->completionstate;
+            if ($completiondata->timemodified > 0) {
+                $moduleinfo['timemodified'] = $completiondata->timemodified;
+            }
+        }
+        return $moduleinfo;
     }
 }

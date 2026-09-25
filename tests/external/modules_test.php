@@ -42,7 +42,7 @@ final class modules_test extends advanced_testcase {
         $this->resetAfterTest();
         baseapi::$my = null;
         baseapi::$ids = [];
-        modules::$withcompletion = false;
+        course_modules::$withcompletion = false;
     }
 
     /**
@@ -51,7 +51,7 @@ final class modules_test extends advanced_testcase {
     protected function tearDown(): void {
         baseapi::$my = null;
         baseapi::$ids = [];
-        modules::$withcompletion = false;
+        course_modules::$withcompletion = false;
         parent::tearDown();
     }
 
@@ -127,19 +127,25 @@ final class modules_test extends advanced_testcase {
         $this->setUser($user);
         modules::set_id($page->cmid);
 
-        $this->assertArrayNotHasKey('completionstatus', modules::execute());
+        $without = modules::execute();
+        $this->assertArrayNotHasKey('completion', $without);
+        $this->assertArrayNotHasKey('completionstatus', $without);
+        $this->assertArrayNotHasKey('timemodified', $without);
 
-        modules::$withcompletion = true;
+        course_modules::$withcompletion = true;
         $response = modules::execute();
         // Moodle 5.x flags the argument the plugin passes to completion_info::get_data().
         $this->resetDebugging();
 
+        $this->assertArrayHasKey('completion', $response);
         $this->assertArrayHasKey('completionstatus', $response);
-        $this->assertNull($response['completionstatus']);
+        $this->assertEquals(COMPLETION_TRACKING_MANUAL, $response['completion']);
+        $this->assertEquals(COMPLETION_INCOMPLETE, $response['completionstatus']);
+        $this->assertArrayNotHasKey('timemodified', $response);
     }
 
     /**
-     * A completed activity is reported as completed.
+     * A completed activity is reported with completion state, mode, and timemodified timestamp.
      */
     public function test_execute_reports_a_completed_module(): void {
         $course = $this->getDataGenerator()->create_course(['enablecompletion' => 1]);
@@ -152,26 +158,44 @@ final class modules_test extends advanced_testcase {
         $this->setUser($user);
 
         $completion = new completion_info(get_course($course->id));
-        $completion->update_state(get_fast_modinfo($course->id)->get_cm($page->cmid), COMPLETION_COMPLETE, $user->id);
+        $cm = get_fast_modinfo($course->id)->get_cm($page->cmid);
+        $completion->update_state($cm, COMPLETION_COMPLETE, $user->id);
 
-        modules::$withcompletion = true;
+        course_modules::$withcompletion = true;
         modules::set_id($page->cmid);
 
         $response = modules::execute();
         // Moodle 5.x flags the argument the plugin passes to completion_info::get_data().
         $this->resetDebugging();
 
-        $this->assertSame(get_string('completed', 'local_learnwise'), $response['completionstatus']);
+        $this->assertEquals(COMPLETION_TRACKING_MANUAL, $response['completion']);
+        $this->assertEquals(COMPLETION_COMPLETE, $response['completionstatus']);
+        $this->assertArrayHasKey('timemodified', $response);
+        $this->assertNotEmpty($response['timemodified']);
     }
 
     /**
-     * The completion field is only declared when completion is being reported.
+     * The completion, completionstatus, and timemodified fields are only declared when completion is being reported.
      */
     public function test_single_structure_declares_completion_on_demand(): void {
-        $this->assertArrayNotHasKey('completionstatus', modules::single_structure()->keys);
+        $structurewithout = modules::single_structure();
+        $this->assertArrayNotHasKey('completion', $structurewithout->keys);
+        $this->assertArrayNotHasKey('completionstatus', $structurewithout->keys);
+        $this->assertArrayNotHasKey('timemodified', $structurewithout->keys);
 
-        modules::$withcompletion = true;
+        course_modules::$withcompletion = true;
 
-        $this->assertArrayHasKey('completionstatus', modules::single_structure()->keys);
+        $structurewith = modules::single_structure();
+        $this->assertArrayHasKey('completion', $structurewith->keys);
+        $this->assertArrayHasKey('completionstatus', $structurewith->keys);
+        $this->assertArrayHasKey('timemodified', $structurewith->keys);
+    }
+
+    /**
+     * Test get_unixtimestamp_fields returns timemodified.
+     */
+    public function test_get_unixtimestamp_fields(): void {
+        $fields = modules::get_unixtimestamp_fields();
+        $this->assertContains('timemodified', $fields);
     }
 }

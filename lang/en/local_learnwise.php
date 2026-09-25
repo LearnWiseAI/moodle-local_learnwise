@@ -40,7 +40,6 @@ $string['checkpassauthheader'] = 'Authorization header check succeeded.';
 $string['cleanuptokentask'] = 'Clean up tokens task';
 $string['clientid'] = 'Client ID';
 $string['clientsecret'] = 'Client Secret';
-$string['completed'] = 'Completed';
 $string['copied'] = 'Copied!';
 $string['course:title'] = 'Courses';
 $string['coursecontentsintegration'] = 'Course Contents Integration';
