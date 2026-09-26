@@ -456,13 +456,18 @@ class api_server extends webservice_base_server {
     /**
      * Limit permanent credentials to integration reads, including the generic WS proxy.
      *
-     * User OAuth credentials continue to use Moodle's per-user capability checks.
+     * The one write is the assignment grade route, which automated assessment posts to. User OAuth
+     * credentials continue to use Moodle's per-user capability checks.
      */
     protected function require_service_read(): void {
         global $DB;
         $callbacks = [
             courses::function_name(), assignments::function_name(), books::function_name(),
-            plugininfo::function_name(), files::function_name(),
+            plugininfo::function_name(), files::function_name(), sections::function_name(),
+            course_modules::function_name(), modules::function_name(), forums::function_name(),
+            discussions::function_name(), singlediscussion::function_name(), quizzes::function_name(),
+            scorms::function_name(), calenderdetails::function_name(), submissions::function_name(),
+            grade::function_name(), users::function_name(),
         ];
         if (in_array($this->functionname, $callbacks, true)) {
             return;
