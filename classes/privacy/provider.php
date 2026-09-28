@@ -16,12 +16,15 @@
 
 namespace local_learnwise\privacy;
 
+use context;
 use context_user;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\writer;
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\approved_userlist;
+use core_privacy\local\request\userlist;
 
 /**
  * Privacy provider for local_learnwise.
@@ -61,6 +64,11 @@ class provider implements
             'token' => 'privacy:metadata:local_learnwise_refreshtoken:token',
             'timeexpiry' => 'privacy:metadata:local_learnwise_refreshtoken:timeexpiry',
         ], 'privacy:metadata:local_learnwise_refreshtoken');
+
+        $collection->add_database_table('local_learnwise_comnt_tracks', [
+            'commentid' => 'privacy:metadata:local_learnwise_comnt_tracks:commentid',
+            'timeupdated' => 'privacy:metadata:local_learnwise_comnt_tracks:timeupdated',
+        ], 'privacy:metadata:local_learnwise_comnt_tracks');
 
         $collection->add_external_location_link('userdetails', [
             'username' => 'privacy:metadata:external:userdetails:username',
@@ -156,11 +164,19 @@ class provider implements
     /**
      * Get the list of users within a context.
      *
-     * @param \core_privacy\local\request\userlist $userlist
+     * @param userlist $userlist
      * @return void
      */
-    public static function get_users_in_context(\core_privacy\local\request\userlist $userlist): void {
+    public static function get_users_in_context(userlist $userlist): void {
         $context = $userlist->get_context();
+
+        $userlist->add_from_sql(
+            'userid',
+            "SELECT DISTINCT c.userid FROM {comments} c
+            JOIN {local_learnwise_comnt_tracks} ct ON ct.commentid = c.id
+            WHERE c.contextid = :contextid",
+            ['contextid' => $context->id]
+        );
 
         if (!$context instanceof context_user) {
             return;
@@ -176,13 +192,19 @@ class provider implements
     /**
      * Delete all user data for users in the approved userlist in a context.
      *
-     * @param \core_privacy\local\request\approved_userlist $userlist
+     * @param approved_userlist $userlist
      * @return void
      */
-    public static function delete_data_for_users(\core_privacy\local\request\approved_userlist $userlist): void {
+    public static function delete_data_for_users(approved_userlist $userlist): void {
+        global $DB;
         $context = $userlist->get_context();
-        if ($context instanceof context_user && in_array($context->instanceid, $userlist->get_userids())) {
+        $userids = $userlist->get_userids();
+        if ($context instanceof context_user && in_array($context->instanceid, $userids)) {
             self::delete_user_data((int) $context->instanceid);
+        }
+        if (count($userids) > 0) {
+            [$in, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+            self::delete_comment_tracks("contextid = :contextid AND userid {$in}", ['contextid' => $context->id] + $params);
         }
     }
 
@@ -195,14 +217,22 @@ class provider implements
     public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
         $sql = "SELECT ctx.id
-                  FROM {local_learnwise_userauth} t
-                  JOIN {context} ctx ON ctx.instanceid = t.userid AND ctx.contextlevel = :ctxlevel
-                 WHERE t.userid = :userid";
+                FROM {local_learnwise_userauth} t
+                JOIN {context} ctx ON ctx.instanceid = t.userid AND ctx.contextlevel = :ctxlevel
+                WHERE t.userid = :userid";
         $params = [
             'ctxlevel' => CONTEXT_USER,
             'userid' => $userid,
         ];
         $contextlist->add_from_sql($sql, $params);
+
+        $sql = "SELECT ctx.id
+                FROM {local_learnwise_comnt_tracks} ct
+                JOIN {comments} c ON c.id = ct.commentid
+                JOIN {context} ctx ON ctx.id = c.contextid
+                WHERE c.userid = :userid";
+        $contextlist->add_from_sql($sql, $params);
+
         return $contextlist;
     }
 
@@ -224,8 +254,10 @@ class provider implements
             'accesstokens' => 'local_learnwise_accesstoken',
             'refreshtokens' => 'local_learnwise_refreshtoken',
         ];
+        $userid = $contextlist->get_user()->id;
         foreach ($contextlist as $context) {
-            if ($context instanceof context_user && $context->instanceid == $contextlist->get_user()->id) {
+            self::export_comment_tracks($context, $userid, $subcontext);
+            if ($context instanceof context_user && $context->instanceid == $userid) {
                 $userauths = $DB->get_records('local_learnwise_userauth', ['userid' => $context->instanceid]);
                 foreach ($userauths as $userauth) {
                     $userauth->clientid = $notexportedstr;
@@ -243,31 +275,85 @@ class provider implements
     }
 
     /**
+     * Export the user's assistant-made comments tracked in a context, alongside the comments themselves.
+     *
+     * @param context $context The approved context the comments live in.
+     * @param int $userid The comment author.
+     * @param array $subcontext The plugin's base subcontext.
+     * @return void
+     */
+    protected static function export_comment_tracks(context $context, int $userid, array $subcontext): void {
+        global $DB;
+        $tracks = $DB->get_records_sql(
+            "SELECT ct.id, ct.commentid, ct.timeupdated
+               FROM {local_learnwise_comnt_tracks} ct
+               JOIN {comments} c ON c.id = ct.commentid
+              WHERE c.contextid = :contextid AND c.userid = :userid
+           ORDER BY ct.id",
+            ['contextid' => $context->id, 'userid' => $userid]
+        );
+        if (empty($tracks)) {
+            return;
+        }
+        foreach ($tracks as $track) {
+            if (!empty($track->timeupdated)) {
+                $track->timeupdated = transform::datetime($track->timeupdated);
+            }
+        }
+        writer::with_context($context)->export_data(
+            array_merge($subcontext, [get_string('privacy:commenttracks', 'local_learnwise')]),
+            (object) ['tracks' => array_values($tracks)]
+        );
+    }
+
+    /**
      * Delete all user data for the specified user, in the specified contexts.
      *
      * @param approved_contextlist $contextlist
      * @return void
      */
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
+        global $DB;
         $userid = $contextlist->get_user()->id;
         foreach ($contextlist as $context) {
             if ($context instanceof context_user && $context->instanceid == $userid) {
                 self::delete_user_data((int) $userid);
-                return;
             }
+        }
+        $contextids = $contextlist->get_contextids();
+        if (count($contextids) > 0) {
+            [$in, $params] = $DB->get_in_or_equal($contextids, SQL_PARAMS_NAMED);
+            self::delete_comment_tracks("contextid {$in} AND userid = :userid", $params + ['userid' => $userid]);
         }
     }
 
     /**
      * Delete all user data for all users in the specified context.
      *
-     * @param \context $context
+     * @param context $context
      * @return void
      */
-    public static function delete_data_for_all_users_in_context(\context $context): void {
+    public static function delete_data_for_all_users_in_context(context $context): void {
         if ($context instanceof context_user) {
             self::delete_user_data((int) $context->instanceid);
         }
+        self::delete_comment_tracks('contextid = :contextid', ['contextid' => $context->id]);
+    }
+
+    /**
+     * Delete the tracking rows of the comments matching a condition.
+     *
+     * @param string $commentwhere Condition on the comments table.
+     * @param array $params Named parameters for the condition.
+     * @return void
+     */
+    protected static function delete_comment_tracks(string $commentwhere, array $params): void {
+        global $DB;
+        $DB->delete_records_select(
+            'local_learnwise_comnt_tracks',
+            "commentid IN (SELECT id FROM {comments} WHERE {$commentwhere})",
+            $params
+        );
     }
 
     /**
