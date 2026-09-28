@@ -76,7 +76,10 @@ class files extends baseapi {
 
         $scriptkey = constants::COMPONENT . '_' . sha1($filteredpath);
         $token = get_user_key($scriptkey, $USER->id, null, null, strtotime('+5 secs'));
-        $urlbase = new moodle_url('/tokenpluginfile.php', ['key' => $token, 'file' => $filteredpath]);
+        $urlbase = new moodle_url(
+            '/local/learnwise/api/file.php',
+            ['key' => $token, 'file' => $filteredpath]
+        );
 
         $urlbase = self::clean_returnvalue(
             new external_value(PARAM_URL),
@@ -120,26 +123,21 @@ class files extends baseapi {
         $curlreturn = new stdClass();
         $curlreturn->responsefinished = false;
         $curlreturn->response = [];
-        $curlreturn->info = [];
-        $curlreturn->error = '';
-        $curlreturn->errno = 0;
 
         $useragent = core_useragent::get_moodlebot_useragent();
-        $emulateredirects = ini_get('open_basedir');
 
         $curloptions = [
             CURLOPT_URL => $url,
             CURLOPT_HTTPGET => false,
             CURLOPT_HEADER => true,
             CURLOPT_NOBODY => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_MAXREDIRS => 0,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_CONNECTTIMEOUT => 30,
             CURLOPT_PROTOCOLS => (CURLPROTO_HTTP | CURLPROTO_HTTPS),
-            CURLOPT_REDIR_PROTOCOLS => (CURLPROTO_HTTP | CURLPROTO_HTTPS),
             CURLOPT_USERAGENT => $useragent,
             CURLOPT_HTTPHEADER => [
                 'User-Agent: ' . $useragent,
@@ -156,63 +154,6 @@ class files extends baseapi {
         $curlreturn->info  = curl_getinfo($curl);
         $curlreturn->error = curl_error($curl);
         $curlreturn->errno = curl_errno($curl);
-
-        if ($emulateredirects && $curlreturn->info['http_code'] != 200) {
-            $redirects = 0;
-            while ($redirects <= $curloptions[CURLOPT_MAXREDIRS]) {
-                if (!in_array($curlreturn->info['http_code'], [301, 302, 307, 308, 303])) {
-                    break;
-                }
-                $redirects++;
-                $redirecturl = null;
-                if (isset($curlreturn->info['redirect_url']) && preg_match('|^https?://|i', $curlreturn->info['redirect_url'])) {
-                    $redirecturl = $curlreturn->info['redirect_url'];
-                }
-                if (!$redirecturl) {
-                    /* @phpstan-ignore foreach.emptyArray */
-                    foreach ($curlreturn->response as $k => $v) {
-                        if (strtolower($k) === 'location') {
-                            $redirecturl = $v;
-                            break;
-                        }
-                    }
-                    /* @phpstan-ignore booleanAnd.leftAlwaysFalse */
-                    if ($redirecturl && !preg_match('|^https?://|i', $redirecturl)) {
-                        $current = curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
-                        if (strpos($redirecturl, '/') === 0) {
-                            $pos = strpos('/', $current, 8);
-                            if ($pos === false) {
-                                $redirecturl = $current . $redirecturl;
-                            } else {
-                                $redirecturl = substr($current, 0, $pos) . $redirecturl;
-                            }
-                        } else {
-                            $redirecturl = dirname($current) . '/' . $redirecturl;
-                        }
-                    }
-                }
-
-                curl_setopt($curl, CURLOPT_URL, $redirecturl);
-                curl_exec($curl);
-
-                $curlreturn->info  = curl_getinfo($curl);
-                $curlreturn->error = curl_error($curl);
-                $curlreturn->errno = curl_errno($curl);
-
-                $curlreturn->info['redirect_count'] = $redirects;
-
-                if ($curlreturn->info['http_code'] === 200) {
-                    break;
-                }
-                if ($curlreturn->errno != CURLE_OK) {
-                    break;
-                }
-            }
-            if ($redirects > $curloptions[CURLOPT_MAXREDIRS]) {
-                $curlreturn->errno = CURLE_TOO_MANY_REDIRECTS;
-                $curlreturn->error = 'Maximum (' . $curloptions[CURLOPT_MAXREDIRS] . ') redirects followed';
-            }
-        }
 
         curl_close($curl);
 

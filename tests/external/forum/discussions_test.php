@@ -17,8 +17,11 @@
 namespace local_learnwise\external\forum;
 
 use local_learnwise\advanced_testcase;
+use context_module;
 use local_learnwise\external\baseapi;
 use local_learnwise\external\timestampvalue;
+use moodle_exception;
+use required_capability_exception;
 use stdClass;
 
 /**
@@ -159,6 +162,96 @@ final class discussions_test extends advanced_testcase {
         $this->assertArrayHasKey((int) $parent->id, $byid);
         $this->assertSame((int) $discussion->firstpost, (int) $byid[(int) $parent->id]['parentid']);
         $this->assertSame('A reply', trim($byid[(int) $parent->id]['message']));
+    }
+
+    /**
+     * Listing a hidden forum is refused, so its discussion titles do not leak.
+     */
+    public function test_execute_refuses_to_list_a_hidden_forum(): void {
+        [$course, $forum, $user] = $this->create_forum();
+        $this->create_discussion($course, $forum, $user, 'Secret topic');
+        set_coursemodule_visible($forum->cmid, 0);
+        rebuild_course_cache($course->id, true);
+        $this->setUser($user);
+
+        $this->expectException(moodle_exception::class);
+        discussions::execute($course->id, $forum->cmid);
+    }
+
+    /**
+     * Listing a forum restricted by an availability condition is refused.
+     */
+    public function test_execute_refuses_to_list_a_restricted_forum(): void {
+        global $CFG;
+        $CFG->enableavailability = true;
+        $course = $this->getDataGenerator()->create_course();
+        $availability = json_encode(\core_availability\tree::get_root_json([
+            \availability_date\condition::get_json(\availability_date\condition::DIRECTION_FROM, time() + DAYSECS),
+        ]));
+        $forum = $this->getDataGenerator()->create_module('forum', [
+            'course' => $course->id,
+            'availability' => $availability,
+        ]);
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, 'student');
+        $this->create_discussion($course, $forum, $user, 'Secret topic');
+        $this->setUser($user);
+
+        $this->expectException(moodle_exception::class);
+        discussions::execute($course->id, $forum->cmid);
+    }
+
+    /**
+     * Listing requires mod/forum:viewdiscussion in the forum itself.
+     */
+    public function test_execute_list_requires_viewdiscussion(): void {
+        global $DB;
+        [$course, $forum, $user] = $this->create_forum();
+        $this->create_discussion($course, $forum, $user, 'Secret topic');
+        $studentrole = $DB->get_field('role', 'id', ['shortname' => 'student']);
+        assign_capability(
+            'mod/forum:viewdiscussion',
+            CAP_PROHIBIT,
+            $studentrole,
+            context_module::instance($forum->cmid)->id,
+            true
+        );
+        $this->setUser($user);
+
+        $this->expectException(required_capability_exception::class);
+        discussions::execute($course->id, $forum->cmid);
+    }
+
+    /**
+     * Pinning a discussion is refused under the same forum-level checks.
+     */
+    public function test_execute_refuses_a_pinned_discussion_in_a_hidden_forum(): void {
+        [$course, $forum, $user] = $this->create_forum();
+        $discussion = $this->create_discussion($course, $forum, $user, 'Secret topic');
+        set_coursemodule_visible($forum->cmid, 0);
+        rebuild_course_cache($course->id, true);
+        $this->setUser($user);
+        discussions::set_id($discussion->id);
+
+        $this->expectException(moodle_exception::class);
+        discussions::execute($course->id, $forum->cmid);
+    }
+
+    /**
+     * A teacher who may see hidden activities can still list a hidden forum.
+     */
+    public function test_execute_lists_a_hidden_forum_for_a_teacher(): void {
+        [$course, $forum, $user] = $this->create_forum();
+        $this->create_discussion($course, $forum, $user, 'Secret topic');
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $course->id, 'editingteacher');
+        set_coursemodule_visible($forum->cmid, 0);
+        rebuild_course_cache($course->id, true);
+        $this->setUser($teacher);
+
+        $response = discussions::execute($course->id, $forum->cmid);
+
+        $this->assertSame(['Secret topic'], array_column($response, 'name'));
     }
 
     /**

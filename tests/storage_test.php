@@ -225,6 +225,37 @@ final class storage_test extends advanced_testcase {
     }
 
     /**
+     * Only the exact secret passes; near misses of the same or different length fail.
+     */
+    public function test_check_client_credentials_rejects_near_misses(): void {
+        $secret = $this->client->secret;
+        $nearmisses = [
+            'prefix' => substr($secret, 0, -1),
+            'suffix' => $secret . 'x',
+            'last char' => substr($secret, 0, -1) . ($secret[strlen($secret) - 1] === 'a' ? 'b' : 'a'),
+            'case' => strtoupper($secret) === $secret ? strtolower($secret) : strtoupper($secret),
+            'whitespace' => " {$secret} ",
+        ];
+        foreach ($nearmisses as $label => $attempt) {
+            $this->assertFalse(
+                $this->storage->checkClientCredentials($this->client->uniqid, $attempt),
+                "Near miss accepted: {$label}"
+            );
+        }
+    }
+
+    /**
+     * A non-string secret is compared as a string instead of raising a TypeError from hash_equals().
+     */
+    public function test_check_client_credentials_casts_non_string_secrets(): void {
+        global $DB;
+        $DB->set_field('local_learnwise_clients', 'secret', '12345', ['id' => $this->client->id]);
+
+        $this->assertTrue($this->storage->checkClientCredentials($this->client->uniqid, 12345));
+        $this->assertFalse($this->storage->checkClientCredentials($this->client->uniqid, 1234));
+    }
+
+    /**
      * A client that carries a secret is not a public client.
      */
     public function test_is_public_client(): void {
