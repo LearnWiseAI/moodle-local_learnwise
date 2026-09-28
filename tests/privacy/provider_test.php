@@ -402,6 +402,280 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     }
 
     /**
+     * The comment tracking table is declared with the fields it stores.
+     */
+    public function test_get_metadata_declares_comment_tracks(): void {
+        $collection = provider::get_metadata(new collection('local_learnwise'));
+        $tables = [];
+        foreach ($collection->get_collection() as $item) {
+            $tables[$item->get_name()] = $item;
+        }
+
+        $this->assertArrayHasKey('local_learnwise_comnt_tracks', $tables);
+        $table = $tables['local_learnwise_comnt_tracks'];
+        $this->assertSame('privacy:metadata:local_learnwise_comnt_tracks', $table->get_summary());
+        $this->assertEqualsCanonicalizing(['commentid', 'timeupdated'], array_keys($table->get_privacy_fields()));
+        foreach (array_merge([$table->get_summary()], $table->get_privacy_fields()) as $identifier) {
+            $this->assertTrue(get_string_manager()->string_exists($identifier, 'local_learnwise'), $identifier);
+        }
+    }
+
+    /**
+     * The context of a tracked comment is reported for its author only.
+     */
+    public function test_get_contexts_for_userid_includes_tracked_comment_contexts(): void {
+        [$contexta, $contextb] = $this->create_comment_contexts();
+        $this->create_tracked_comment($contexta, $this->usera);
+        $this->create_tracked_comment($contextb, $this->userb);
+
+        $contextids = provider::get_contexts_for_userid($this->usera->id)->get_contextids();
+
+        $this->assertEqualsCanonicalizing(
+            [context_user::instance($this->usera->id)->id, $contexta->id],
+            array_map('intval', $contextids)
+        );
+    }
+
+    /**
+     * Comments the assistant did not make are not the plugin's data.
+     */
+    public function test_get_contexts_for_userid_ignores_untracked_comments(): void {
+        [$contexta] = $this->create_comment_contexts();
+        $stranger = $this->getDataGenerator()->create_user();
+        $this->create_tracked_comment($contexta, $stranger, false);
+
+        $this->assertCount(0, provider::get_contexts_for_userid($stranger->id)->get_contextids());
+    }
+
+    /**
+     * Authors of tracked comments are discoverable from the comment's context.
+     */
+    public function test_get_users_in_context_finds_tracked_commenters(): void {
+        [$contexta, $contextb] = $this->create_comment_contexts();
+        $stranger = $this->getDataGenerator()->create_user();
+        $this->create_tracked_comment($contexta, $this->usera);
+        $this->create_tracked_comment($contexta, $stranger, false);
+        $this->create_tracked_comment($contextb, $this->userb);
+        $userlist = new userlist($contexta, 'local_learnwise');
+
+        provider::get_users_in_context($userlist);
+
+        $this->assertSame([(int) $this->usera->id], array_map('intval', $userlist->get_userids()));
+    }
+
+    /**
+     * A tracked comment is exported, with its time made readable, without disturbing the token export.
+     */
+    public function test_export_user_data_includes_comment_tracks(): void {
+        global $DB;
+        [$contexta] = $this->create_comment_contexts();
+        $timeupdated = 1700000000;
+        $trackid = $this->create_tracked_comment($contexta, $this->usera, true, $timeupdated);
+        $contextids = provider::get_contexts_for_userid($this->usera->id)->get_contextids();
+
+        provider::export_user_data(new approved_contextlist($this->usera, 'local_learnwise', $contextids));
+
+        $tracks = $this->find_exported_tracks($contextids);
+        $this->assertCount(1, $tracks);
+        $track = reset($tracks);
+        $this->assertEquals($DB->get_field('local_learnwise_comnt_tracks', 'commentid', ['id' => $trackid]), $track->commentid);
+        $this->assertSame(\core_privacy\local\request\transform::datetime($timeupdated), $track->timeupdated);
+
+        // The token export for the same user must still be intact.
+        $authid = $DB->get_field('local_learnwise_userauth', 'id', ['userid' => $this->usera->id]);
+        $usercontext = context_user::instance($this->usera->id);
+        $data = writer::with_context($usercontext)->get_data([get_string('pluginname', 'local_learnwise'), (string) $authid]);
+        $this->assertSame(get_string('privacy:request:notexportedsecurity', 'local_learnwise'), $data->clientid);
+    }
+
+    /**
+     * A user who never authorised the assistant still gets their tracked comments exported.
+     */
+    public function test_export_user_data_for_user_without_tokens(): void {
+        [$contexta] = $this->create_comment_contexts();
+        $stranger = $this->getDataGenerator()->create_user();
+        $this->create_tracked_comment($contexta, $stranger, true, 1700000000);
+        $this->create_tracked_comment($contexta, $stranger, true, null);
+        $contextids = provider::get_contexts_for_userid($stranger->id)->get_contextids();
+
+        provider::export_user_data(new approved_contextlist($stranger, 'local_learnwise', $contextids));
+
+        $this->assertCount(2, $this->find_exported_tracks($contextids));
+    }
+
+    /**
+     * Another user's tracked comments are never part of an export.
+     */
+    public function test_export_user_data_excludes_other_users_tracks(): void {
+        [$contexta] = $this->create_comment_contexts();
+        $this->create_tracked_comment($contexta, $this->usera);
+        $this->create_tracked_comment($contexta, $this->userb);
+        $contextids = [context_user::instance($this->usera->id)->id, $contexta->id];
+
+        provider::export_user_data(new approved_contextlist($this->usera, 'local_learnwise', $contextids));
+
+        $this->assertCount(1, $this->find_exported_tracks($contextids));
+    }
+
+    /**
+     * Deleting a user's data removes only their tracks, and only in the approved contexts.
+     */
+    public function test_delete_data_for_user_removes_own_comment_tracks(): void {
+        [$contexta, $contextb] = $this->create_comment_contexts();
+        $owna = $this->create_tracked_comment($contexta, $this->usera);
+        $ownb = $this->create_tracked_comment($contextb, $this->usera);
+        $other = $this->create_tracked_comment($contexta, $this->userb);
+
+        provider::delete_data_for_user(new approved_contextlist($this->usera, 'local_learnwise', [$contexta->id]));
+
+        $this->assert_tracks_exist([$owna => false, $ownb => true, $other => true]);
+        $this->assert_tokens_exist('a', true);
+    }
+
+    /**
+     * Approving the user context alone does not erase tracks held in other contexts.
+     */
+    public function test_delete_data_for_user_in_user_context_keeps_comment_tracks(): void {
+        [$contexta] = $this->create_comment_contexts();
+        $own = $this->create_tracked_comment($contexta, $this->usera);
+
+        $context = context_user::instance($this->usera->id);
+        provider::delete_data_for_user(new approved_contextlist($this->usera, 'local_learnwise', [$context->id]));
+
+        $this->assert_tokens_exist('a', false);
+        $this->assert_tracks_exist([$own => true]);
+    }
+
+    /**
+     * The userlist deletion path removes tracks for the approved users only.
+     */
+    public function test_delete_data_for_users_removes_approved_comment_tracks(): void {
+        [$contexta, $contextb] = $this->create_comment_contexts();
+        $owna = $this->create_tracked_comment($contexta, $this->usera);
+        $ownb = $this->create_tracked_comment($contextb, $this->usera);
+        $other = $this->create_tracked_comment($contexta, $this->userb);
+
+        provider::delete_data_for_users(new approved_userlist($contexta, 'local_learnwise', [$this->usera->id]));
+
+        $this->assert_tracks_exist([$owna => false, $ownb => true, $other => true]);
+        $this->assert_tokens_exist('a', true);
+    }
+
+    /**
+     * Deleting a context removes every track in it and nothing elsewhere.
+     */
+    public function test_delete_data_for_all_users_in_context_removes_comment_tracks(): void {
+        [$contexta, $contextb] = $this->create_comment_contexts();
+        $owna = $this->create_tracked_comment($contexta, $this->usera);
+        $other = $this->create_tracked_comment($contexta, $this->userb);
+        $ownb = $this->create_tracked_comment($contextb, $this->usera);
+
+        provider::delete_data_for_all_users_in_context($contexta);
+
+        $this->assert_tracks_exist([$owna => false, $other => false, $ownb => true]);
+        $this->assert_tokens_exist('a', true);
+        $this->assert_tokens_exist('b', true);
+    }
+
+    /**
+     * Create two module contexts that comments can live in.
+     *
+     * @return \context_module[]
+     */
+    protected function create_comment_contexts(): array {
+        $course = $this->getDataGenerator()->create_course();
+        $contexts = [];
+        foreach ([1, 2] as $unused) {
+            $assign = $this->getDataGenerator()->create_module('assign', ['course' => $course->id]);
+            $contexts[] = \context_module::instance($assign->cmid);
+        }
+        return $contexts;
+    }
+
+    /**
+     * Insert a comment and, optionally, the row that marks it as made by the assistant.
+     *
+     * @param \context $context Context the comment lives in
+     * @param stdClass $user Author of the comment
+     * @param bool $tracked Whether to add a tracking row
+     * @param int|null $timeupdated Time the tracked comment was last updated
+     * @return int|null The tracking row id
+     */
+    protected function create_tracked_comment(
+        \context $context,
+        stdClass $user,
+        bool $tracked = true,
+        ?int $timeupdated = null
+    ): ?int {
+        global $DB;
+        $commentid = $DB->insert_record('comments', (object) [
+            'contextid' => $context->id,
+            'component' => 'assignsubmission_comments',
+            'commentarea' => 'submission_comments',
+            'itemid' => 1,
+            'content' => 'Feedback',
+            'format' => FORMAT_MOODLE,
+            'userid' => $user->id,
+            'timecreated' => time(),
+        ]);
+        if (!$tracked) {
+            return null;
+        }
+        return (int) $DB->insert_record('local_learnwise_comnt_tracks', (object) [
+            'commentid' => $commentid,
+            'timeupdated' => $timeupdated,
+        ]);
+    }
+
+    /**
+     * Collect every exported record that describes a comment track, from any of the given contexts.
+     *
+     * @param int[] $contextids Contexts to search
+     * @return stdClass[]
+     */
+    protected function find_exported_tracks(array $contextids): array {
+        $found = [];
+        // Tracks may be exported one per node or grouped in a list inside one node.
+        $scan = function ($value) use (&$scan, &$found) {
+            if (is_object($value) && property_exists($value, 'commentid')) {
+                $found[] = $value;
+            } else if (is_array($value) || is_object($value)) {
+                foreach ($value as $item) {
+                    $scan($item);
+                }
+            }
+        };
+        $collect = function ($node) use (&$collect, $scan) {
+            $scan($node->data);
+            foreach ($node->children as $child) {
+                $collect($child);
+            }
+        };
+        foreach ($contextids as $contextid) {
+            $writer = writer::with_context(\context::instance_by_id($contextid));
+            $property = new \ReflectionProperty($writer, 'data');
+            $property->setAccessible(true);
+            $all = $property->getValue($writer);
+            if (isset($all->$contextid)) {
+                $collect($all->$contextid);
+            }
+        }
+        return $found;
+    }
+
+    /**
+     * Assert which tracking rows remain.
+     *
+     * @param array $expected Map of tracking row id to whether it should still exist
+     */
+    protected function assert_tracks_exist(array $expected): void {
+        global $DB;
+        foreach ($expected as $trackid => $exists) {
+            $this->assertSame($exists, $DB->record_exists('local_learnwise_comnt_tracks', ['id' => $trackid]), "Track {$trackid}");
+        }
+    }
+
+    /**
      * Assert that all three credential types remain retrievable or have been erased.
      *
      * @param string $suffix Token fixture suffix.

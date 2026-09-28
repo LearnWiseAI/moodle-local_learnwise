@@ -16,7 +16,6 @@
 
 namespace local_learnwise\external\forum;
 
-use context_course;
 use context_module;
 use external_multiple_structure;
 use external_single_structure;
@@ -75,14 +74,9 @@ class discussions extends baseapi {
 
         $cm = get_coursemodule_from_id('forum', $params['forumid'], $params['courseid']);
 
-        $context = context_course::instance($params['courseid']);
-        if (static::is_singleoperation()) {
-            $context = context_module::instance($cm->id);
-        }
+        $context = context_module::instance($cm->id);
         static::validate_context($context);
-        if (static::is_singleoperation()) {
-            require_capability('mod/forum:viewdiscussion', $context);
-        }
+        require_capability('mod/forum:viewdiscussion', $context);
 
         $vaultfactory = \mod_forum\local\container::get_vault_factory();
         $forumvault = $vaultfactory->get_forum_vault();
