@@ -76,7 +76,10 @@ class files extends baseapi {
 
         $scriptkey = constants::COMPONENT . '_' . sha1($filteredpath);
         $token = get_user_key($scriptkey, $USER->id, null, null, strtotime('+5 secs'));
-        $urlbase = new moodle_url('/tokenpluginfile.php', ['key' => $token, 'file' => $filteredpath]);
+        $urlbase = new moodle_url(
+            '/local/learnwise/api/file.php',
+            ['key' => $token, 'file' => $filteredpath]
+        );
 
         $urlbase = self::clean_returnvalue(
             new external_value(PARAM_URL),
@@ -132,10 +135,10 @@ class files extends baseapi {
             CURLOPT_HTTPGET => false,
             CURLOPT_HEADER => true,
             CURLOPT_NOBODY => true,
-            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_MAXREDIRS => 10,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_CONNECTTIMEOUT => 30,
             CURLOPT_PROTOCOLS => (CURLPROTO_HTTP | CURLPROTO_HTTPS),

@@ -247,7 +247,7 @@ class storage implements
     public function checkClientCredentials($clientid, $clientsecret = null) {
         $client = $this->getClientDetails($clientid);
         if ($client) {
-            return $clientsecret === $client['client_secret'];
+            return hash_equals((string) $clientsecret, (string) $client['client_secret']);
         }
         return false;
     }
