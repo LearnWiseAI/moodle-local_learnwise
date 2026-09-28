@@ -529,4 +529,143 @@ final class files_test extends advanced_testcase {
         $this->assertFalse($DB->record_exists('user_private_key', ['value' => $requests[0]['query']['key']]));
         $this->assertFalse($DB->record_exists('user_private_key', ['userid' => $student->id]));
     }
+
+    /**
+     * Restrict the files PHP may open to the ones Moodle and PHPUnit need, the way open_basedir is set on hardened servers.
+     *
+     * Tests run in separate processes, so the restriction ends with the test.
+     */
+    private function restrict_open_basedir(): void {
+        global $CFG;
+
+        // Composer's vendor directory holds PHPUnit, and from Moodle 5.1 it sits outside dirroot.
+        $vendordir = dirname((new \ReflectionClass(\Composer\Autoload\ClassLoader::class))->getFileName(), 2);
+        $dirs = array_unique(array_filter([
+            $CFG->dirroot,
+            $vendordir,
+            $CFG->dataroot,
+            $CFG->tempdir ?? '',
+            $CFG->cachedir ?? '',
+            $CFG->localcachedir ?? '',
+            $CFG->localrequestdir ?? '',
+            dirname($this->requestlog),
+            sys_get_temp_dir(),
+        ]));
+        ini_set('open_basedir', implode(PATH_SEPARATOR, $dirs));
+
+        $this->assertNotEmpty(ini_get('open_basedir'), 'open_basedir could not be set.');
+    }
+
+    /**
+     * Whether the test runs with open_basedir set.
+     *
+     * @return array
+     */
+    public static function open_basedir_provider(): array {
+        return [
+            'Without open_basedir' => ['openbasedir' => false],
+            'With open_basedir' => ['openbasedir' => true],
+        ];
+    }
+
+    /**
+     * Cases where the site answers the probe with a redirect, and where that redirect points.
+     *
+     * @return array
+     */
+    public static function redirected_probe_provider(): array {
+        $cases = [];
+        foreach (self::open_basedir_provider() as $name => $openbasedir) {
+            $cases["Not enrolled, {$name}"] = ['case' => 'notenrolled', 'location' => '/enrol/index.php'] + $openbasedir;
+            $cases["Suspended, {$name}"] = ['case' => 'suspended', 'location' => '/enrol/index.php'] + $openbasedir;
+            $cases["Hidden activity, {$name}"] = ['case' => 'hidden', 'location' => '/course/view.php'] + $openbasedir;
+        }
+        return $cases;
+    }
+
+    /**
+     * A redirect answer is final: the probe never follows Location, even with open_basedir set.
+     *
+     * @dataProvider redirected_probe_provider
+     * @param string $case Why the user cannot open the file.
+     * @param string $location Text the redirect location contains.
+     * @param bool $openbasedir Whether open_basedir is set.
+     */
+    public function test_redirect_is_not_followed(string $case, string $location, bool $openbasedir): void {
+        global $DB;
+
+        [$course, $path] = $this->create_assignment_with_intro_file($case === 'hidden' ? ['visible' => 0] : []);
+        if ($case === 'notenrolled') {
+            $user = $this->getDataGenerator()->create_user();
+        } else {
+            $user = $this->getDataGenerator()->create_and_enrol(
+                $course,
+                'student',
+                null,
+                'manual',
+                0,
+                0,
+                $case === 'suspended' ? ENROL_USER_SUSPENDED : ENROL_USER_ACTIVE
+            );
+        }
+        $this->start_site_server();
+        $this->setUser($user);
+        if ($openbasedir) {
+            $this->restrict_open_basedir();
+        }
+
+        $this->assertSame(['accessible' => false], files::execute($path));
+
+        // The site saw only the probe itself, never a request for the page it redirected to.
+        $this->assert_site_answered(303, $location);
+        $this->assertCount(1, $this->get_site_requests());
+        $this->assertFalse($DB->record_exists('user_private_key', [
+            'script' => 'local_learnwise_' . sha1($path),
+            'userid' => $user->id,
+        ]));
+    }
+
+    /**
+     * The head request reports the redirect it was given, and does not follow it.
+     *
+     * @dataProvider open_basedir_provider
+     * @param bool $openbasedir Whether open_basedir is set.
+     */
+    public function test_send_head_request_does_not_follow_redirects(bool $openbasedir): void {
+        global $CFG;
+
+        $course = $this->getDataGenerator()->create_course();
+        $this->start_site_server();
+        if ($openbasedir) {
+            $this->restrict_open_basedir();
+        }
+
+        // Without a session the course page sends the visitor to the login page.
+        $url = $CFG->wwwroot . '/course/view.php?id=' . $course->id;
+        $curlreturn = files::send_head_request($url);
+
+        $this->assertSame(CURLE_OK, $curlreturn->errno);
+        $this->assertSame('', $curlreturn->error);
+        $this->assertSame(303, $curlreturn->info['http_code']);
+        $this->assertSame(0, $curlreturn->info['redirect_count']);
+        $this->assertSame($url, $curlreturn->info['url']);
+        $this->assertStringContainsString('/login/index.php', $curlreturn->response['Location']);
+        $this->assertStringContainsString('/login/index.php', $curlreturn->info['redirect_url']);
+
+        $requests = $this->get_site_requests();
+        $this->assertCount(1, $requests);
+        $this->assertSame('HEAD', $requests[0]['method']);
+        $this->assertSame('/course/view.php', $requests[0]['path']);
+    }
+
+    /**
+     * The probe still only speaks HTTP(S), so another protocol is refused before any request is made.
+     */
+    public function test_send_head_request_makes_no_request_for_other_protocols(): void {
+        $curlreturn = files::send_head_request('file:///etc/passwd');
+
+        $this->assertSame(CURLE_UNSUPPORTED_PROTOCOL, $curlreturn->errno);
+        $this->assertNotEmpty($curlreturn->error);
+        $this->assertSame([], $curlreturn->response);
+    }
 }
