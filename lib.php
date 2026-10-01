@@ -145,6 +145,7 @@ function local_learnwise_env_check_auth_header(environment_results $result) {
         CURLOPT_HTTPHEADER => [
             'Authorization: Bearer sampletoken',
         ],
+        CURLOPT_TIMEOUT => 30,
     ]);
 
     $response = curl_exec($ch);
