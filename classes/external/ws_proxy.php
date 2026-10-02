@@ -40,6 +40,23 @@ class ws_proxy {
     const MAX_RESPONSE_BYTES = 10 * 1024 * 1024;
 
     /**
+     * List of replica functions map that are deprecated at some point
+     */
+    const REPLICA_FUNCTIONS = [
+        'core_grades_get_enrolled_users_for_search_widget' => [
+            'name' => 'core_grades_get_enrolled_users_for_selector',
+            'since' => 401,
+            'removed' => 500,
+            'deprecatedparams' => [
+                'actionbaseurl' => [
+                    'type' => PARAM_URL,
+                    'default' => '/',
+                ],
+            ],
+        ],
+    ];
+
+    /**
      * Dispatch a WS function call from URL segments and return the result.
      *
      * @param api_server $apiserver
@@ -108,6 +125,15 @@ class ws_proxy {
             }
         }
 
+        // Do parameter cleaning.
+        if (isset(self::REPLICA_FUNCTIONS[$functionname])) {
+            $functioninfo = baseapi::external_function_info($allowed[$functionname]);
+            $params = baseapi::clean_returnvalue(
+                $functioninfo->parameters_desc,
+                $params
+            );
+        }
+
         $apiserver->set_parameters($params);
         $apiserver->set_functionname($functionname);
         $response->set_response_size_limit(
@@ -140,6 +166,11 @@ class ws_proxy {
             $plugindir = core_component::get_component_directory($functionrecord->component);
             if (file_exists($plugindir . '/db/services.php')) {
                 $cache[$functionrecord->name] = $functionrecord;
+            }
+        }
+        foreach (self::REPLICA_FUNCTIONS as $deprecatedfunc => $replacementfuncinfo) {
+            if (isset($cache[$replacementfuncinfo['name']])) {
+                $cache[$deprecatedfunc] = $cache[$replacementfuncinfo['name']];
             }
         }
         return $cache;

@@ -17,9 +17,11 @@
 namespace local_learnwise\external;
 
 use local_learnwise\advanced_testcase;
+use core_component;
 use core_plugin_manager;
 use local_learnwise\api_response;
 use local_learnwise\api_server;
+use local_learnwise\test_helpers;
 
 /**
  * Tests for the generic web service proxy.
@@ -31,6 +33,8 @@ use local_learnwise\api_server;
  * @runTestsInSeparateProcesses
  */
 final class ws_proxy_test extends advanced_testcase {
+    use test_helpers;
+
     /**
      * The request method before the test replaced it.
      *
@@ -219,6 +223,79 @@ final class ws_proxy_test extends advanced_testcase {
         $this->assertArrayHasKey('mod_assign_get_assignments', $allowed);
         $this->assertArrayNotHasKey('core_course_not_a_real_function', $allowed);
         $this->assertSame('core_course_get_courses', $allowed['core_course_get_courses']->name);
+    }
+
+    /**
+     * The replica function definitions refers to replacement function.
+     */
+    public function test_get_allowed_functions_covers_replica_functions(): void {
+        global $CFG;
+        $allowed = ws_proxy::get_allowed_functions();
+
+        $testneedstorun = count(ws_proxy::REPLICA_FUNCTIONS);
+        foreach (ws_proxy::REPLICA_FUNCTIONS as $deprecatedfunc => $replacementfuncinfo) {
+            if ($CFG->branch < $replacementfuncinfo['since']) {
+                $testneedstorun--;
+                continue;
+            }
+            $this->assertArrayHasKey($deprecatedfunc, $allowed);
+            $comparewsfunction = $replacementfuncinfo['name'];
+            if (!isset($allowed[$comparewsfunction])) {
+                $comparewsfunction = $deprecatedfunc;
+            }
+            $this->assertSame(
+                $comparewsfunction,
+                $allowed[$deprecatedfunc]->name
+            );
+        }
+
+        if ($testneedstorun <= 0) {
+            $this->markTestSkipped();
+        }
+    }
+
+    /**
+     * The replica function definitions passes to replacement function.
+     */
+    public function test_replica_function_must_be_callable(): void {
+        global $CFG;
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $user = $this->getDataGenerator()->create_and_enrol($course);
+        grade_regrade_final_grades($course->id);
+
+        $replicafunc = array_keys(ws_proxy::REPLICA_FUNCTIONS)[0];
+        $replacementfuncinfo = array_values(ws_proxy::REPLICA_FUNCTIONS)[0];
+
+        if ($CFG->branch < $replacementfuncinfo['since']) {
+            $this->markTestSkipped();
+        }
+
+        $allcomponents = ['core'];
+        foreach (core_component::get_component_list() as $plugininfo) {
+            $allcomponents = array_merge($allcomponents, array_keys($plugininfo));
+        }
+
+        $component = '';
+        foreach (array_reverse($allcomponents) as $componentname) {
+            if (strpos($replicafunc, $componentname) === 0) {
+                $component = $componentname;
+                break;
+            }
+        }
+
+        $noncomponenturlpart = trim(str_replace($component, '', $replicafunc), '_');
+
+        $server = $this->oauth_server($teacher->id);
+        $server->urlparts = ['ws', $component, $noncomponenturlpart];
+        $_GET['courseid'] = $course->id;
+        foreach ($replacementfuncinfo['deprecatedparams'] as $paramname => $paramreplaceinfo) {
+            $_GET[$paramname] = $paramreplaceinfo['default'];
+        }
+
+        $result = $this->execute_request($server);
+        $this->assertArrayHasKey('users', $result);
+        $this->assertSame($user->id, $result['users'][0]->id);
     }
 
     /**
