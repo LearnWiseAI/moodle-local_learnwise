@@ -275,6 +275,23 @@ abstract class baseapi extends external_api implements api_route {
     }
 
     /**
+     * Returns detailed function information
+     *
+     * @param string|\stdClass $function name of external function or record from external_function
+     * @param int $strictness IGNORE_MISSING means compatible mode, false returned if record not found, debug message if more found;
+     *                        MUST_EXIST means throw exception if no record or multiple records found
+     * @return \stdClass|bool description or false if not found or exception thrown
+     */
+    public static function external_function_info($function, $strictness = MUST_EXIST) {
+        // Override deprecated function definition for backword compatibility.
+        if (is_string($function) && isset(ws_proxy::REPLICA_FUNCTIONS[$function])) {
+            $allfunctions = ws_proxy::get_allowed_functions();
+            $function = $allfunctions[$function];
+        }
+        return parent::external_function_info($function, $strictness);
+    }
+
+    /**
      * Returns input parameters definition
      *
      * @return external_function_parameters
