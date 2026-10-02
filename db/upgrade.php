@@ -236,11 +236,6 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026091002, 'local', 'learnwise');
     }
 
-    if ($oldversion < 2026091501) {
-        local_learnwise_upgrade_restrict_service_role();
-        upgrade_plugin_savepoint(true, 2026091501, 'local', 'learnwise');
-    }
-
     if ($oldversion < 2026091502) {
         // Define table local_learnwise_com_tracks to be created.
         $table = new xmldb_table('local_learnwise_comnt_tracks');
@@ -261,6 +256,13 @@ function xmldb_local_learnwise_upgrade($oldversion) {
 
         // Learnwise savepoint reached.
         upgrade_plugin_savepoint(true, 2026091502, 'local', 'learnwise');
+    }
+
+    if ($oldversion < 2026092500) {
+        // Revoke the integration role's unused write grants and grant what ingestion and automated
+        // assessment need, leaving existing tokens in place.
+        local_learnwise_upgrade_service_role_capabilities();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'learnwise');
     }
 
     return true;
