@@ -3,6 +3,7 @@ includes:
 parameters:
     level: 5
     excludePaths:
+        - classes/test_helpers.php
         - classes/local/OAuth2/*
         # PHPStan's Moodle extension does not model the PHPUnit test scaffolding
         # (testing_data_generator's per-component create_* methods are resolved at

@@ -19,7 +19,6 @@ namespace local_learnwise;
 use context_system;
 use local_learnwise\external\baseapi;
 use local_learnwise\form\webservicesetup;
-use local_learnwise\local\OAuth2\Request;
 
 /**
  * Verify setup and API access without a site-wide REST permission grant.
@@ -32,6 +31,8 @@ use local_learnwise\local\OAuth2\Request;
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class webservice_permissions_test extends \advanced_testcase {
+    use test_helpers;
+
     /**
      * Start without the default role's REST permission.
      */
@@ -56,34 +57,6 @@ final class webservice_permissions_test extends \advanced_testcase {
         $form = new webservicesetup();
         $this->assertTrue($form->update_from_formdata((object) ['setupwebservicesetup' => 1]));
         return util::get_or_generate_token_for_user(constants::COMPONENT, false);
-    }
-
-    /**
-     * Invoke the real server pipeline without run(), which sends output and exits PHP.
-     *
-     * @param \webservice_base_server $server Server under test.
-     * @param string $method Protected pipeline stage.
-     * @return mixed
-     */
-    protected function stage(\webservice_base_server $server, string $method) {
-        $reflection = new \ReflectionMethod($server, $method);
-        $reflection->setAccessible(true);
-        return $reflection->invoke($server);
-    }
-
-    /**
-     * Parse, authenticate and execute a real request, retaining its raw result.
-     *
-     * @param \webservice_base_server $server Server under test.
-     * @return mixed
-     */
-    protected function execute_request(\webservice_base_server $server) {
-        foreach (['parse_request', 'authenticate_user', 'load_function_info', 'execute'] as $stage) {
-            $this->stage($server, $stage);
-        }
-        $property = new \ReflectionProperty($server, 'returns');
-        $property->setAccessible(true);
-        return $property->getValue($server);
     }
 
     /**
@@ -790,143 +763,5 @@ final class webservice_permissions_test extends \advanced_testcase {
      */
     public static function disabled_service_provider(): array {
         return [[true], [false]];
-    }
-
-    /**
-     * Construct a request using the permanent token through the real Bearer fallback.
-     *
-     * @param \stdClass $token Permanent token.
-     * @param array $route Route segments.
-     * @param array $body Request body; a non-empty body makes it a POST.
-     * @return api_server
-     */
-    protected function service_server(\stdClass $token, array $route, array $body = []): api_server {
-        global $ME;
-        $ME = '/local/learnwise/api/r.php';
-        set_config('liveapi', 1, 'local_learnwise');
-        set_config('aiops', 1, 'local_learnwise');
-        // Routes record single-operation ids in static state, so start every request from a clean slate.
-        baseapi::$ids = [];
-        baseapi::$my = null;
-        $_POST = [];
-        $_GET = [];
-        $_SERVER['REQUEST_METHOD'] = $body ? 'POST' : 'GET';
-        $_SERVER['SERVER_SOFTWARE'] = 'Apache';
-        $server = new api_server();
-        $server->urlparts = array_map('strval', $route);
-        $server->request = new Request([], $body, [], [], [], [], null, ['Authorization' => 'Bearer ' . $token->token]);
-        return $server;
-    }
-
-    /**
-     * Execute a core REST read with the same permanent credential.
-     *
-     * @param \stdClass $token Permanent token.
-     * @param string $function External function name.
-     * @param array $params Request parameters.
-     * @return mixed
-     */
-    protected function core_service_request(\stdClass $token, string $function, array $params) {
-        global $ME;
-        // Plugin functions such as local_learnwise_get_books shape their output for the native endpoint.
-        $ME = '/webservice/rest/server.php';
-        $_POST = [];
-        $_GET = $params + ['wstoken' => $token->token, 'wsfunction' => $function, 'moodlewsrestformat' => 'json'];
-        return $this->execute_request(new \webservice_rest_server(WEBSERVICE_AUTHMETHOD_PERMANENT_TOKEN));
-    }
-
-    /**
-     * Create a submitted submission for a student.
-     *
-     * @param \stdClass $assignment Assignment module record.
-     * @param \stdClass $student Student.
-     * @return \stdClass The submission.
-     */
-    protected function submit_assignment(\stdClass $assignment, \stdClass $student): \stdClass {
-        global $CFG, $DB;
-        require_once($CFG->dirroot . '/mod/assign/locallib.php');
-        $assign = new \assign(\context_module::instance($assignment->cmid), null, null);
-        $submission = $assign->get_user_submission($student->id, true);
-        $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
-        $DB->update_record('assign_submission', $submission);
-        return $submission;
-    }
-
-    /**
-     * The request body automated assessment posts to the grade route.
-     *
-     * @param \stdClass $course Course.
-     * @param \stdClass $assignment Assignment module record.
-     * @param \stdClass $student Student being graded.
-     * @param array $assessment The rubric_assessment payload.
-     * @return array
-     */
-    protected function grade_body(\stdClass $course, \stdClass $assignment, \stdClass $student, array $assessment): array {
-        return [
-            'course_id' => $course->id, 'assignment_id' => $assignment->cmid, 'user_id' => $student->id,
-            'rubric_assessment' => $assessment,
-        ];
-    }
-
-    /**
-     * A course holding one of every module type the knowledge loader ingests, with content in each.
-     *
-     * @param bool $hidden Whether to hide every activity from students.
-     * @return array The course and the module records keyed by module name.
-     */
-    protected function create_course_with_every_content_type(bool $hidden = false): array {
-        $generator = $this->getDataGenerator();
-        $course = $generator->create_course();
-        $author = $generator->create_and_enrol($course, 'editingteacher');
-        $records = [
-            'page' => ['name' => 'LW page', 'content' => 'LW page body'],
-            'resource' => ['name' => 'LW resource'],
-            'folder' => ['name' => 'LW folder'],
-            'url' => ['name' => 'LW url', 'externalurl' => 'https://example.com/lw-link'],
-            'label' => ['intro' => 'LW label text'],
-            'book' => ['name' => 'LW book'],
-            'assign' => ['name' => 'LW assignment'],
-            'forum' => ['name' => 'LW forum'],
-            'quiz' => ['name' => 'LW quiz'],
-            'scorm' => ['name' => 'LW scorm'],
-            'h5pactivity' => ['name' => 'LW h5p'],
-        ];
-        $modules = [];
-        foreach ($records as $modname => $record) {
-            $record += ['course' => $course->id, 'visible' => $hidden ? 0 : 1];
-            $modules[$modname] = $generator->create_module($modname, $record);
-        }
-        get_file_storage()->create_file_from_string([
-            'contextid' => \context_module::instance($modules['folder']->cmid)->id, 'component' => 'mod_folder',
-            'filearea' => 'content', 'itemid' => 0, 'filepath' => '/', 'filename' => 'lw-folder.txt',
-        ], 'Folder file');
-        $generator->get_plugin_generator('mod_book')->create_chapter([
-            'bookid' => $modules['book']->id, 'content' => 'LW chapter',
-        ]);
-        $generator->get_plugin_generator('mod_forum')->create_discussion([
-            'course' => $course->id, 'forum' => $modules['forum']->id, 'userid' => $author->id, 'name' => 'LW discussion',
-        ]);
-        return [$course, $modules];
-    }
-
-    /**
-     * Issue a real OAuth bearer token for the plugin request pipeline.
-     *
-     * @param int $userid Authenticated user.
-     * @return api_server
-     */
-    protected function oauth_server(int $userid): api_server {
-        set_config('liveapi', 1, 'local_learnwise');
-        set_config('aiops', 1, 'local_learnwise');
-        $storage = new storage();
-        $client = util::get_or_generate_client();
-        $storage->setAccessToken('user-oauth-token', $client->uniqid, $userid, time() + 3600);
-        $_POST = [];
-        $_GET = [];
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_SERVER['SERVER_SOFTWARE'] = 'Apache';
-        $server = new api_server();
-        $server->request = new Request([], [], [], [], [], [], null, ['Authorization' => 'Bearer user-oauth-token']);
-        return $server;
     }
 }
