@@ -18,7 +18,6 @@ namespace local_learnwise;
 
 use context_system;
 use local_learnwise\form\webservicesetup;
-use local_learnwise\local\OAuth2\Request;
 
 /**
  * Verify setup and API access without a site-wide REST permission grant.
@@ -31,6 +30,8 @@ use local_learnwise\local\OAuth2\Request;
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class webservice_permissions_test extends \advanced_testcase {
+    use test_helpers;
+
     /**
      * Start without the default role's REST permission.
      */
@@ -55,34 +56,6 @@ final class webservice_permissions_test extends \advanced_testcase {
         $form = new webservicesetup();
         $this->assertTrue($form->update_from_formdata((object) ['setupwebservicesetup' => 1]));
         return util::get_or_generate_token_for_user(constants::COMPONENT, false);
-    }
-
-    /**
-     * Invoke the real server pipeline without run(), which sends output and exits PHP.
-     *
-     * @param \webservice_base_server $server Server under test.
-     * @param string $method Protected pipeline stage.
-     * @return mixed
-     */
-    protected function stage(\webservice_base_server $server, string $method) {
-        $reflection = new \ReflectionMethod($server, $method);
-        $reflection->setAccessible(true);
-        return $reflection->invoke($server);
-    }
-
-    /**
-     * Parse, authenticate and execute a real request, retaining its raw result.
-     *
-     * @param \webservice_base_server $server Server under test.
-     * @return mixed
-     */
-    protected function execute_request(\webservice_base_server $server) {
-        foreach (['parse_request', 'authenticate_user', 'load_function_info', 'execute'] as $stage) {
-            $this->stage($server, $stage);
-        }
-        $property = new \ReflectionProperty($server, 'returns');
-        $property->setAccessible(true);
-        return $property->getValue($server);
     }
 
     /**
@@ -467,62 +440,5 @@ final class webservice_permissions_test extends \advanced_testcase {
      */
     public static function disabled_service_provider(): array {
         return [[true], [false]];
-    }
-
-    /**
-     * Construct a request using the permanent token through the real Bearer fallback.
-     *
-     * @param \stdClass $token Permanent token.
-     * @param array $route Route segments.
-     * @return api_server
-     */
-    protected function service_server(\stdClass $token, array $route): api_server {
-        global $ME;
-        $ME = '/local/learnwise/api/r.php';
-        set_config('liveapi', 1, 'local_learnwise');
-        set_config('aiops', 1, 'local_learnwise');
-        $_POST = [];
-        $_GET = [];
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_SERVER['SERVER_SOFTWARE'] = 'Apache';
-        $server = new api_server();
-        $server->urlparts = array_map('strval', $route);
-        $server->request = new Request([], [], [], [], [], [], null, ['Authorization' => 'Bearer ' . $token->token]);
-        return $server;
-    }
-
-    /**
-     * Execute a core REST read with the same permanent credential.
-     *
-     * @param \stdClass $token Permanent token.
-     * @param string $function External function name.
-     * @param array $params Request parameters.
-     * @return mixed
-     */
-    protected function core_service_request(\stdClass $token, string $function, array $params) {
-        $_POST = [];
-        $_GET = $params + ['wstoken' => $token->token, 'wsfunction' => $function, 'moodlewsrestformat' => 'json'];
-        return $this->execute_request(new \webservice_rest_server(WEBSERVICE_AUTHMETHOD_PERMANENT_TOKEN));
-    }
-
-    /**
-     * Issue a real OAuth bearer token for the plugin request pipeline.
-     *
-     * @param int $userid Authenticated user.
-     * @return api_server
-     */
-    protected function oauth_server(int $userid): api_server {
-        set_config('liveapi', 1, 'local_learnwise');
-        set_config('aiops', 1, 'local_learnwise');
-        $storage = new storage();
-        $client = util::get_or_generate_client();
-        $storage->setAccessToken('user-oauth-token', $client->uniqid, $userid, time() + 3600);
-        $_POST = [];
-        $_GET = [];
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_SERVER['SERVER_SOFTWARE'] = 'Apache';
-        $server = new api_server();
-        $server->request = new Request([], [], [], [], [], [], null, ['Authorization' => 'Bearer user-oauth-token']);
-        return $server;
     }
 }
