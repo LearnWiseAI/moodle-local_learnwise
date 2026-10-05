@@ -70,13 +70,15 @@ class grade extends baseapi {
             'course_id' => new external_value(PARAM_INT, 'Course ID'),
             'assignment_id' => new external_value(PARAM_INT, 'Assignment ID'),
             'user_id' => new external_value(PARAM_INT, 'User ID'),
+            // Feedback text is PARAM_RAW: Moodle rejects a parameter whose value changes when cleaned, so with
+            // PARAM_TEXT any tag in the feedback ("<br>", "<b>") would refuse the whole grade.
             'rubric_assessment' => new external_single_structure([
                 'submission_grade' => new external_value(PARAM_FLOAT, 'Submission Grade'),
                 'rubric_assessments' => new external_single_structure([
                     'rubric_feedback_array' => new external_multiple_structure(
                         new external_single_structure([
                             'rubric_section_id' => new external_value(PARAM_TEXT, 'Rubric Section ID'),
-                            'content' => new external_value(PARAM_TEXT, 'Remarks content', VALUE_OPTIONAL),
+                            'content' => new external_value(PARAM_RAW, 'Remarks content', VALUE_OPTIONAL),
                             'graded_lms_rubric_rating_id' => new external_value(
                                 PARAM_TEXT,
                                 'Graded LMS Rubric Rating ID',
@@ -90,14 +92,14 @@ class grade extends baseapi {
                     'guide_feedback_array' => new external_multiple_structure(
                         new external_single_structure([
                             'rubric_section_id' => new external_value(PARAM_INT, 'Guide Level ID'),
-                            'content' => new external_value(PARAM_TEXT, 'Guide Remarks', VALUE_OPTIONAL),
+                            'content' => new external_value(PARAM_RAW, 'Guide Remarks', VALUE_OPTIONAL),
                             'graded_score' => new external_value(PARAM_FLOAT, 'Guide score'),
                         ]),
                         'Guide Feedback Array',
                         VALUE_OPTIONAL
                     ),
                 ], 'Rubric Assessments', VALUE_OPTIONAL),
-                'general_feedback' => new external_value(PARAM_TEXT, 'General Feedback', VALUE_OPTIONAL),
+                'general_feedback' => new external_value(PARAM_RAW, 'General Feedback', VALUE_OPTIONAL),
             ]),
             'advancedgradinginstanceid' => new external_value(PARAM_INT, 'needed if user grade record not found', VALUE_DEFAULT),
         ]);

@@ -277,7 +277,10 @@ class assignments extends baseapi {
         $structure = new external_single_structure([
             'id' => new external_value(PARAM_INT, 'course module id of assignment'),
             'name' => new external_value(PARAM_TEXT, 'name of assignment'),
-            'description' => new external_value(PARAM_TEXT, 'Description of assignment'),
+            // Text a teacher typed is returned as PARAM_RAW throughout. Moodle rejects a response whose value
+            // changes when cleaned, and PARAM_TEXT strips tags, so a literal "<h1>" or "<50%" in it would fail
+            // validation, and in a list take every other assignment down with it.
+            'description' => new external_value(PARAM_RAW, 'Description of assignment'),
             'sectionname' => new external_value(PARAM_TEXT, 'name of section that assignment belongs to'),
             'timedue' => new external_value(PARAM_INT, 'due date in unix timestamp if applied'),
             'opendate' => new external_value(PARAM_INT, 'open date in unix timestamp if applied'),
@@ -311,19 +314,19 @@ class assignments extends baseapi {
                 'ratings' => new external_multiple_structure(new external_single_structure([
                     'id' => new external_value(PARAM_INT, 'id'),
                     'points' => new external_value(PARAM_FLOAT, 'points'),
-                    'description' => new external_value(PARAM_TEXT, 'description'),
+                    'description' => new external_value(PARAM_RAW, 'description'),
                 ])),
             ]), 'rubric', VALUE_OPTIONAL);
             $structure->keys['guide'] = new external_multiple_structure(new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'id'),
                 'points' => new external_value(PARAM_FLOAT, 'Max Score'),
-                'description' => new external_value(PARAM_TEXT, 'Short Name'),
+                'description' => new external_value(PARAM_RAW, 'Short Name'),
                 'instructions' => new external_value(PARAM_RAW, 'Description Markers'),
                 'criterion_use_range' => new external_value(PARAM_BOOL, 'uses ranges', VALUE_DEFAULT, true),
             ], 'section'), 'guide', VALUE_OPTIONAL);
             $structure->keys['rubric_settings'] = new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'id'),
-                'title' => new external_value(PARAM_TEXT, 'name'),
+                'title' => new external_value(PARAM_RAW, 'name'),
                 'points_possible' => new external_value(PARAM_FLOAT, 'points'),
             ], 'rubric settings', VALUE_OPTIONAL);
         }
