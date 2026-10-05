@@ -265,5 +265,12 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026092500, 'local', 'learnwise');
     }
 
+    if ($oldversion < 2026100501) {
+        // Give back allocation management, which the 2026092500 step revoked. Without it the service token
+        // lists no submissions on assignments that use marking allocation.
+        local_learnwise_upgrade_sync_role_capabilities();
+        upgrade_plugin_savepoint(true, 2026100501, 'local', 'learnwise');
+    }
+
     return true;
 }
