@@ -52,6 +52,7 @@ class util {
         'mod/quiz:view',
         'mod/assign:viewgrades',
         'mod/assign:grade',
+        'mod/assign:manageallocations',
         'moodle/user:viewdetails',
         'mod/book:read',
         'local/learnwise:plugininfo',
