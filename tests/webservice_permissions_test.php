@@ -454,8 +454,8 @@ final class webservice_permissions_test extends advanced_testcase {
 
         // The scheduler picks up submissions whose workflow_state is "submitted".
         $list = $this->execute_request($this->service_server($token, $base));
-        $this->assertEquals($student->id, ((array) reset($list))['user_id']);
-        $this->assertSame('submitted', ((array) reset($list))['workflow_state']);
+        $this->assertEquals($student->id, $list[0]['user_id']);
+        $this->assertSame('submitted', $list[0]['workflow_state']);
         $single = $this->execute_request($this->service_server($token, array_merge($base, [$student->id])));
         $this->assertEquals($student->id, ((array) $single)['user_id']);
         $user = $this->execute_request($this->service_server($token, ['users', $student->id]));
@@ -475,7 +475,7 @@ final class webservice_permissions_test extends advanced_testcase {
 
         // Once graded, the scheduler no longer sees it as waiting.
         $list = $this->execute_request($this->service_server($token, $base));
-        $this->assertSame('graded', ((array) reset($list))['workflow_state']);
+        $this->assertSame('graded', $list['workflow_state']);
     }
 
     /**
@@ -632,11 +632,11 @@ final class webservice_permissions_test extends advanced_testcase {
         );
         $scorms = $json($this->core_service_request($token, 'mod_scorm_get_scorms_by_courses', $byid));
         $this->assertStringContainsString('LW scorm', $scorms);
-        $this->assertStringContainsString('webservice/pluginfile.php', $scorms);
+        $this->assertStringContainsString('local/learnwise/api/file.php', $scorms);
         $h5p = $json($this->core_service_request($token, 'mod_h5pactivity_get_h5pactivities_by_courses', $byid));
         $this->assertStringContainsString('LW h5p', $h5p);
         // The package fixture differs between Moodle versions, so check for its download URL, not its name.
-        $this->assertStringContainsString('webservice/pluginfile.php', $h5p);
+        $this->assertStringContainsString('local/learnwise/api/file.php', $h5p);
         $this->assertStringContainsString('/mod_h5pactivity/package/', $h5p);
         $this->assertStringContainsString(
             'LW book',
@@ -652,7 +652,7 @@ final class webservice_permissions_test extends advanced_testcase {
 
     /**
      * With the authenticated user role stripped of module access, the service account still passes the checks
-     * webservice/pluginfile.php makes before serving a module's files, on hidden activities too.
+     * local/learnwise/api/file.php makes before serving a module's files, on hidden activities too.
      *
      * @dataProvider module_file_access_provider
      * @param string $modname Module type.
@@ -763,5 +763,80 @@ final class webservice_permissions_test extends advanced_testcase {
      */
     public static function disabled_service_provider(): array {
         return [[true], [false]];
+    }
+
+
+    /**
+     * Create a submitted submission for a student.
+     *
+     * @param \stdClass $assignment Assignment module record.
+     * @param \stdClass $student Student.
+     * @return \stdClass The submission.
+     */
+    protected function submit_assignment(\stdClass $assignment, \stdClass $student): \stdClass {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
+        $assign = new \assign(\context_module::instance($assignment->cmid), null, null);
+        $submission = $assign->get_user_submission($student->id, true);
+        $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        $DB->update_record('assign_submission', $submission);
+        return $submission;
+    }
+
+    /**
+     * The request body automated assessment posts to the grade route.
+     *
+     * @param \stdClass $course Course.
+     * @param \stdClass $assignment Assignment module record.
+     * @param \stdClass $student Student being graded.
+     * @param array $assessment The rubric_assessment payload.
+     * @return array
+     */
+    protected function grade_body(\stdClass $course, \stdClass $assignment, \stdClass $student, array $assessment): array {
+        return [
+            'course_id' => $course->id, 'assignment_id' => $assignment->cmid, 'user_id' => $student->id,
+            'rubric_assessment' => $assessment,
+        ];
+    }
+
+    /**
+     * A course holding one of every module type the knowledge loader ingests, with content in each.
+     *
+     * @param bool $hidden Whether to hide every activity from students.
+     * @return array The course and the module records keyed by module name.
+     */
+    protected function create_course_with_every_content_type(bool $hidden = false): array {
+        $generator = $this->getDataGenerator();
+        $course = $generator->create_course();
+        $author = $generator->create_and_enrol($course, 'editingteacher');
+        $records = [
+            'page' => ['name' => 'LW page', 'content' => 'LW page body'],
+            'resource' => ['name' => 'LW resource'],
+            'folder' => ['name' => 'LW folder'],
+            'url' => ['name' => 'LW url', 'externalurl' => 'https://example.com/lw-link'],
+            'label' => ['intro' => 'LW label text'],
+            'book' => ['name' => 'LW book'],
+            'assign' => ['name' => 'LW assignment'],
+            'forum' => ['name' => 'LW forum'],
+            'quiz' => ['name' => 'LW quiz'],
+            'scorm' => ['name' => 'LW scorm'],
+            'h5pactivity' => ['name' => 'LW h5p'],
+        ];
+        $modules = [];
+        foreach ($records as $modname => $record) {
+            $record += ['course' => $course->id, 'visible' => $hidden ? 0 : 1];
+            $modules[$modname] = $generator->create_module($modname, $record);
+        }
+        get_file_storage()->create_file_from_string([
+            'contextid' => \context_module::instance($modules['folder']->cmid)->id, 'component' => 'mod_folder',
+            'filearea' => 'content', 'itemid' => 0, 'filepath' => '/', 'filename' => 'lw-folder.txt',
+        ], 'Folder file');
+        $generator->get_plugin_generator('mod_book')->create_chapter([
+            'bookid' => $modules['book']->id, 'content' => 'LW chapter',
+        ]);
+        $generator->get_plugin_generator('mod_forum')->create_discussion([
+            'course' => $course->id, 'forum' => $modules['forum']->id, 'userid' => $author->id, 'name' => 'LW discussion',
+        ]);
+        return [$course, $modules];
     }
 }

@@ -16,6 +16,7 @@
 
 namespace local_learnwise;
 
+use local_learnwise\external\baseapi;
 use local_learnwise\local\OAuth2\Request;
 
 defined('MOODLE_INTERNAL') || die();
@@ -35,12 +36,13 @@ trait test_helpers {
      *
      * @param \webservice_base_server $server Server under test.
      * @param string $method Protected pipeline stage.
+     * @param array $args Method call arguments.
      * @return mixed
      */
-    protected function stage(\webservice_base_server $server, string $method) {
+    protected function stage(\webservice_base_server $server, string $method, array $args = []) {
         $reflection = new \ReflectionMethod($server, $method);
         $reflection->setAccessible(true);
-        return $reflection->invoke($server);
+        return $reflection->invokeArgs($server, $args);
     }
 
     /**
@@ -53,9 +55,29 @@ trait test_helpers {
         foreach (['parse_request', 'authenticate_user', 'load_function_info', 'execute'] as $stage) {
             $this->stage($server, $stage);
         }
+
         $property = new \ReflectionProperty($server, 'returns');
         $property->setAccessible(true);
-        return $property->getValue($server);
+        $returns = $property->getValue($server);
+
+        $property = new \ReflectionProperty($server, 'function');
+        $property->setAccessible(true);
+        $function = $property->getValue($server);
+
+        if (!isset($function->returns_desc)) {
+            return $returns;
+        }
+
+        if (method_exists($server, 'clean_returns')) {
+            return $this->stage($server, 'clean_returns', [$returns]);
+        }
+
+        $returns = baseapi::clean_returnvalue(
+            $function->returns_desc,
+            $returns
+        );
+
+        return $returns;
     }
 
     /**
@@ -63,9 +85,10 @@ trait test_helpers {
      *
      * @param \stdClass $token Permanent token.
      * @param array $route Route segments.
+     * @param array $body Request body parameters.
      * @return api_server
      */
-    protected function service_server(\stdClass $token, array $route): api_server {
+    protected function service_server(\stdClass $token, array $route, array $body = []): api_server {
         global $ME;
         $ME = '/local/learnwise/api/r.php';
         set_config('liveapi', 1, 'local_learnwise');
@@ -76,7 +99,7 @@ trait test_helpers {
         $_SERVER['SERVER_SOFTWARE'] = 'Apache';
         $server = new api_server();
         $server->urlparts = array_map('strval', $route);
-        $server->request = new Request([], [], [], [], [], [], null, ['Authorization' => 'Bearer ' . $token->token]);
+        $server->request = new Request([], $body, [], [], [], [], null, ['Authorization' => 'Bearer ' . $token->token]);
         return $server;
     }
 
