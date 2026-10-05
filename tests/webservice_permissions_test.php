@@ -222,14 +222,12 @@ final class webservice_permissions_test extends advanced_testcase {
         global $DB;
         $token = $this->setup_service();
         $context = context_system::instance();
-        foreach (
-            ['moodle/course:update', 'mod/assign:manageallocations', 'moodle/webservice:createtoken'] as $capability
-        ) {
+        foreach (['moodle/course:update', 'moodle/webservice:createtoken'] as $capability) {
             $this->assertFalse(has_capability($capability, $context, $token->userid), $capability);
         }
         foreach (
             ['moodle/course:viewhiddenactivities', 'mod/assign:viewgrades', 'mod/assign:grade',
-                'mod/folder:view', 'mod/url:view', 'webservice/rest:use'] as $capability
+                'mod/assign:manageallocations', 'mod/folder:view', 'mod/url:view', 'webservice/rest:use'] as $capability
         ) {
             $this->assertTrue(has_capability($capability, $context, $token->userid), $capability);
         }
@@ -281,6 +279,24 @@ final class webservice_permissions_test extends advanced_testcase {
         $this->test_service_role_grants_reads_and_grading();
         $result = $this->execute_request($this->service_server($token, ['plugininfo']));
         $this->assertIsArray($result);
+    }
+
+    /**
+     * A site that already ran the 2026092500 step, which revoked allocation management, gets it back.
+     */
+    public function test_upgrade_restores_allocation_management(): void {
+        global $CFG;
+        require_once($CFG->libdir . '/upgradelib.php');
+        require_once($CFG->dirroot . '/local/learnwise/db/upgrade.php');
+        $token = $this->setup_service();
+        unassign_capability('mod/assign:manageallocations', util::get_or_create_role()->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->assertFalse(has_capability('mod/assign:manageallocations', context_system::instance(), $token->userid));
+        set_config('version', 2026100500, 'local_learnwise');
+        set_config('upgraderunning', time() + 3600);
+        $this->assertTrue(xmldb_local_learnwise_upgrade(2026100500));
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->assertTrue(has_capability('mod/assign:manageallocations', context_system::instance(), $token->userid));
     }
 
     /**
@@ -478,6 +494,39 @@ final class webservice_permissions_test extends advanced_testcase {
         // Once graded, the scheduler no longer sees it as waiting.
         $list = $this->execute_request($this->service_server($token, $base));
         $this->assertSame('graded', $list['workflow_state']);
+    }
+
+    /**
+     * On an assignment with marking allocation, the scheduler still sees submissions allocated to a teacher.
+     *
+     * Core narrows the participant list to the caller's own allocations when they can grade but not manage
+     * allocations, and the service user is never anyone's allocated marker.
+     */
+    public function test_service_lists_submissions_allocated_to_other_markers(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/assign/locallib.php');
+        $token = $this->setup_service();
+        $course = $this->getDataGenerator()->create_course();
+        $assignment = $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id, 'markingworkflow' => 1, 'markingallocation' => 1,
+        ]);
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'teacher');
+        $this->submit_assignment($assignment, $student);
+        $assign = new \assign(\context_module::instance($assignment->cmid), null, null);
+        $flags = $assign->get_user_flags($student->id, true);
+        $flags->allocatedmarker = $teacher->id;
+        $assign->update_user_flags($flags);
+        $route = ['courses', $course->id, 'assignments', $assignment->cmid, 'submissions'];
+
+        $list = $this->execute_request($this->service_server($token, $route));
+        $this->assertEquals($student->id, $list[0]['user_id']);
+        $this->assertSame('submitted', $list[0]['workflow_state']);
+
+        // Without allocation management the list comes back empty, which is what the grant is for.
+        unassign_capability('mod/assign:manageallocations', util::get_or_create_role()->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->assertEmpty($this->execute_request($this->service_server($token, $route)));
     }
 
     /**

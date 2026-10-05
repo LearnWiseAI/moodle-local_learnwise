@@ -91,8 +91,9 @@ function local_learnwise_upgrade_hash_user_tokens() {
 /**
  * Bring the integration role in line with util::ROLECAPS without replacing tokens.
  *
- * Earlier releases granted the role course editing, token creation and allocation management, which
- * nothing needs. Syncing only ever adds capabilities, so those are revoked explicitly first.
+ * Earlier releases granted the role course editing and token creation, which nothing needs. Syncing
+ * only ever adds capabilities, so those are revoked explicitly first. Allocation management stays: on an
+ * assignment with marking allocation, a grader without it only sees the students allocated to them.
  */
 function local_learnwise_upgrade_service_role_capabilities(): void {
     global $DB;
@@ -101,7 +102,7 @@ function local_learnwise_upgrade_service_role_capabilities(): void {
         return;
     }
     foreach (
-        ['moodle/webservice:createtoken', 'moodle/course:update', 'mod/assign:manageallocations'] as $capability
+        ['moodle/webservice:createtoken', 'moodle/course:update'] as $capability
     ) {
         unassign_capability($capability, $role->id);
     }
