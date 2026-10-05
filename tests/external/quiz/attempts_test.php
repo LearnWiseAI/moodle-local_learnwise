@@ -129,7 +129,7 @@ final class attempts_test extends advanced_testcase {
         $this->assertCount(1, $response);
         $this->assertSame((int) $attempt->id, (int) $response[0]['id']);
         $this->assertSame('finished', $response[0]['state']);
-        $this->assertEquals(80.0, $response[0]['grade'], '', 0.001);
+        $this->assertEqualsWithDelta(80.0, $response[0]['grade'], 0.001);
     }
 
     /**

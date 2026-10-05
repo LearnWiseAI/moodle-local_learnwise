@@ -47,4 +47,26 @@ class advanced_testcase extends \advanced_testcase {
     use Polyfills\EqualToSpecializations;
     use Polyfills\ExpectExceptionMessageMatches;
     use Polyfills\ExpectExceptionObject;
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function getDataGenerator() {
+        $generator = \phpunit_util::get_data_generator();
+        $prop = new \ReflectionProperty($generator, 'generators');
+        $prop->setAccessible(true);
+        $componentgenerators = $prop->getValue($generator);
+        $currentcomponentdir = \core_component::get_component_directory(constants::COMPONENT);
+        foreach (['core_grading', 'gradingform_guide', 'gradingform_rubric'] as $component) {
+            $componentdir = \core_component::get_component_directory($component);
+            if (!isset($componentgenerators[$component]) &&
+                !file_exists("{$componentdir}/tests/generator/lib.php")) {
+                require_once("{$currentcomponentdir}/tests/generator/{$component}/lib.php");
+                $generatorclassname = "{$component}_generator";
+                $componentgenerators[$component] = new $generatorclassname($generator);
+            }
+        }
+        $prop->setValue($generator, $componentgenerators);
+        return $generator;
+    }
 }

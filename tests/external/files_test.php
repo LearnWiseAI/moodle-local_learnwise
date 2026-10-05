@@ -55,9 +55,15 @@ final class files_test extends advanced_testcase {
      * Reset the static state shared by every API class.
      */
     protected function tearDown(): void {
+        global $DB;
         if (is_resource($this->siteserver)) {
             proc_terminate($this->siteserver);
             proc_close($this->siteserver);
+            // The site server writes to the database from its own process (user_lastaccess, logs, sessions), which
+            // the reset does not track, so mark every table for it to restore.
+            foreach ($DB->get_tables(false) as $table) {
+                \testing_util::$tableupdated[$table] = true;
+            }
         }
         $this->siteserver = null;
         baseapi::$my = null;
@@ -550,6 +556,7 @@ final class files_test extends advanced_testcase {
             $CFG->localrequestdir ?? '',
             dirname($this->requestlog),
             sys_get_temp_dir(),
+            $CFG->pathtogs
         ]));
         ini_set('open_basedir', implode(PATH_SEPARATOR, $dirs));
 

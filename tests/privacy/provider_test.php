@@ -16,6 +16,8 @@
 
 namespace local_learnwise\privacy;
 
+defined('MOODLE_INTERNAL') || die();
+
 use context_course;
 use context_system;
 use context_user;
@@ -28,6 +30,8 @@ use local_learnwise\storage;
 use local_learnwise\util;
 use stdClass;
 
+require_once(dirname(__FILE__, 2) . '/vendor/phpunit-polyfills/phpunitpolyfills-autoload.php');
+
 /**
  * Tests for the plugin's GDPR privacy provider.
  *
@@ -37,6 +41,8 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class provider_test extends \core_privacy\tests\provider_testcase {
+    use \Yoast\PHPUnitPolyfills\Polyfills\AssertEqualsSpecializations;
+
     /** @var storage */
     protected $storage;
 
