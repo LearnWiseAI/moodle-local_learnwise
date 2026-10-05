@@ -170,6 +170,32 @@ final class assignments_test extends advanced_testcase {
     }
 
     /**
+     * A description whose text contains a literal tag still passes response validation, so one such
+     * assignment does not fail the listing for the whole course.
+     */
+    public function test_execute_returns_a_description_with_a_literal_tag(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id,
+            'intro' => '<p>&lt;h1&gt; Test Heading &lt;/h1&gt;</p>',
+            'introformat' => FORMAT_HTML,
+            'alwaysshowdescription' => 1,
+        ]);
+        $this->getDataGenerator()->create_module('assign', ['course' => $course->id]);
+        $this->setAdminUser();
+
+        $response = assignments::clean_returnvalue(
+            assignments::execute_returns(),
+            assignments::execute($course->id)
+        );
+
+        $this->assertCount(2, $response);
+        $descriptions = implode("\n", array_column($response, 'description'));
+        $this->assertStringContainsString('<h1>', $descriptions);
+        $this->assertStringContainsString('Test Heading', $descriptions);
+    }
+
+    /**
      * The student flavour reports whether the caller has submitted.
      */
     public function test_execute_reports_submission_state_for_my(): void {
