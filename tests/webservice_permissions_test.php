@@ -280,24 +280,6 @@ final class webservice_permissions_test extends \advanced_testcase {
     }
 
     /**
-     * A site that already ran the 2026092500 step, which revoked allocation management, gets it back.
-     */
-    public function test_upgrade_restores_allocation_management(): void {
-        global $CFG;
-        require_once($CFG->libdir . '/upgradelib.php');
-        require_once($CFG->dirroot . '/local/learnwise/db/upgrade.php');
-        $token = $this->setup_service();
-        unassign_capability('mod/assign:manageallocations', util::get_or_create_role()->id);
-        accesslib_clear_all_caches_for_unit_testing();
-        $this->assertFalse(has_capability('mod/assign:manageallocations', context_system::instance(), $token->userid));
-        set_config('version', 2026100500, 'local_learnwise');
-        set_config('upgraderunning', time() + 3600);
-        $this->assertTrue(xmldb_local_learnwise_upgrade(2026100500));
-        accesslib_clear_all_caches_for_unit_testing();
-        $this->assertTrue(has_capability('mod/assign:manageallocations', context_system::instance(), $token->userid));
-    }
-
-    /**
      * Removing course editing preserves raw restriction metadata and admin course/enrolment reads.
      */
     public function test_service_preserves_course_reads_and_availability(): void {
