@@ -566,6 +566,71 @@ final class webservice_permissions_test extends advanced_testcase {
     }
 
     /**
+     * Rubric and marking guide text with tag-like content comes back unchanged, and feedback containing HTML
+     * is accepted and saved, instead of failing validation.
+     *
+     * @dataProvider advanced_grading_method_provider
+     * @param string $method Grading method.
+     */
+    public function test_service_round_trips_tag_like_grading_text(string $method): void {
+        global $DB;
+        $token = $this->setup_service();
+        $course = $this->getDataGenerator()->create_course();
+        $assignment = $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id, 'grade' => 100, 'assignfeedback_comments_enabled' => 1,
+        ]);
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->submit_assignment($assignment, $student);
+        $context = \context_module::instance($assignment->cmid);
+        $generator = $this->getDataGenerator()->get_plugin_generator('gradingform_' . $method);
+        $criteria = $method === 'rubric' ? ['LW criterion' => ['Score <50%' => 0, 'Good <b>work</b>' => 10]] : [
+            'Use of <sources>' => ['description' => 'LW criterion', 'descriptionmarkers' => 'LW markers', 'maxscore' => 10],
+        ];
+        $this->setAdminUser();
+        $definition = $generator->create_instance($context, 'mod_assign', 'submissions', 'LW <form>', '', $criteria)
+            ->get_definition();
+
+        $info = (array) $this->execute_request(
+            $this->service_server($token, ['courses', $course->id, 'assignments', $assignment->cmid])
+        );
+        if ($method === 'rubric') {
+            $this->assertSame('LW <form>', $info['rubric_settings']['title']);
+            $levels = array_column($info['rubric'][0]['ratings'], 'description');
+            $this->assertContains('Score <50%', $levels);
+            $this->assertContains('Good <b>work</b>', $levels);
+        } else {
+            $this->assertSame('Use of <sources>', $info['guide'][0]['description']);
+        }
+
+        $remark = 'Meets <b>most</b> of it';
+        $assessment = ['submission_grade' => 0.0, 'general_feedback' => '<p>Well argued.<br>Next time cite sources.</p>'];
+        if ($method === 'rubric') {
+            $criterion = reset($definition->rubric_criteria);
+            $level = end($criterion['levels']);
+            $assessment['rubric_assessments']['rubric_feedback_array'] = [[
+                'rubric_section_id' => $criterion['id'], 'graded_lms_rubric_rating_id' => $level['id'], 'content' => $remark,
+            ]];
+        } else {
+            $criterion = reset($definition->guide_criteria);
+            $assessment['rubric_assessments']['guide_feedback_array'] = [[
+                'rubric_section_id' => $criterion['id'], 'graded_score' => 10, 'content' => $remark,
+            ]];
+        }
+        $result = $this->execute_request($this->service_server(
+            $token,
+            ['courses', $course->id, 'assignments', $assignment->cmid, 'submissions', $student->id, 'grade'],
+            $this->grade_body($course, $assignment, $student, $assessment)
+        ));
+        $this->assertTrue(((array) $result)['success']);
+        $grade = $DB->get_record('assign_grades', ['assignment' => $assignment->id, 'userid' => $student->id], '*', MUST_EXIST);
+        $feedback = $DB->get_record('assignfeedback_comments', ['grade' => $grade->id], '*', MUST_EXIST);
+        $this->assertStringContainsString('Next time cite sources', $feedback->commenttext);
+        $instance = $DB->get_record('grading_instances', ['itemid' => $grade->id, 'definitionid' => $definition->id]);
+        $filling = $DB->get_record('gradingform_' . $method . '_fillings', ['instanceid' => $instance->id], '*', MUST_EXIST);
+        $this->assertStringContainsString('most', $filling->remark);
+    }
+
+    /**
      * Grading methods automated assessment supports.
      *
      * @return array
