@@ -374,6 +374,9 @@ final class baseapi_test extends advanced_testcase {
 
         $original = $ME;
         try {
+            $ME = null;
+            $this->assertFalse(baseapi::called_native_endpoint());
+
             $ME = '/webservice/rest/server.php';
             $this->assertTrue(baseapi::called_native_endpoint());
 

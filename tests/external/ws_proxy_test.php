@@ -295,7 +295,7 @@ final class ws_proxy_test extends advanced_testcase {
 
         $result = $this->execute_request($server);
         $this->assertArrayHasKey('users', $result);
-        $this->assertSame($user->id, $result['users'][0]->id);
+        $this->assertSame((int) $user->id, $result['users'][0]['id']);
     }
 
     /**

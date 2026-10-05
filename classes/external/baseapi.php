@@ -207,7 +207,7 @@ abstract class baseapi extends external_api implements api_route {
      */
     public static function called_native_endpoint() {
         global $ME;
-        return strpos($ME, '/webservice/') !== false;
+        return is_string($ME) && strpos($ME, '/webservice/') !== false;
     }
 
     /**
