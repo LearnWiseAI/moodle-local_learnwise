@@ -21,8 +21,8 @@ defined('MOODLE_INTERNAL') || die();
 use context_user;
 use core_user;
 use core_user_external;
-use external_function_parameters;
-use external_value;
+use core_external\external_function_parameters;
+use core_external\external_value;
 
 global $CFG;
 require_once($CFG->dirroot . '/user/externallib.php');
@@ -50,9 +50,7 @@ class userdetails extends baseapi {
     }
 
     /**
-     * Returns the parameters for the execute function.
-     *
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return new external_function_parameters([
@@ -81,35 +79,31 @@ class userdetails extends baseapi {
         $context = context_user::instance($userid);
         self::validate_context($context);
         $user = core_user::get_user($userid, '*', MUST_EXIST);
-        if ($userid != $USER->id && !user_can_view_profile($user)) {
+        if ($userid != $USER->id && !self::user_can_view_profile($user)) {
             require_capability('moodle/user:viewdetails', $context);
         }
-        return user_get_user_details_courses($user);
+        return self::user_get_user_details_courses($user);
     }
 
 
     /**
-     * Returns true if the API is a single operation.
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public static function is_singleoperation() {
         return true;
     }
 
     /**
-     * Returns the structure of a single user.
-     *
-     * @return \external_description
+     * {@inheritdoc}
      */
     public static function single_structure() {
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
+        // @phpstan-ignore return.type
         return core_user_external::user_description();
     }
 
     /**
-     * Returns the list of fields that are in Unix timestamp format.
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public static function get_unixtimestamp_fields() {
         return ['firstaccess', 'lastaccess'];

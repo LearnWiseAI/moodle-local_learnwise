@@ -18,8 +18,8 @@ namespace local_learnwise\external\forum;
 
 use advanced_testcase;
 use dml_missing_record_exception;
-use external_multiple_structure;
-use external_single_structure;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
 use local_learnwise\external\baseapi;
 use moodle_exception;
 

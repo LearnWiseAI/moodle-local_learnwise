@@ -17,9 +17,9 @@
 namespace local_learnwise\external;
 
 use context_course;
-use external_format_value;
-use external_single_structure;
-use external_value;
+use core_external\external_format_value;
+use core_external\external_single_structure;
+use core_external\external_value;
 
 /**
  * Class sections
@@ -79,7 +79,7 @@ class sections extends baseapi {
                 continue;
             }
             $sectionvalues = [];
-            $summaryvalues = external_format_text(
+            $summaryvalues = self::external_format_text(
                 $section->summary,
                 $section->summaryformat,
                 $context->id,

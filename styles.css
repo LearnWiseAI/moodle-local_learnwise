@@ -1,5 +1,4 @@
 #page-admin-local-learnwise-setup {
-    background-color: #fff;
     line-height: 1.5;
 }
 #page-admin-local-learnwise-setup #region-main {
@@ -78,7 +77,6 @@
     border: 1px solid #d1d5db;
     border-radius: 0.375rem;
     font-size: 0.875rem;
-    background-color: #fff;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 #page-admin-local-learnwise-setup #region-main .input:focus {
@@ -102,7 +100,6 @@
     border: 1px solid #d1d5db;
     border-radius: 0.375rem;
     font-size: 0.875rem;
-    background-color: #fff;
     resize: none;
     font-family: inherit;
 }
@@ -125,8 +122,8 @@
     padding: 0.3rem 0.55rem;
     border: 1px solid #d1d5db;
     border-radius: 0.375rem;
-    background-color: #fff;
     cursor: pointer;
+    background-color: #fff;
     transition: background-color 0.15s ease-in-out;
 }
 #page-admin-local-learnwise-setup #region-main .styled-icon-btn:hover {
@@ -154,7 +151,6 @@
 #page-admin-local-learnwise-setup #region-main .switch {
     width: 2.75rem;
     height: 1.5rem;
-    background-color: #e5e7eb;
     border-radius: 0.75rem;
     position: relative;
     cursor: pointer;
@@ -420,4 +416,31 @@
         padding: .25em .4em 0;
         margin-bottom: 0;
     }
+}
+
+#page-admin-local-learnwise-setup #region-main .switch:not(.active) {
+    background-color: #ced4da;
+}
+
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #clientSecretVisibilityBtn img,
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #visibilityControlBtn img,
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #webservicerotatetokenbutton img {
+    filter: brightness(0) invert(1);
+}
+
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #region-main .switch:not(.active) {
+    background-color: #6a737b;
+}
+
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #region-main .mmodal,
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #region-main .styled-icon-btn,
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #region-main .input.readonly,
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #region-main .styled-icon-btn:hover {
+    background-color: #3b3b3b;
+}
+
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #region-main .mmodal .modal-header .modal-title,
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #region-main .mmodal .modal-body p,
+html[data-bs-theme="dark"] #page-admin-local-learnwise-setup #region-main .radio-option {
+    color: #fff;
 }

@@ -18,8 +18,8 @@ namespace local_learnwise\external;
 
 use advanced_testcase;
 use completion_info;
-use external_function_parameters;
-use external_single_structure;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
 
 /**
  * Tests for the single module API.

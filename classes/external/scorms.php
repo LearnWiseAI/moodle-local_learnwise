@@ -18,7 +18,7 @@ namespace local_learnwise\external;
 
 use context_course;
 use context_module;
-use external_value;
+use core_external\external_value;
 use mod_scorm_external;
 
 /**
@@ -44,9 +44,7 @@ class scorms extends baseapi {
     }
 
     /**
-     * Returns the parameters for the execute function.
-     *
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -61,7 +59,6 @@ class scorms extends baseapi {
      * @return array
      */
     public static function execute($courseid) {
-        global $USER;
         $params = static::validate_parameters(static::execute_parameters(), [
             'courseid' => $courseid,
         ]);
@@ -99,9 +96,7 @@ class scorms extends baseapi {
     }
 
     /**
-     * Returns the structure of a single scorm.
-     *
-     * @return \external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $structure = mod_scorm_external::get_scorms_by_courses_returns()->keys['scorms']->content;

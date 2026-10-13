@@ -28,5 +28,5 @@ $plugin->component    = 'local_learnwise';
 $plugin->release      = '1.5.3a';
 $plugin->version      = 2026111800;
 $plugin->requires     = 2020061500;
-$plugin->supported    = [39, 502];
+$plugin->supported    = [39, 503];
 $plugin->maturity     = MATURITY_STABLE;

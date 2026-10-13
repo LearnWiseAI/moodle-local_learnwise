@@ -18,10 +18,8 @@ namespace local_learnwise\external;
 
 use context_course;
 use context_module;
-use external_function_parameters;
-use external_multiple_structure;
-use external_single_structure;
-use external_value;
+use core_external\external_multiple_structure;
+use core_external\external_value;
 use local_learnwise\util;
 use mod_quiz_external;
 
@@ -48,8 +46,7 @@ class quizzes extends baseapi {
     }
 
     /**
-     * Summary of execute_parameters
-     * @return external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -103,17 +100,14 @@ class quizzes extends baseapi {
     }
 
     /**
-     * Returns the fields that should be treated as Unix timestamps.
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public static function get_unixtimestamp_fields() {
         return ['timeclose'];
     }
 
     /**
-     * Summary of single_structure
-     * @return external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $definedorder = array_flip(['id', 'name', 'intro', 'timeclose', 'grade', 'sumgrades', 'descriptionfiles']);

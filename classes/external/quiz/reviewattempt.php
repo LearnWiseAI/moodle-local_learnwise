@@ -16,10 +16,9 @@
 
 namespace local_learnwise\external\quiz;
 
-use external_function_parameters;
-use external_multiple_structure;
-use external_single_structure;
-use external_value;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\external_value;
 use local_learnwise\external\baseapi;
 use moodle_exception;
 
@@ -46,8 +45,7 @@ class reviewattempt extends baseapi {
     }
 
     /**
-     * Summary of execute_parameters
-     * @return external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -158,17 +156,14 @@ class reviewattempt extends baseapi {
     }
 
     /**
-     * Checks if the API is being called for a single operation.
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public static function is_singleoperation() {
         return true;
     }
 
     /**
-     * Summary of single_structure
-     * @return external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $questionstructure = new external_single_structure([
