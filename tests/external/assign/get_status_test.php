@@ -20,7 +20,7 @@ use advanced_testcase;
 use assign;
 use context_module;
 use dml_missing_record_exception;
-use external_single_structure;
+use core_external\external_single_structure;
 use local_learnwise\external\baseapi;
 use moodle_exception;
 use required_capability_exception;

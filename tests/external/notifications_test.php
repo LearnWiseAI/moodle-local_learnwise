@@ -18,7 +18,7 @@ namespace local_learnwise\external;
 
 use advanced_testcase;
 use core\message\message;
-use external_multiple_structure;
+use core_external\external_multiple_structure;
 
 /**
  * Tests for the notifications API.

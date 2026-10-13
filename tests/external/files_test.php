@@ -22,7 +22,7 @@ use core\event\url_blocked;
 use core\files\curl_security_helper;
 use curl;
 use Exception;
-use external_single_structure;
+use core_external\external_single_structure;
 use invalid_parameter_exception;
 
 /**
@@ -55,9 +55,16 @@ final class files_test extends advanced_testcase {
      * Reset the static state shared by every API class.
      */
     protected function tearDown(): void {
+        global $DB;
         if (is_resource($this->siteserver)) {
             proc_terminate($this->siteserver);
             proc_close($this->siteserver);
+
+            // The reset only restores tables written through this process's $DB, and the web server writes too,
+            // e.g. user_preferences on login. Left behind, such rows collide with ids of later tests.
+            foreach ($DB->get_tables(false) as $table) {
+                \phpunit_util::$tableupdated[$table] = true;
+            }
         }
         $this->siteserver = null;
         baseapi::$my = null;

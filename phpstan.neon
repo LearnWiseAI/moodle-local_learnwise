@@ -10,5 +10,9 @@ parameters:
         # runtime), so analysing tests produces only false positives. The tests are
         # verified by running them instead.
         - tests/*
+    ignoreErrors:
+        - message: '#Call to function is_callable\(\)#'
+          path: classes/compatibility.php
+          reportUnmatched: false
     moodle:
         rootDirectory: %currentWorkingDirectory%

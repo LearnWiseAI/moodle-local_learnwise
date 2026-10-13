@@ -17,8 +17,8 @@
 namespace local_learnwise\external;
 
 use advanced_testcase;
-use external_function_parameters;
-use external_multiple_structure;
+use core_external\external_function_parameters;
+use core_external\external_multiple_structure;
 use local_learnwise\api_server;
 
 /**

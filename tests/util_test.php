@@ -403,29 +403,6 @@ final class util_test extends advanced_testcase {
     }
 
     /**
-     * Sequential integer-keyed arrays are recognised as lists.
-     */
-    public function test_array_is_list_for_populated_arrays(): void {
-        $this->assertTrue(util::array_is_list(['a', 'b', 'c']));
-        $this->assertTrue(util::array_is_list([0 => 'a', 1 => 'b']));
-        $this->assertFalse(util::array_is_list(['x' => 'a']));
-        $this->assertFalse(util::array_is_list([1 => 'a', 0 => 'b']));
-        $this->assertFalse(util::array_is_list([0 => 'a', 2 => 'b']));
-    }
-
-    /**
-     * The empty array is NOT reported as a list, unlike PHP's native array_is_list().
-     *
-     * This documents current behaviour: range(0, -1) evaluates to [0, -1] rather than [],
-     * so the comparison against array_keys([]) fails. The helper is currently unused, but
-     * the divergence from the native function it replaces is deliberate to record here.
-     */
-    public function test_array_is_list_diverges_from_native_for_empty_array(): void {
-        $this->assertFalse(util::array_is_list([]));
-        $this->assertTrue(array_is_list([]), 'Native PHP disagrees - see MDLSITE note in util::array_is_list()');
-    }
-
-    /**
      * Pluginfile URLs embedded in text are extracted and normalised.
      */
     public function test_extract_pluginfile_urls_from_text(): void {

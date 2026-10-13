@@ -17,9 +17,8 @@
 namespace local_learnwise\external\assign;
 
 use core_user;
-use external_function_parameters;
-use external_single_structure;
-use external_value;
+use core_external\external_function_parameters;
+use core_external\external_value;
 use local_learnwise\external\baseapi;
 use mod_assign_external;
 use required_capability_exception;
@@ -40,8 +39,7 @@ class get_status extends baseapi {
     }
 
     /**
-     * Summary of execute_parameters
-     * @return external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return new external_function_parameters([
@@ -86,18 +84,14 @@ class get_status extends baseapi {
     }
 
     /**
-     * Indicate function response is singular
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public static function is_singleoperation() {
         return true;
     }
 
     /**
-     * Returns the structure of the response for the execute function.
-     *
-     * @return external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         global $CFG;

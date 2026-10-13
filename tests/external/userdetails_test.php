@@ -18,7 +18,7 @@ namespace local_learnwise\external;
 
 use advanced_testcase;
 use dml_missing_record_exception;
-use external_single_structure;
+use core_external\external_single_structure;
 
 /**
  * Tests for the current user API.

@@ -19,6 +19,7 @@ namespace local_learnwise\external;
 defined('MOODLE_INTERNAL') || die();
 
 use context_system;
+use core_external\external_description;
 use message_popup_external;
 
 global $CFG;
@@ -47,9 +48,7 @@ class notifications extends baseapi {
     }
 
     /**
-     * Returns the parameters for the execute function.
-     *
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         $stucture = message_popup_external::get_popup_notifications_parameters();
@@ -65,7 +64,7 @@ class notifications extends baseapi {
      * @param bool $newestfirst Sorting preference
      * @param int $limit Record limit
      * @param int $offset Record offset
-     * @return \external_description
+     * @return external_description
      */
     public static function execute($useridto, $newestfirst, $limit, $offset) {
         $params = static::validate_parameters(
@@ -92,9 +91,7 @@ class notifications extends baseapi {
     }
 
     /**
-     * Returns the structure of a single notification.
-     *
-     * @return \external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $stucture = message_popup_external::get_popup_notifications_returns();
@@ -102,9 +99,7 @@ class notifications extends baseapi {
     }
 
     /**
-     * Returns the fields that should be returned as Unix timestamps.
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public static function get_unixtimestamp_fields() {
         return ['timecreated', 'timeread'];

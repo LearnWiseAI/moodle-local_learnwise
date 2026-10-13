@@ -21,9 +21,9 @@ use assignfeedback_editpdf\document_services;
 use assignfeedback_editpdf\page_editor;
 use context_module;
 use core_user;
-use external_multiple_structure;
-use external_single_structure;
-use external_value;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\external_value;
 use local_learnwise\external\baseapi;
 use local_learnwise\external\timestampvalue;
 use stdClass;
@@ -51,9 +51,7 @@ class submissions extends baseapi {
     }
 
     /**
-     * Returns the parameters for the execute function.
-     *
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -255,9 +253,7 @@ class submissions extends baseapi {
     }
 
     /**
-     * Returns the structure of the response for the execute function.
-     *
-     * @return external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $singlestructure = new external_single_structure([

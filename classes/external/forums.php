@@ -18,9 +18,9 @@ namespace local_learnwise\external;
 
 use context_course;
 use context_module;
-use external_multiple_structure;
-use external_single_structure;
-use external_value;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\external_value;
 use local_learnwise\external\forum\discussions;
 
 /**
@@ -46,9 +46,7 @@ class forums extends baseapi {
     }
 
     /**
-     * Returns the parameters for the execute function.
-     *
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -109,9 +107,7 @@ class forums extends baseapi {
     }
 
     /**
-     * Returns the structure of a single forum.
-     *
-     * @return external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $structure = new external_single_structure([

@@ -19,8 +19,8 @@ namespace local_learnwise\external;
 use completion_info;
 use context_course;
 use context_module;
-use external_single_structure;
-use external_value;
+use core_external\external_single_structure;
+use core_external\external_value;
 
 /**
  * Class course_modules
@@ -52,9 +52,7 @@ class course_modules extends baseapi {
     public static $withcompletion = false;
 
     /**
-     * Returns the parameters required for the execute function.
-     *
-     * @return \external_function_parameters The parameters for the external function.
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -107,9 +105,7 @@ class course_modules extends baseapi {
     }
 
     /**
-     * Returns the structure for a single course module.
-     *
-     * @return \external_single_structure The structure describing a single course module.
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $structure = new external_single_structure([
@@ -131,8 +127,7 @@ class course_modules extends baseapi {
     }
 
     /**
-     * Returns the fields that should be treated as Unix timestamps.
-     * @return array
+     * {@inheritdoc}
      */
     public static function get_unixtimestamp_fields() {
         return ['timemodified'];

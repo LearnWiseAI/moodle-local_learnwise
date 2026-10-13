@@ -17,9 +17,8 @@
 namespace local_learnwise\external;
 
 use context_system;
-use external_function_parameters;
-use external_single_structure;
-use external_value;
+use core_external\external_single_structure;
+use core_external\external_value;
 use local_learnwise\constants;
 use local_learnwise\util;
 
@@ -46,8 +45,7 @@ class plugininfo extends baseapi {
     }
 
     /**
-     * Summary of execute_parameters
-     * @return external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([]);
@@ -77,18 +75,14 @@ class plugininfo extends baseapi {
     }
 
     /**
-     * Define the API is being called for a single operation.
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public static function is_singleoperation() {
         return true;
     }
 
     /**
-     * Returns the structure for API.
-     *
-     * @return external_single_structure The structure for the API response.
+     * {@inheritdoc}
      */
     public static function single_structure() {
         return new external_single_structure([

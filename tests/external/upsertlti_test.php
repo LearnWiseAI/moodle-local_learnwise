@@ -17,7 +17,7 @@
 namespace local_learnwise\external;
 
 use advanced_testcase;
-use external_single_structure;
+use core_external\external_single_structure;
 use local_learnwise\constants;
 use local_learnwise\util;
 use required_capability_exception;

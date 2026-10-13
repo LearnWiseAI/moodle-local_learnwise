@@ -17,11 +17,12 @@
 namespace local_learnwise\external;
 
 use core_component;
-use external_api;
-use external_description;
-use external_function_parameters;
-use external_multiple_structure;
-use external_single_structure;
+use core_external\external_api;
+use core_external\external_description;
+use core_external\external_function_parameters;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use local_learnwise\compatibility;
 use local_learnwise\constants;
 use moodle_url;
 use ReflectionClass;
@@ -29,7 +30,7 @@ use stored_file;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir . '/externallib.php');
+require_once($CFG->dirroot . '/local/learnwise/classes/compatibility.php');
 
 /**
  * Class baseapi
@@ -39,6 +40,8 @@ require_once($CFG->libdir . '/externallib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class baseapi extends external_api implements api_route {
+    use compatibility;
+
     /**
      * The name of the API.
      *
