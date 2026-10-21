@@ -62,7 +62,7 @@ class assignments extends baseapi {
      * @return array
      */
     public static function execute($courseid) {
-        global $CFG, $USER;
+        global $CFG, $USER, $DB;
         require_once($CFG->dirroot . '/lib/externallib.php');
         require_once($CFG->dirroot . '/course/lib.php');
         require_once($CFG->dirroot . '/mod/assign/lib.php');
@@ -256,7 +256,21 @@ class assignments extends baseapi {
                         'id' => 0,
                         'title' => get_string('gradingmethodnone', 'core_grading'),
                         'points_possible' => $assignment->get_instance()->grade,
+                        'scale' => [],
                     ];
+                    $assign = $assignment->get_instance();
+                    if ($assign->grade < 0) {
+                        if ($scale = $DB->get_record('scale', ['id' => -$assign->grade])) {
+                            $grademenu = make_menu_from_list($scale->scale);
+                            ksort($grademenu);
+                            foreach ($grademenu as $value => $label) {
+                                $assignmentinfo['rubric_settings']['scale'][] = [
+                                    'value' => $value,
+                                    'label' => $label,
+                                ];
+                            }
+                        }
+                    }
                 }
             }
 
@@ -328,6 +342,14 @@ class assignments extends baseapi {
                 'id' => new external_value(PARAM_INT, 'id'),
                 'title' => new external_value(PARAM_RAW, 'name'),
                 'points_possible' => new external_value(PARAM_FLOAT, 'points'),
+                'scale' => new external_multiple_structure(
+                    new external_single_structure([
+                        'value' => new external_value(PARAM_INT, 'Scale point'),
+                        'label' => new external_value(PARAM_TEXT, 'Scale label'),
+                    ], 'scale item'),
+                    'scale list',
+                    VALUE_OPTIONAL
+                ),
             ], 'rubric settings', VALUE_OPTIONAL);
         }
         return $structure;

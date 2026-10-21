@@ -18,6 +18,7 @@ namespace local_learnwise\external;
 
 use advanced_testcase;
 use context_module;
+use local_learnwise\test_helpers;
 use moodle_exception;
 
 /**
@@ -30,6 +31,17 @@ use moodle_exception;
  * @runTestsInSeparateProcesses
  */
 final class assignments_test extends advanced_testcase {
+    use test_helpers;
+
+    /**
+     * Regex of the path after api/r.php that assignments serves, for build_url().
+     *
+     * @return string
+     */
+    public static function url_regex(): string {
+        return '/^(me\/)?courses\/(?P<courseid>\d+)\/assignments(?:\/(?P<id>\d+))?$/';
+    }
+
     /**
      * Reset the static state shared by every API class.
      */
@@ -237,13 +249,48 @@ final class assignments_test extends advanced_testcase {
         $teacher = $this->getDataGenerator()->create_user();
         $this->getDataGenerator()->enrol_user($teacher->id, $course->id, 'editingteacher');
         $this->setUser($teacher);
-        assignments::set_id($assign->cmid);
 
-        $response = assignments::execute($course->id);
+        $response = $this->oauth_server_execute_request(
+            static::build_url(['courseid' => $course->id, 'id' => $assign->cmid])
+        );
 
         $this->assertSame(0, (int) $response['rubric_settings']['id']);
         $this->assertSame(get_string('gradingmethodnone', 'core_grading'), $response['rubric_settings']['title']);
         $this->assertEquals(80, $response['rubric_settings']['points_possible']);
+        $this->assertSame([], $response['rubric_settings']['scale']);
+    }
+
+    /**
+     * An assignment graded with a scale exposes the scale items to a grader.
+     */
+    public function test_execute_reports_scale_settings_to_a_grader(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $scale = $this->getDataGenerator()->create_scale([
+            'name' => 'Default competence scale',
+            'scale' => 'Not yet competent,Competent',
+        ]);
+        $assign = $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id,
+            'grade' => -$scale->id,
+        ]);
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $course->id, 'editingteacher');
+        $this->setUser($teacher);
+
+        $response = $this->oauth_server_execute_request(
+            static::build_url(['courseid' => $course->id, 'id' => $assign->cmid])
+        );
+
+        $this->assertSame(0, (int) $response['rubric_settings']['id']);
+        $this->assertSame(get_string('gradingmethodnone', 'core_grading'), $response['rubric_settings']['title']);
+        $this->assertEquals(-$scale->id, $response['rubric_settings']['points_possible']);
+        $this->assertArrayHasKey('scale', $response['rubric_settings']);
+
+        $expected = [
+            ['value' => 1, 'label' => 'Not yet competent'],
+            ['value' => 2, 'label' => 'Competent'],
+        ];
+        $this->assertSame($expected, $response['rubric_settings']['scale']);
     }
 
     /**
@@ -303,6 +350,7 @@ final class assignments_test extends advanced_testcase {
         $this->assertArrayHasKey('rubric', $singlestructure->keys);
         $this->assertArrayHasKey('guide', $singlestructure->keys);
         $this->assertArrayHasKey('rubric_settings', $singlestructure->keys);
+        $this->assertArrayHasKey('scale', $singlestructure->keys['rubric_settings']->keys);
     }
 
     /**
