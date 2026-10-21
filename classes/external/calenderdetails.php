@@ -22,8 +22,8 @@ use context_user;
 use core_calendar\external\calendar_event_exporter;
 use core_calendar\local\event\container;
 use core_calendar\local\event\entities\event_interface;
-use external_function_parameters;
-use external_value;
+use core_external\external_function_parameters;
+use core_external\external_value;
 
 global $CFG;
 require_once($CFG->dirroot . '/calendar/externallib.php');
@@ -51,9 +51,7 @@ class calenderdetails extends baseapi {
     }
 
     /**
-     * Summary of execute_parameters
-     *
-     * @return external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return new external_function_parameters([
@@ -90,9 +88,7 @@ class calenderdetails extends baseapi {
     }
 
     /**
-     * Summary of single_structure
-     *
-     * @return \external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         return calendar_event_exporter::get_read_structure();
@@ -212,9 +208,7 @@ class calenderdetails extends baseapi {
     }
 
     /**
-     * Summary of get_unixtimestamp_fields
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public static function get_unixtimestamp_fields() {
         return ['timestart', 'timesort', 'timemodified'];

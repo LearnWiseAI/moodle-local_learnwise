@@ -41,9 +41,7 @@ class modules extends baseapi {
     }
 
     /**
-     * Returns the parameters required for the execute function.
-     *
-     * @return \external_function_parameters The parameters for the external function.
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters();
@@ -75,27 +73,21 @@ class modules extends baseapi {
     }
 
     /**
-     * Returns the structure for a single course module.
-     *
-     * @return \external_single_structure The structure describing a single course module.
+     * {@inheritdoc}
      */
     public static function single_structure() {
         return course_modules::single_structure();
     }
 
     /**
-     * Checks if the API is being called for a single operation.
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public static function is_singleoperation() {
         return true;
     }
 
     /**
-     * Returns the fields that should be treated as Unix timestamps.
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public static function get_unixtimestamp_fields() {
         return course_modules::get_unixtimestamp_fields();

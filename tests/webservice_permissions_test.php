@@ -40,7 +40,6 @@ final class webservice_permissions_test extends \advanced_testcase {
         global $CFG;
         parent::setUp();
         $this->resetAfterTest();
-        require_once($CFG->libdir . '/externallib.php');
         require_once($CFG->dirroot . '/webservice/rest/locallib.php');
         unassign_capability('webservice/rest:use', $CFG->defaultuserroleid, context_system::instance()->id);
         accesslib_clear_all_caches_for_unit_testing();

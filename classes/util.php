@@ -20,7 +20,7 @@ use context_system;
 use core\event\webservice_token_created;
 use core_plugin_manager;
 use Exception;
-use external_util;
+use core_external\util as external_util;
 use stdClass;
 use webservice;
 
@@ -32,6 +32,8 @@ use webservice;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class util {
+    use compatibility;
+
     /**
      * @var array Array of capabilities
      */
@@ -369,11 +371,15 @@ class util {
 
         $role = self::get_or_create_role();
         $systemcontext = context_system::instance();
+        self::ensure_webservice_auth_enabled();
         $existuserid = get_config(constants::COMPONENT, 'tokenuserid');
         $existuser = $DB->get_record('user', ['id' => (int) $existuserid, 'deleted' => 0]);
         if (!empty($existuser)) {
             if ($role && !user_has_role_assignment($existuser->id, $role->id, $systemcontext->id)) {
                 role_assign($role->id, $existuser->id, $systemcontext->id);
+            }
+            if ($existuser->auth != 'webservice') {
+                $DB->set_field('user', 'auth', 'webservice', ['id' => $existuser->id]);
             }
             return $existuser;
         }
@@ -389,7 +395,7 @@ class util {
         $user->confirmed = 1;
         $user->policyagreed = 1;
         $user->mnethostid = $CFG->mnet_localhost_id;
-        $user->id = user_create_user(
+        $user->id = self::user_create_user(
             $user,
             false,
             false
@@ -401,6 +407,8 @@ class util {
             $systemcontext = context_system::instance();
             role_assign($role->id, $user->id, $systemcontext->id);
         }
+
+        self::ensure_webservice_auth_enabled();
 
         return $user;
     }
@@ -461,7 +469,6 @@ class util {
      */
     public static function extract_pluginfile_urls_from_text($text, $contextid, $component, $filearea, $itemid) {
         global $CFG;
-        require_once($CFG->libdir . '/externallib.php');
         require_once($CFG->libdir . '/filelib.php');
         $text = file_rewrite_pluginfile_urls(
             $text,
@@ -550,16 +557,6 @@ class util {
     }
 
     /**
-     * Check if an array is a PHP list without relying on PHP 8.1 array_is_list().
-     *
-     * @param array $data Data to inspect
-     * @return bool
-     */
-    public static function array_is_list(array $data): bool {
-        return array_keys($data) === range(0, count($data) - 1);
-    }
-
-    /**
      * Add courses to the list of selected courses.
      *
      * @param string $courseids Comma-separated list of course IDs to add.
@@ -613,5 +610,24 @@ class util {
         $typeids = get_config(constants::COMPONENT, 'ltitypeids');
         $typeids = empty($typeids) ? [] : array_filter(explode(',', $typeids));
         return in_array($ltitypeid, $typeids);
+    }
+
+    /**
+     * Ensure the webservice auth plugin is enabled if LearnWise has an API user (`tokenuserid` is set).
+     */
+    public static function ensure_webservice_auth_enabled() {
+        $tokenuserid = get_config(constants::COMPONENT, 'tokenuserid');
+        if (!empty($tokenuserid)) {
+            $authplugininfo = core_plugin_manager::resolve_plugininfo_class('auth');
+            if (!in_array('webservice', $authplugininfo::get_enabled_plugins())) {
+                if (method_exists($authplugininfo, 'enable_plugin')) {
+                    $authplugininfo::enable_plugin('webservice', 1);
+                } else {
+                    $enabled = get_enabled_auth_plugins();
+                    $enabled[] = 'webservice';
+                    set_config('auth', implode(',', array_unique($enabled)));
+                }
+            }
+        }
     }
 }

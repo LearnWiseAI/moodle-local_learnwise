@@ -39,9 +39,7 @@ class users extends userdetails {
     }
 
     /**
-     * Returns the parameters for the execute function.
-     *
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         $structure = parent::execute_parameters();

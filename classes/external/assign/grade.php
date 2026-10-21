@@ -19,10 +19,10 @@ namespace local_learnwise\external\assign;
 use assign;
 use comment;
 use context_module;
-use external_function_parameters;
-use external_multiple_structure;
-use external_single_structure;
-use external_value;
+use core_external\external_function_parameters;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\external_value;
 use invalid_parameter_exception;
 use local_learnwise\external\baseapi;
 use stdClass;
@@ -61,9 +61,7 @@ class grade extends baseapi {
     }
 
     /**
-     * Returns the parameters for the execute function.
-     *
-     * @return external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return new external_function_parameters([
@@ -325,9 +323,7 @@ class grade extends baseapi {
     }
 
     /**
-     * Returns the structure of the response for the execute function.
-     *
-     * @return external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         return new external_single_structure([
@@ -356,9 +352,7 @@ class grade extends baseapi {
     }
 
     /**
-     * Indicate function response is singular
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public static function is_singleoperation() {
         return true;

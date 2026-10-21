@@ -18,9 +18,9 @@ namespace local_learnwise\external;
 
 use context_course;
 use context_module;
-use external_multiple_structure;
-use external_single_structure;
-use external_value;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\external_value;
 use local_learnwise\util;
 use stdClass;
 
@@ -46,8 +46,7 @@ class books extends baseapi {
     }
 
     /**
-     * Summary of execute_parameters
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -128,7 +127,7 @@ class books extends baseapi {
                 'course_id' => $cm->course,
             ];
 
-            $descriptiondata = external_format_text(
+            $descriptiondata = self::external_format_text(
                 $bookcm->intro,
                 $bookcm->introformat,
                 $context->id,
@@ -232,8 +231,7 @@ class books extends baseapi {
     }
 
     /**
-     * Summary of execute_returns
-     * @return external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $structure = new external_single_structure([

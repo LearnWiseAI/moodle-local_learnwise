@@ -22,8 +22,8 @@ use context_course;
 use context_user;
 use core_completion\progress;
 use core_course_category;
-use external_single_structure;
-use external_value;
+use core_external\external_single_structure;
+use core_external\external_value;
 use moodle_url;
 
 /**
@@ -49,9 +49,7 @@ class courses extends baseapi {
     }
 
     /**
-     * Returns the parameters for the execute function.
-     *
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters();
@@ -125,9 +123,7 @@ class courses extends baseapi {
     }
 
     /**
-     * Returns the structure of the response for the execute function.
-     *
-     * @return \external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $modulestructure = course_modules::execute_returns();
@@ -159,9 +155,7 @@ class courses extends baseapi {
     }
 
     /**
-     * Returns the fields that should be converted to unix timestamps.
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public static function get_unixtimestamp_fields() {
         return ['startdate', 'enddate', 'completiondate'];
