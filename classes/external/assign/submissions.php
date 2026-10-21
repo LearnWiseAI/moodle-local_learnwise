@@ -124,6 +124,7 @@ class submissions extends baseapi {
             }
             $submission->user_id = $submission->userid;
             $submission->workflow_state = $workflowstate;
+            $submission->grade = !empty($grades) ? $grades->grade : null;
             if (static::is_singleoperation()) {
                 if (has_capability('mod/assign:grade', $context)) {
                     self::get_info($assign, $submission);
@@ -272,6 +273,7 @@ class submissions extends baseapi {
             'body' => new external_value(PARAM_RAW, 'body', VALUE_OPTIONAL),
             'workflow_state' => new external_value(PARAM_ALPHA, 'status'),
             'user_id' => new external_value(PARAM_INT, 'userid'),
+            'grade' => new external_value(PARAM_FLOAT, 'grade'),
         ]);
         if (static::is_singleoperation()) {
             $singlestructure->keys['attachments'] = new external_multiple_structure(

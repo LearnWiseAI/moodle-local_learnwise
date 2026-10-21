@@ -21,6 +21,7 @@ use assign;
 use context_module;
 use local_learnwise\external\baseapi;
 use local_learnwise\external\timestampvalue;
+use local_learnwise\test_helpers;
 use moodle_exception;
 use require_login_exception;
 use stdClass;
@@ -42,6 +43,18 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class submissions_test extends advanced_testcase {
+    use test_helpers;
+
+    /**
+     * Regex of the path after api/r.php that submissions serves, for build_url().
+     *
+     * @return string
+     */
+    public static function url_regex(): string {
+        return '/^(me\/)?courses\/(?P<courseid>\d+)\/assignments\/(?P<assignmentid>\d+)\/' .
+            'submissions(?:\/(?P<id>\d+))?$/';
+    }
+
     /** @var stdClass */
     protected $course;
 
@@ -227,6 +240,103 @@ final class submissions_test extends advanced_testcase {
             get_string('onlygraded', 'local_learnwise'),
             $bystudent[$this->studenta->id]->workflow_state
         );
+    }
+
+    /**
+     * An ungraded submission reports a null or -1 grade as stored in assign_grades.
+     */
+    public function test_execute_reports_null_or_negative_one_grade_when_ungraded(): void {
+        global $DB;
+
+        // Student A has no assign_grades record -> returns null.
+        // Student B has an assign_grades record with -1 (ungraded in Moodle) -> returns -1.
+        $DB->insert_record('assign_grades', (object) [
+            'assignment' => $this->assign->id,
+            'userid' => $this->studentb->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'grader' => -1,
+            'grade' => -1.0,
+            'attemptnumber' => 0,
+        ]);
+
+        $this->setUser($this->teacher);
+        $result = $this->oauth_server_execute_request(
+            static::build_url([
+                'courseid' => $this->course->id,
+                'assignmentid' => $this->assign->cmid,
+            ])
+        );
+
+        $bystudent = [];
+        foreach ($result as $submission) {
+            $bystudent[$submission['user_id']] = $submission;
+        }
+
+        $this->assertNull($bystudent[$this->studenta->id]['grade']);
+        $this->assertEquals(-1.0, $bystudent[$this->studentb->id]['grade']);
+
+        // Test single read-back (GET /courses/{c}/assignments/{a}/submissions/{user}).
+        $singlea = $this->oauth_server_execute_request(
+            static::build_url([
+                'courseid' => $this->course->id,
+                'assignmentid' => $this->assign->cmid,
+                'id' => $this->studenta->id,
+            ])
+        );
+        $this->assertNull($singlea['grade']);
+
+        $singleb = $this->oauth_server_execute_request(
+            static::build_url([
+                'courseid' => $this->course->id,
+                'assignmentid' => $this->assign->cmid,
+                'id' => $this->studentb->id,
+            ])
+        );
+        $this->assertEquals(-1.0, $singleb['grade']);
+    }
+
+    /**
+     * A graded submission reports its grade to the caller.
+     */
+    public function test_execute_reports_grade_when_graded(): void {
+        global $DB;
+
+        $DB->insert_record('assign_grades', (object) [
+            'assignment' => $this->assign->id,
+            'userid' => $this->studenta->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'grader' => $this->teacher->id,
+            'grade' => 2.0,
+            'attemptnumber' => 0,
+        ]);
+
+        $this->setUser($this->teacher);
+        $result = $this->oauth_server_execute_request(
+            static::build_url([
+                'courseid' => $this->course->id,
+                'assignmentid' => $this->assign->cmid,
+            ])
+        );
+
+        $bystudent = [];
+        foreach ($result as $submission) {
+            $bystudent[$submission['user_id']] = $submission;
+        }
+
+        $this->assertEquals(2.0, $bystudent[$this->studenta->id]['grade']);
+        $this->assertNull($bystudent[$this->studentb->id]['grade']);
+
+        // Also test single-operation mode.
+        $single = $this->oauth_server_execute_request(
+            static::build_url([
+                'courseid' => $this->course->id,
+                'assignmentid' => $this->assign->cmid,
+                'id' => $this->studenta->id,
+            ])
+        );
+        $this->assertEquals(2.0, $single['grade']);
     }
 
     /**
@@ -422,7 +532,7 @@ final class submissions_test extends advanced_testcase {
     public function test_single_structure_matches_the_flavour(): void {
         $liststructure = submissions::single_structure();
 
-        $this->assertSame(['id', 'body', 'workflow_state', 'user_id'], array_keys($liststructure->keys));
+        $this->assertSame(['id', 'body', 'workflow_state', 'user_id', 'grade'], array_keys($liststructure->keys));
 
         submissions::set_id(1);
         $singlestructure = submissions::single_structure();
