@@ -614,4 +614,29 @@ class util {
         $typeids = empty($typeids) ? [] : array_filter(explode(',', $typeids));
         return in_array($ltitypeid, $typeids);
     }
+
+    /**
+     * get launch parameters
+     *
+     * @param string $assistantid
+     * @param int $courseid
+     * @return array
+     */
+    public static function get_launch_params($assistantid, $courseid) {
+        $assistantid = trim($assistantid);
+        if ($assistantid === '') {
+            return [];
+        }
+        $setting = get_config(constants::COMPONENT);
+        if (empty($setting->region)) {
+            $setting->region = constants::REGION;
+        }
+        return [
+            'host'        => self::get_remotehosturl(),
+            'chatsrc'     => self::get_ltitoolurl(),
+            'assistantid' => $assistantid,
+            'courseid'    => $courseid,
+            'region'      => $setting->region,
+        ];
+    }
 }

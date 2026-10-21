@@ -26,14 +26,14 @@
       "userid": "2",
       "userfullname": "Admin User",
       "useremail": "admin@test.com",
-      "remotehost": "https:\/\/aiden-sbx.learnwise.dev",
-      "chathost": "https:\/\/chat.sandbox.learnwise.dev"
+      "host": "https:\/\/aiden-sbx.learnwise.dev",
+      "chatsrc": "https:\/\/chat.sandbox.learnwise.dev"
     }
 }}
 <script>
     window.learnWiseSetup = {
-        host: {{#quote}}{{{ remotehost }}}{{/quote}},
-        chatSrc: {{#quote}}{{{ chathost }}}{{/quote}},
+        host: {{#quote}}{{{ host }}}{{/quote}},
+        chatSrc: {{#quote}}{{{ chatsrc }}}{{/quote}},
         assistantId: {{#quote}}{{{ assistantid }}}{{/quote}},
         courseId: {{#courseid}}{{#quote}}{{{ courseid }}}{{/quote}}{{/courseid}}{{^courseid}}null{{/courseid}},
         lmsUserId: {{#quote}}{{{ userid }}}{{/quote}},

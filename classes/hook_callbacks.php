@@ -131,17 +131,19 @@ JS;
             $sitecourseid = get_site()->id;
             $currentcourseid = $COURSE->id > $sitecourseid ? $COURSE->id : null;
             $showincoursecheck = !$showincoursesonly || in_array($currentcourseid, $configcourseids);
+            $params = util::get_launch_params($settings->assistantid, $currentcourseid);
+            $contextdata = [
+                'assistantid' => $params['assistantid'],
+                'courseid' => $params['courseid'],
+                'userid' => $USER->id,
+                'userfullname' => fullname($USER),
+                'useremail' => $USER->email,
+                'host' => $params['host'],
+                'chatsrc' => $params['chatsrc'],
+                'region' => $params['region'],
+            ];
             if (isset($currentcourseid) ? $showincoursecheck : !$showincoursesonly) {
-                $html .= $renderer->render_from_template('local_learnwise/assistantwidget', [
-                    'assistantid' => $settings->assistantid,
-                    'courseid' => $currentcourseid,
-                    'userid' => $USER->id,
-                    'userfullname' => fullname($USER),
-                    'useremail' => $USER->email,
-                    'remotehost' => util::get_remotehosturl(),
-                    'chathost' => util::get_ltitoolurl(),
-                    'region' => $settings->region,
-                ]);
+                $html .= $renderer->render_from_template('local_learnwise/assistantwidget', $contextdata);
             }
         }
         if (!empty($hook)) {
