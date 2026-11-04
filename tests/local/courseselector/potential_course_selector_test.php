@@ -153,23 +153,27 @@ final class potential_course_selector_test extends advanced_testcase {
     }
 
     /**
-     * With nothing configured, every visible course can be added and none can be removed.
+     * With nothing configured, every course can be added and none can be removed.
      */
     public function test_no_configured_courses(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        $course = $this->getDataGenerator()->create_course();
+        $generator = $this->getDataGenerator();
+        $course = $generator->create_course();
+        $hidden = $generator->create_course(['visible' => 0]);
 
         $selector = new potential_course_selector('potential_courses');
-        $this->assertSame([(int) $course->id], $this->found_ids($selector->find_courses('')));
+        $expected = [(int) $course->id, (int) $hidden->id];
+        sort($expected);
+        $this->assertSame($expected, $this->found_ids($selector->find_courses('')));
 
         $currentselector = new current_course_selector('current_courses');
         $this->assertSame([], $this->found_ids($currentselector->find_courses('')));
     }
 
     /**
-     * Hidden courses are never offered, whether or not they are configured.
+     * Hidden courses are offered whether or not they are configured.
      */
     public function test_hidden_courses_are_not_offered(): void {
         $this->resetAfterTest();
@@ -182,7 +186,7 @@ final class potential_course_selector_test extends advanced_testcase {
         set_config('courseids', $hidden->id, 'local_learnwise');
 
         $selector = new current_course_selector('current_courses');
-        $this->assertSame([], $this->found_ids($selector->find_courses('')));
+        $this->assertSame([(int) $hidden->id], $this->found_ids($selector->find_courses('')));
 
         $potentialselector = new potential_course_selector('potential_courses');
         $this->assertSame([(int) $visible->id], $this->found_ids($potentialselector->find_courses('')));
