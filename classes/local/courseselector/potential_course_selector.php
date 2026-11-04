@@ -40,7 +40,6 @@ class potential_course_selector extends course_selector_base {
         $sql = " FROM {course} c WHERE c.id > 1";
         $params = [];
 
-        $sql .= ' AND c.visible = 1 ';
         $order = " ORDER BY c.fullname ASC";
         if ($search) {
             $sql .= ' AND ' . $DB->sql_like('c.fullname', ':fullname', false);
