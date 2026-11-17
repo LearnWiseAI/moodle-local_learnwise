@@ -22,6 +22,8 @@ use external_description;
 use external_function_parameters;
 use external_multiple_structure;
 use external_single_structure;
+use external_value;
+use invalid_response_exception;
 use local_learnwise\constants;
 use moodle_url;
 use ReflectionClass;
@@ -59,6 +61,26 @@ abstract class baseapi extends external_api implements api_route {
      * @var array
      */
     public static $ids = [];
+
+    /**
+     * Response value types that clean_response() never corrects.
+     *
+     * Cleaning turns a non-numeric value into 0 for these types, which would replace wrong data
+     * with plausible-looking wrong data (an id of 0), so a mismatch still fails the response.
+     */
+    const STRICT_RESPONSE_TYPES = [PARAM_INT, PARAM_FLOAT, PARAM_BOOL];
+
+    /**
+     * Whether clean_returnvalue() is running inside clean_response().
+     *
+     * Core's external_api::clean_returnvalue() recurses through static::clean_returnvalue() for
+     * every nested value, so the mode cannot travel as an argument; clean_response() sets it for
+     * the duration of one call. Request parameters are cleaned with clean_returnvalue() directly
+     * and stay strict.
+     *
+     * @var bool
+     */
+    protected static $cleaningresponse = false;
 
     /**
      * Returns the base parameters for the API.
@@ -172,7 +194,48 @@ abstract class baseapi extends external_api implements api_route {
                 $response
             );
         }
+        if (
+            self::$cleaningresponse
+            && $description instanceof external_value
+            && is_scalar($response)
+            && !in_array($description->type, self::STRICT_RESPONSE_TYPES, true)
+        ) {
+            try {
+                return parent::clean_returnvalue($description, $response);
+            } catch (invalid_response_exception $e) {
+                // Core rejects a value whose cleaned form differs from it, e.g. an email with a
+                // trailing space or a name containing a tag, and one such value fails the whole
+                // response: for /me that blocks the user's LearnWise sign-in. Return the cleaned
+                // form instead, which is what the declared type permits.
+                debugging(
+                    "Corrected a response value that failed its declared type. {$e->debuginfo}",
+                    DEBUG_DEVELOPER
+                );
+                return clean_param($response, $description->type);
+            }
+        }
         return parent::clean_returnvalue($description, $response);
+    }
+
+    /**
+     * Cleans a route's response, correcting values that fail their declared type.
+     *
+     * Unlike clean_returnvalue(), a text-like value that its PARAM type would change is replaced by
+     * its cleaned form instead of failing the whole response with invalidresponse. Values of
+     * STRICT_RESPONSE_TYPES, missing required keys and wrongly shaped structures still fail.
+     *
+     * @param external_description $description The description of the response.
+     * @param mixed $response The response to clean.
+     * @return mixed The cleaned response.
+     */
+    public static function clean_response(external_description $description, $response) {
+        $previous = self::$cleaningresponse;
+        self::$cleaningresponse = true;
+        try {
+            return static::clean_returnvalue($description, $response);
+        } finally {
+            self::$cleaningresponse = $previous;
+        }
     }
 
     /**
