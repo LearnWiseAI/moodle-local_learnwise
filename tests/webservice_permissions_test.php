@@ -169,6 +169,64 @@ final class webservice_permissions_test extends \advanced_testcase {
     }
 
     /**
+     * /me answers a user whose stored profile fails its declared types, with the cleaned values.
+     */
+    public function test_me_with_profile_values_failing_their_types_returns_cleaned_values(): void {
+        global $DB;
+        $this->setup_service();
+        $user = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'email', 'learner@example.com ', ['id' => $user->id]);
+        $DB->set_field('user', 'lastname', 'Smith <b>Jr</b>', ['id' => $user->id]);
+        $server = $this->oauth_server($user->id);
+        $server->urlparts = ['me'];
+
+        $result = $this->execute_request($server);
+
+        $this->assertEquals($user->id, $result['id']);
+        $this->assertSame('learner@example.com', $result['email']);
+        $this->assertSame('Smith Jr', $result['lastname']);
+        $this->assertNotEmpty($this->getDebuggingMessages());
+        $this->resetDebugging();
+    }
+
+    /**
+     * An error response carries the exception's debuginfo only when the site has debugging on.
+     */
+    public function test_send_error_includes_debuginfo_only_with_debugging_on(): void {
+        global $CFG;
+        $error = new \invalid_response_exception('email => Invalid external api response');
+
+        $CFG->debug = 0;
+        $parameters = $this->send_error_parameters($error);
+        $this->assertSame('invalidresponse', $parameters['error_description']);
+        $this->assertArrayNotHasKey('debuginfo', $parameters);
+
+        $CFG->debug = DEBUG_DEVELOPER;
+        $parameters = $this->send_error_parameters($error);
+        $this->assertSame('invalidresponse', $parameters['error_description']);
+        $this->assertSame('email => Invalid external api response', $parameters['debuginfo']);
+    }
+
+    /**
+     * Send an error through a real server and return the response parameters.
+     *
+     * @param \Exception $error Exception to send.
+     * @return array
+     */
+    private function send_error_parameters(\Exception $error): array {
+        $server = $this->oauth_server(get_admin()->id);
+        ob_start();
+        try {
+            $this->stage($server, 'send_error', [$error]);
+        } finally {
+            ob_end_clean();
+        }
+        $property = new \ReflectionProperty($server, 'response');
+        $property->setAccessible(true);
+        return $property->getValue($server)->getParameters();
+    }
+
+    /**
      * Roles and API paths to verify.
      *
      * @return array
