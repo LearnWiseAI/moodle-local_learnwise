@@ -188,7 +188,9 @@ final class webservice_permissions_test extends \advanced_testcase {
 
         $this->assertEquals($user->id, $result['id']);
         $this->assertSame('learner@example.com', $result['email']);
-        $this->assertSame('Smith Jr', $result['lastname']);
+        // Before Moodle 4.4 lastname is returned only to users who can view full names; fullname
+        // always is, and is built from the stored lastname.
+        $this->assertSame("{$user->firstname} Smith Jr", $result['fullname']);
     }
 
     /**
