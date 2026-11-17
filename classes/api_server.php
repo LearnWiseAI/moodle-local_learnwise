@@ -529,7 +529,7 @@ class api_server extends webservice_base_server {
      * @return array
      */
     protected function clean_returns($returns) {
-        return baseapi::clean_returnvalue(
+        return baseapi::clean_response(
             $this->function->returns_desc,
             $returns
         );
@@ -547,6 +547,11 @@ class api_server extends webservice_base_server {
         } else {
             $errorcode = $ex instanceof moodle_exception ? $ex->errorcode : null;
             $this->response->setError(404, get_string('error', constants::COMPONENT), $errorcode);
+        }
+        // As core's REST server does, name the cause only to sites with debugging on: debuginfo
+        // can hold user data and internals. For invalidresponse it names the failing field.
+        if ($ex instanceof moodle_exception && !empty($ex->debuginfo) && debugging()) {
+            $this->response->setParameter('debuginfo', $ex->debuginfo);
         }
         $this->response->send($this->responseformat);
     }

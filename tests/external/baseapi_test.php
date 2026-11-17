@@ -270,6 +270,57 @@ final class baseapi_test extends advanced_testcase {
     }
 
     /**
+     * A response's text values that their type would change are returned cleaned, not rejected.
+     */
+    public function test_clean_response_with_text_values_failing_their_type_returns_cleaned_values(): void {
+        $this->resetAfterTest();
+
+        $description = new external_single_structure([
+            'email' => new external_value(PARAM_RAW_TRIMMED, 'Email'),
+            'lastname' => new external_value(PARAM_NOTAGS, 'Last name'),
+            'city' => new external_value(PARAM_TEXT, 'City'),
+        ]);
+        $cleaned = baseapi::clean_response($description, [
+            'email' => 'learner@example.com ',
+            'lastname' => 'Smith <b>Jr</b>',
+            'city' => 'Bulle',
+        ]);
+
+        $this->assertSame(
+            ['email' => 'learner@example.com', 'lastname' => 'Smith Jr', 'city' => 'Bulle'],
+            $cleaned
+        );
+        $this->assertDebuggingCalledCount(2);
+    }
+
+    /**
+     * A numeric response value that fails its type still fails the response.
+     */
+    public function test_clean_response_with_non_numeric_int_throws_invalid_response(): void {
+        $this->resetAfterTest();
+
+        $this->expectException(\invalid_response_exception::class);
+        baseapi::clean_response(new external_value(PARAM_INT, 'Id'), 'abc');
+    }
+
+    /**
+     * Request parameters stay strict, including after a response failed inside clean_response().
+     */
+    public function test_clean_returnvalue_after_failed_clean_response_rejects_text_failing_its_type(): void {
+        $this->resetAfterTest();
+
+        try {
+            baseapi::clean_response(new external_value(PARAM_INT, 'Id'), 'abc');
+            $this->fail('A non-numeric id must fail the response.');
+        } catch (\invalid_response_exception $e) {
+            $this->assertSame('invalidresponse', $e->errorcode);
+        }
+
+        $this->expectException(\invalid_response_exception::class);
+        baseapi::clean_returnvalue(new external_value(PARAM_RAW_TRIMMED, 'Email'), 'learner@example.com ');
+    }
+
+    /**
      * The external function name is derived from the class namespace, dropping "external".
      */
     public function test_function_name(): void {
