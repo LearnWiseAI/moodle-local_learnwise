@@ -87,7 +87,7 @@ class upsertlti extends baseapi {
      * @return stdClass The LTI type record
      */
     public static function upsert($params) {
-        global $CFG;
+        global $CFG, $DB;
         require_once($CFG->dirroot . '/mod/lti/lib.php');
         require_once($CFG->dirroot . '/mod/lti/locallib.php');
         $params = self::validate_parameters(
@@ -106,8 +106,19 @@ class upsertlti extends baseapi {
 
         if ($ltityperecord = util::get_lti_data($params['id'])) {
             $ltidata = lti_get_type_type_config($params['id']);
-            if (!empty($ltidata) && !empty($params['name'])) {
-                $ltidata->lti_typename = $params['name'];
+            if (!empty($ltidata)) {
+                if (!empty($params['name'])) {
+                    $ltidata->lti_typename = $params['name'];
+                }
+                if ($DB->get_manager()->table_exists('lti_types_categories')) {
+                    $catids = $DB->get_fieldset_select(
+                        'lti_types_categories',
+                        'categoryid',
+                        'typeid = :typeid',
+                        ['typeid' => $params['id']]
+                    );
+                    $ltidata->lti_coursecategories = implode(',', $catids);
+                }
             }
         }
 
