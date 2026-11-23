@@ -140,6 +140,44 @@ final class upsertlti_test extends advanced_testcase {
     }
 
     /**
+     * Updating a tool keeps the course categories it was restricted to.
+     */
+    public function test_execute_keeps_the_course_categories_on_update(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('lti_types_categories')) {
+            $this->markTestSkipped('LTI course category restrictions need Moodle 4.3 or later.');
+        }
+        $this->setAdminUser();
+        $created = upsertlti::execute(0, 'LearnWise', 'assistant123');
+        $category1 = $this->getDataGenerator()->create_category();
+        $category2 = $this->getDataGenerator()->create_category();
+        $DB->insert_record('lti_types_categories', ['typeid' => $created->id, 'categoryid' => $category1->id]);
+        $DB->insert_record('lti_types_categories', ['typeid' => $created->id, 'categoryid' => $category2->id]);
+
+        upsertlti::execute($created->id, 'LearnWise EU', 'assistant456');
+
+        $categoryids = $DB->get_fieldset_select('lti_types_categories', 'categoryid', 'typeid = ?', [$created->id]);
+        sort($categoryids);
+        $this->assertEquals([$category1->id, $category2->id], $categoryids);
+    }
+
+    /**
+     * Updating a tool without category restrictions does not add any.
+     */
+    public function test_execute_adds_no_course_categories_on_update(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('lti_types_categories')) {
+            $this->markTestSkipped('LTI course category restrictions need Moodle 4.3 or later.');
+        }
+        $this->setAdminUser();
+        $created = upsertlti::execute(0, 'LearnWise', 'assistant123');
+
+        upsertlti::execute($created->id, 'LearnWise EU', 'assistant456');
+
+        $this->assertFalse($DB->record_exists('lti_types_categories', ['typeid' => $created->id]));
+    }
+
+    /**
      * The tool is wired up against the environment's LearnWise endpoints.
      */
     public function test_execute_points_the_tool_at_the_configured_environment(): void {
