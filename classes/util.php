@@ -617,16 +617,14 @@ class util {
      */
     public static function ensure_webservice_auth_enabled() {
         $tokenuserid = get_config(constants::COMPONENT, 'tokenuserid');
-        if (!empty($tokenuserid)) {
+        if (!empty($tokenuserid) && !is_enabled_auth('webservice')) {
             $authplugininfo = core_plugin_manager::resolve_plugininfo_class('auth');
-            if (!in_array('webservice', $authplugininfo::get_enabled_plugins())) {
-                if (method_exists($authplugininfo, 'enable_plugin')) {
-                    $authplugininfo::enable_plugin('webservice', 1);
-                } else {
-                    $enabled = get_enabled_auth_plugins();
-                    $enabled[] = 'webservice';
-                    set_config('auth', implode(',', array_unique($enabled)));
-                }
+            if (method_exists($authplugininfo, 'enable_plugin')) {
+                $authplugininfo::enable_plugin('webservice', 1);
+            } else {
+                $enabled = get_enabled_auth_plugins();
+                $enabled[] = 'webservice';
+                set_config('auth', implode(',', array_unique($enabled)));
             }
         }
     }
