@@ -107,8 +107,9 @@ class upsertlti extends baseapi {
         if ($ltityperecord = util::get_lti_data($params['id'])) {
             $ltidata = lti_get_type_type_config($params['id']);
             if (!empty($ltidata)) {
-                if (!empty($params['name'])) {
-                    $ltidata->lti_typename = $params['name'];
+                $name = trim((string) $params['name']);
+                if ($name !== '') {
+                    $ltidata->lti_typename = $name;
                 }
                 if ($DB->get_manager()->table_exists('lti_types_categories')) {
                     $catids = $DB->get_fieldset_select(
@@ -127,7 +128,8 @@ class upsertlti extends baseapi {
             $ltidata->tab = '';
             $ltidata->typeid = 0;
             $ltidata->course = get_site()->id;
-            $ltidata->lti_typename = empty($params['name']) ? $params['name'] : 'Learnwise';
+            $name = trim((string) $params['name']);
+            $ltidata->lti_typename = $name === '' ? 'Learnwise' : $name;
             $ltidata->oldicon = $ltidata->lti_icon = $ltidata->lti_secureicon = '';
             $ltidata->lti_description = '';
             $ltidata->lti_coursevisible = LTI_COURSEVISIBLE_ACTIVITYCHOOSER;
@@ -145,7 +147,6 @@ class upsertlti extends baseapi {
             $ltidata->lti_organizationurl = '';
         }
 
-        $ltidata->lti_typename = $params['name'];
         $ltidata->lti_toolurl = $toolurl;
         $ltidata->lti_publickeyset = $ltiprefixurl . '/lti/jwks';
         $ltidata->lti_initiatelogin = $ltiprefixurl . '/lti';
