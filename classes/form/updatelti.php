@@ -66,6 +66,7 @@ class updatelti extends moodleform {
      */
     public function definition_after_data() {
         $mform = $this->_form;
+        $mform->applyFilter('name', 'trim');
         $id = $mform->exportValue('id');
         if ($id > 0) {
             $mform->getElement('submitbutton')->setValue(get_string('update'));

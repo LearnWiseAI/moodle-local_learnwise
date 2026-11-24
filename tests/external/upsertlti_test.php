@@ -102,6 +102,52 @@ final class upsertlti_test extends advanced_testcase {
     }
 
     /**
+     * An empty name defaults to Learnwise when creating a tool.
+     */
+    public function test_execute_defaults_an_empty_name_on_create(): void {
+        $this->setAdminUser();
+
+        $created = upsertlti::execute(0, '', 'assistant123');
+        $this->assertSame('Learnwise', $created->name);
+    }
+
+    /**
+     * An empty name on update leaves the existing tool name unchanged.
+     */
+    public function test_execute_keeps_existing_name_when_update_name_is_empty(): void {
+        $this->setAdminUser();
+        $created = upsertlti::execute(0, 'Existing tool name', 'assistant123');
+
+        $updated = upsertlti::execute($created->id, '', 'assistant456');
+
+        $this->assertSame('Existing tool name', $updated->name);
+    }
+
+    /**
+     * A non-empty name is trimmed when creating and updating a tool.
+     */
+    public function test_execute_trims_the_name_on_create_and_update(): void {
+        $this->setAdminUser();
+
+        $created = upsertlti::execute(0, '  LearnWise  ', 'assistant123');
+        $this->assertSame('LearnWise', $created->name);
+
+        $updated = upsertlti::execute($created->id, '  LearnWise EU  ', 'assistant456');
+        $this->assertSame('LearnWise EU', $updated->name);
+    }
+
+    /**
+     * A non-empty name that evaluates to false in PHP is not replaced by the default.
+     */
+    public function test_execute_keeps_zero_as_a_name(): void {
+        $this->setAdminUser();
+
+        $ltitype = upsertlti::execute(0, '0', 'assistant123');
+
+        $this->assertSame('0', $ltitype->name);
+    }
+
+    /**
      * A newly created tool is remembered in the plugin configuration.
      */
     public function test_execute_records_the_new_tool_id(): void {
