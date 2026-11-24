@@ -316,6 +316,83 @@ final class util_test extends advanced_testcase {
     }
 
     /**
+     * An existing API user whose auth was changed is switched back to webservice auth.
+     */
+    public function test_get_or_create_apiuser_restores_webservice_auth() {
+        global $DB;
+        $this->resetAfterTest();
+
+        $existing = $this->getDataGenerator()->create_user(['auth' => 'manual']);
+        set_config('tokenuserid', $existing->id, 'local_learnwise');
+
+        $user = util::get_or_create_apiuser();
+
+        $this->assertEquals($existing->id, $user->id, 'The configured API user should be reused');
+        $this->assertSame('webservice', $DB->get_field('user', 'auth', ['id' => $existing->id]));
+        $this->assertTrue(is_enabled_auth('webservice'));
+    }
+
+    /**
+     * Without an API user (tokenuserid unset) nothing changes: the webservice auth plugin
+     * stays disabled and no API user, role or tokenuserid is created (the upgrade step
+     * relies on this for sites that never set up LearnWise web services).
+     */
+    public function test_ensure_webservice_auth_enabled_noop_without_tokenuserid() {
+        global $CFG, $DB;
+        $this->resetAfterTest();
+
+        set_config('auth', 'email');
+        unset_config('tokenuserid', 'local_learnwise');
+        $this->assertFalse(is_enabled_auth('webservice'));
+
+        util::ensure_webservice_auth_enabled();
+
+        $this->assertFalse(is_enabled_auth('webservice'));
+        $this->assertSame('email', $CFG->auth);
+        $this->assertFalse(get_config('local_learnwise', 'tokenuserid'));
+        $this->assertFalse($DB->record_exists('user', ['username' => 'learnwise_assistant_user']));
+        $this->assertFalse($DB->record_exists('role', ['shortname' => 'learnwise_assistant']));
+    }
+
+    /**
+     * With an API user (tokenuserid set) the webservice auth plugin is enabled,
+     * keeping the auth plugins that were already enabled.
+     */
+    public function test_ensure_webservice_auth_enabled_with_tokenuserid() {
+        $this->resetAfterTest();
+
+        set_config('auth', 'email');
+        set_config('tokenuserid', 2, 'local_learnwise');
+        $this->assertFalse(is_enabled_auth('webservice'));
+
+        util::ensure_webservice_auth_enabled();
+
+        $this->assertTrue(is_enabled_auth('webservice'));
+        $this->assertTrue(is_enabled_auth('email'));
+    }
+
+    /**
+     * Running it twice is safe: webservice is listed once and nothing else changes.
+     */
+    public function test_ensure_webservice_auth_enabled_is_idempotent() {
+        global $CFG;
+        $this->resetAfterTest();
+
+        set_config('auth', 'email');
+        set_config('tokenuserid', 2, 'local_learnwise');
+
+        util::ensure_webservice_auth_enabled();
+        $first = $CFG->auth;
+        util::ensure_webservice_auth_enabled();
+
+        $this->assertSame($first, $CFG->auth);
+        $enabled = explode(',', $CFG->auth);
+        $this->assertCount(1, array_keys($enabled, 'webservice'));
+        $this->assertContains('email', $enabled);
+        $this->assertTrue(is_enabled_auth('webservice'));
+    }
+
+    /**
      * The plugin version info is resolved for the plugin's own component by default.
      */
     public function test_get_plugin_versioninfo(): void {
