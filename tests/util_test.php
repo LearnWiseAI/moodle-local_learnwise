@@ -318,7 +318,7 @@ final class util_test extends advanced_testcase {
     /**
      * An existing API user whose auth was changed is switched back to webservice auth.
      */
-    public function test_get_or_create_apiuser_restores_webservice_auth() {
+    public function test_get_or_create_apiuser_restores_webservice_auth(): void {
         global $DB;
         $this->resetAfterTest();
 
@@ -337,7 +337,7 @@ final class util_test extends advanced_testcase {
      * stays disabled and no API user, role or tokenuserid is created (the upgrade step
      * relies on this for sites that never set up LearnWise web services).
      */
-    public function test_ensure_webservice_auth_enabled_noop_without_tokenuserid() {
+    public function test_ensure_webservice_auth_enabled_noop_without_tokenuserid(): void {
         global $CFG, $DB;
         $this->resetAfterTest();
 
@@ -358,7 +358,7 @@ final class util_test extends advanced_testcase {
      * With an API user (tokenuserid set) the webservice auth plugin is enabled,
      * keeping the auth plugins that were already enabled.
      */
-    public function test_ensure_webservice_auth_enabled_with_tokenuserid() {
+    public function test_ensure_webservice_auth_enabled_with_tokenuserid(): void {
         $this->resetAfterTest();
 
         set_config('auth', 'email');
@@ -374,7 +374,7 @@ final class util_test extends advanced_testcase {
     /**
      * Running it twice is safe: webservice is listed once and nothing else changes.
      */
-    public function test_ensure_webservice_auth_enabled_is_idempotent() {
+    public function test_ensure_webservice_auth_enabled_is_idempotent(): void {
         global $CFG;
         $this->resetAfterTest();
 

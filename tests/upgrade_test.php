@@ -47,7 +47,7 @@ final class upgrade_test extends advanced_testcase {
      * A site that never set up LearnWise web services is left alone: no API user, role or
      * tokenuserid is created and the webservice auth plugin stays disabled.
      */
-    public function test_upgrade_without_apiuser_changes_nothing() {
+    public function test_upgrade_without_apiuser_changes_nothing(): void {
         global $CFG, $DB;
         $this->resetAfterTest();
 
@@ -72,7 +72,7 @@ final class upgrade_test extends advanced_testcase {
     /**
      * An existing API user gets webservice auth back and the webservice auth plugin is enabled.
      */
-    public function test_upgrade_with_apiuser_restores_webservice_auth() {
+    public function test_upgrade_with_apiuser_restores_webservice_auth(): void {
         global $DB;
         $this->resetAfterTest();
 
@@ -92,7 +92,7 @@ final class upgrade_test extends advanced_testcase {
     /**
      * A tokenuserid pointing at a deleted user does not cause the user to be recreated or changed.
      */
-    public function test_upgrade_with_deleted_apiuser_does_not_recreate_it() {
+    public function test_upgrade_with_deleted_apiuser_does_not_recreate_it(): void {
         global $DB;
         $this->resetAfterTest();
 
