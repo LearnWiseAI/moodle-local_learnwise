@@ -265,11 +265,11 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026092500, 'local', 'learnwise');
     }
 
-    if ($oldversion < 2026102100) {
+    if ($oldversion < 2026112400) {
         util::get_or_create_apiuser();
 
         // Learnwise savepoint reached.
-        upgrade_plugin_savepoint(true, 2026102100, 'local', 'learnwise');
+        upgrade_plugin_savepoint(true, 2026112400, 'local', 'learnwise');
     }
 
     return true;
