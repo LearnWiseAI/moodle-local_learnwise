@@ -208,6 +208,30 @@ final class upsertlti_test extends advanced_testcase {
     }
 
     /**
+     * Updating a tool without a name keeps both its name and its course categories.
+     */
+    public function test_execute_keeps_the_name_and_course_categories_when_name_is_omitted(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('lti_types_categories')) {
+            $this->markTestSkipped('LTI course category restrictions need Moodle 4.3 or later.');
+        }
+        $this->setAdminUser();
+        $created = upsertlti::execute(0, 'Existing tool name', 'assistant123');
+        $category1 = $this->getDataGenerator()->create_category();
+        $category2 = $this->getDataGenerator()->create_category();
+        $DB->insert_record('lti_types_categories', ['typeid' => $created->id, 'categoryid' => $category1->id]);
+        $DB->insert_record('lti_types_categories', ['typeid' => $created->id, 'categoryid' => $category2->id]);
+
+        $updated = upsertlti::execute($created->id, null, 'assistant456');
+
+        $this->assertSame('Existing tool name', $updated->name);
+        $this->assertSame('assistant456', $updated->assistantid);
+        $categoryids = $DB->get_fieldset_select('lti_types_categories', 'categoryid', 'typeid = ?', [$created->id]);
+        sort($categoryids);
+        $this->assertEquals([$category1->id, $category2->id], $categoryids);
+    }
+
+    /**
      * Updating a tool without category restrictions does not add any.
      */
     public function test_execute_adds_no_course_categories_on_update(): void {
