@@ -25,9 +25,9 @@
 namespace local_learnwise\external;
 
 use context_system;
-use external_function_parameters;
-use external_single_structure;
-use external_value;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
 use invalid_parameter_exception;
 use local_learnwise\constants;
 use local_learnwise\util;
@@ -48,9 +48,7 @@ class deletelti extends baseapi {
     }
 
     /**
-     * Describes the parameters for local_learnwise_deletelti
-     *
-     * @return external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return new external_function_parameters([
@@ -113,18 +111,14 @@ class deletelti extends baseapi {
     }
 
     /**
-     * Define api supports single operation
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public static function is_singleoperation() {
         return true;
     }
 
     /**
-     * Returns the structure for a single operation.
-     *
-     * @return external_single_structure The structure for the API response.
+     * {@inheritdoc}
      */
     public static function single_structure() {
         return new external_single_structure([

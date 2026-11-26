@@ -18,7 +18,7 @@ namespace local_learnwise\external;
 
 use advanced_testcase;
 use context_module;
-use external_multiple_structure;
+use core_external\external_multiple_structure;
 use moodle_exception;
 
 /**

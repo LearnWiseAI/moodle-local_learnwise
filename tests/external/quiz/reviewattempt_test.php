@@ -18,8 +18,8 @@ namespace local_learnwise\external\quiz;
 
 use advanced_testcase;
 use context_module;
-use external_multiple_structure;
-use external_single_structure;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
 use local_learnwise\external\baseapi;
 use moodle_exception;
 use question_engine;

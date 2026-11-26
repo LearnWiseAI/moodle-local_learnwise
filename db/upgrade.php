@@ -265,5 +265,19 @@ function xmldb_local_learnwise_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026092500, 'local', 'learnwise');
     }
 
+    if ($oldversion < 2026112400) {
+        util::ensure_webservice_auth_enabled();
+
+        // If api user already created then update it's auth type to work in Moodle 5.3 and later versions.
+        $existuserid = get_config(constants::COMPONENT, 'tokenuserid');
+        $existuser = $DB->get_record('user', ['id' => (int) $existuserid, 'deleted' => 0]);
+        if (!empty($existuser) && $existuser->auth != 'webservice') {
+            $DB->set_field('user', 'auth', 'webservice', ['id' => $existuser->id]);
+        }
+
+        // Learnwise savepoint reached.
+        upgrade_plugin_savepoint(true, 2026112400, 'local', 'learnwise');
+    }
+
     return true;
 }

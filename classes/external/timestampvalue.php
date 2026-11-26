@@ -16,6 +16,12 @@
 
 namespace local_learnwise\external;
 
+use core_external\external_value;
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot . '/local/learnwise/classes/compatibility.php');
+
 /**
  * Class external_value
  *
@@ -23,7 +29,7 @@ namespace local_learnwise\external;
  * @copyright  2025 LearnWise <help@learnwise.ai>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class timestampvalue extends \external_value {
+class timestampvalue extends external_value {
     /**
      * Summary of isunixstamp
      * @var bool
@@ -33,10 +39,10 @@ class timestampvalue extends \external_value {
     /**
      * Create a new instance of timestampvalue.
      *
-     * @param \external_value $extenalvalue The external value to base this on.
+     * @param external_value $extenalvalue The external value to base this on.
      * @return timestampvalue
      */
-    public static function make(\external_value $extenalvalue) {
+    public static function make(external_value $extenalvalue) {
         return new timestampvalue(
             PARAM_TEXT,
             $extenalvalue->desc,

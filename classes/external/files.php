@@ -18,8 +18,8 @@ namespace local_learnwise\external;
 
 use context_system;
 use core_useragent;
-use external_single_structure;
-use external_value;
+use core_external\external_single_structure;
+use core_external\external_value;
 use local_learnwise\constants;
 use moodle_url;
 use stdClass;

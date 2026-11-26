@@ -17,7 +17,7 @@
 namespace local_learnwise\external;
 
 use advanced_testcase;
-use external_value;
+use core_external\external_value;
 
 /**
  * Tests for the timestamp flavoured external value.
@@ -29,14 +29,6 @@ use external_value;
  * @runTestsInSeparateProcesses
  */
 final class timestampvalue_test extends advanced_testcase {
-    /**
-     * Make the legacy external API class aliases available.
-     */
-    protected function setUp(): void {
-        global $CFG;
-        parent::setUp();
-        require_once($CFG->libdir . '/externallib.php');
-    }
     /**
      * A timestamp value carries the marker the response cleaner looks for.
      */
@@ -60,6 +52,8 @@ final class timestampvalue_test extends advanced_testcase {
      * make() carries over the description and the optionality of the source value.
      */
     public function test_make_preserves_the_source_description(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/learnwise/classes/compatibility.php');
         $source = new external_value(PARAM_INT, 'time the post was created', VALUE_OPTIONAL, 12345, NULL_ALLOWED);
 
         $value = timestampvalue::make($source);

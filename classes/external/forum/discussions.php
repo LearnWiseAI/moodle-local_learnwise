@@ -17,9 +17,9 @@
 namespace local_learnwise\external\forum;
 
 use context_module;
-use external_multiple_structure;
-use external_single_structure;
-use external_value;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\external_value;
 use local_learnwise\external\baseapi;
 use local_learnwise\external\timestampvalue;
 
@@ -46,9 +46,7 @@ class discussions extends baseapi {
     }
 
     /**
-     * Returns the parameters for the execute function.
-     *
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -126,8 +124,7 @@ class discussions extends baseapi {
 
 
     /**
-     * Summary of single_structure
-     * @return external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $discussionstructure = new external_single_structure([
@@ -146,7 +143,7 @@ class discussions extends baseapi {
     /**
      * Returns the structure of a single post.
      *
-     * @return \external_single_structure
+     * @return external_single_structure
      */
     public static function post_structure() {
         $structure = new external_single_structure([

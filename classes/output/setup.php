@@ -192,10 +192,9 @@ class setup implements renderable, templatable {
     }
 
     /**
-     * Exports data for use in a mustache template.
-     *
-     * @param renderer_base $output The renderer to be used for output.
-     * @return stdClass Data to be used by the template.
+     * Export for template.
+     * @param renderer_base $output The renderer instance.
+     * @return stdClass The template data.
      */
     public function export_for_template(renderer_base $output) {
         $env = $this->formvalues->environment;
@@ -237,6 +236,8 @@ class setup implements renderable, templatable {
     public function save(stdClass $postdata) {
         $plugin = constants::COMPONENT;
         $oldconfig = get_config($plugin);
+        $oldconfig->environment = $oldconfig->environment ?? util::get_env();
+        $oldconfig->region = $oldconfig->region ?? constants::REGION;
         set_config('assistantid', $postdata->floatingButtonAssistantId, $plugin);
         set_config('showassistantwidget', $postdata->floatingButtonStatus, $plugin);
         set_config('webservices', $postdata->webServicesStatus, $plugin);

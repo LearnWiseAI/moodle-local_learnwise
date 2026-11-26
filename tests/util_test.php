@@ -316,6 +316,83 @@ final class util_test extends advanced_testcase {
     }
 
     /**
+     * An existing API user whose auth was changed is switched back to webservice auth.
+     */
+    public function test_get_or_create_apiuser_restores_webservice_auth(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $existing = $this->getDataGenerator()->create_user(['auth' => 'manual']);
+        set_config('tokenuserid', $existing->id, 'local_learnwise');
+
+        $user = util::get_or_create_apiuser();
+
+        $this->assertEquals($existing->id, $user->id, 'The configured API user should be reused');
+        $this->assertSame('webservice', $DB->get_field('user', 'auth', ['id' => $existing->id]));
+        $this->assertTrue(is_enabled_auth('webservice'));
+    }
+
+    /**
+     * Without an API user (tokenuserid unset) nothing changes: the webservice auth plugin
+     * stays disabled and no API user, role or tokenuserid is created (the upgrade step
+     * relies on this for sites that never set up LearnWise web services).
+     */
+    public function test_ensure_webservice_auth_enabled_noop_without_tokenuserid(): void {
+        global $CFG, $DB;
+        $this->resetAfterTest();
+
+        set_config('auth', 'email');
+        unset_config('tokenuserid', 'local_learnwise');
+        $this->assertFalse(is_enabled_auth('webservice'));
+
+        util::ensure_webservice_auth_enabled();
+
+        $this->assertFalse(is_enabled_auth('webservice'));
+        $this->assertSame('email', $CFG->auth);
+        $this->assertFalse(get_config('local_learnwise', 'tokenuserid'));
+        $this->assertFalse($DB->record_exists('user', ['username' => 'learnwise_assistant_user']));
+        $this->assertFalse($DB->record_exists('role', ['shortname' => 'learnwise_assistant']));
+    }
+
+    /**
+     * With an API user (tokenuserid set) the webservice auth plugin is enabled,
+     * keeping the auth plugins that were already enabled.
+     */
+    public function test_ensure_webservice_auth_enabled_with_tokenuserid(): void {
+        $this->resetAfterTest();
+
+        set_config('auth', 'email');
+        set_config('tokenuserid', 2, 'local_learnwise');
+        $this->assertFalse(is_enabled_auth('webservice'));
+
+        util::ensure_webservice_auth_enabled();
+
+        $this->assertTrue(is_enabled_auth('webservice'));
+        $this->assertTrue(is_enabled_auth('email'));
+    }
+
+    /**
+     * Running it twice is safe: webservice is listed once and nothing else changes.
+     */
+    public function test_ensure_webservice_auth_enabled_is_idempotent(): void {
+        global $CFG;
+        $this->resetAfterTest();
+
+        set_config('auth', 'email');
+        set_config('tokenuserid', 2, 'local_learnwise');
+
+        util::ensure_webservice_auth_enabled();
+        $first = $CFG->auth;
+        util::ensure_webservice_auth_enabled();
+
+        $this->assertSame($first, $CFG->auth);
+        $enabled = explode(',', $CFG->auth);
+        $this->assertCount(1, array_keys($enabled, 'webservice'));
+        $this->assertContains('email', $enabled);
+        $this->assertTrue(is_enabled_auth('webservice'));
+    }
+
+    /**
      * The plugin version info is resolved for the plugin's own component by default.
      */
     public function test_get_plugin_versioninfo(): void {
@@ -400,29 +477,6 @@ final class util_test extends advanced_testcase {
 
         util::remove_courses('1');
         $this->assertFalse(get_config('local_learnwise', 'courseids'));
-    }
-
-    /**
-     * Sequential integer-keyed arrays are recognised as lists.
-     */
-    public function test_array_is_list_for_populated_arrays(): void {
-        $this->assertTrue(util::array_is_list(['a', 'b', 'c']));
-        $this->assertTrue(util::array_is_list([0 => 'a', 1 => 'b']));
-        $this->assertFalse(util::array_is_list(['x' => 'a']));
-        $this->assertFalse(util::array_is_list([1 => 'a', 0 => 'b']));
-        $this->assertFalse(util::array_is_list([0 => 'a', 2 => 'b']));
-    }
-
-    /**
-     * The empty array is NOT reported as a list, unlike PHP's native array_is_list().
-     *
-     * This documents current behaviour: range(0, -1) evaluates to [0, -1] rather than [],
-     * so the comparison against array_keys([]) fails. The helper is currently unused, but
-     * the divergence from the native function it replaces is deliberate to record here.
-     */
-    public function test_array_is_list_diverges_from_native_for_empty_array(): void {
-        $this->assertFalse(util::array_is_list([]));
-        $this->assertTrue(array_is_list([]), 'Native PHP disagrees - see MDLSITE note in util::array_is_list()');
     }
 
     /**

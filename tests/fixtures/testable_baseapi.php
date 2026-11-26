@@ -24,9 +24,8 @@
 
 namespace local_learnwise\external;
 
-use external_function_parameters;
-use external_single_structure;
-use external_value;
+use core_external\external_single_structure;
+use core_external\external_value;
 
 /**
  * Concrete baseapi subclass used to exercise the shared base behaviour.

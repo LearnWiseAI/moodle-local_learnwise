@@ -16,8 +16,8 @@
 
 namespace local_learnwise;
 
-use external_multiple_structure;
-use external_value;
+use core_external\external_multiple_structure;
+use core_external\external_value;
 use invalid_parameter_exception;
 use local_learnwise\local\OAuth2\Request;
 use local_learnwise\external\assign\grade;
@@ -59,6 +59,8 @@ require_once($CFG->dirroot . '/webservice/lib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class api_server extends webservice_base_server {
+    use compatibility;
+
     /**
      * The LearnWise server instance.
      *

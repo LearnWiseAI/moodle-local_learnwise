@@ -19,10 +19,10 @@ namespace local_learnwise\external;
 use assign;
 use context_course;
 use context_module;
-use external_multiple_structure;
-use external_single_structure;
-use external_util;
-use external_value;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\util as external_util;
+use core_external\external_value;
 use local_learnwise\util;
 
 /**
@@ -47,8 +47,7 @@ class assignments extends baseapi {
     }
 
     /**
-     * Summary of execute_parameters
-     * @return \external_function_parameters
+     * {@inheritdoc}
      */
     public static function execute_parameters() {
         return static::base_parameters([
@@ -284,8 +283,7 @@ class assignments extends baseapi {
     }
 
     /**
-     * Summary of execute_returns
-     * @return external_single_structure
+     * {@inheritdoc}
      */
     public static function single_structure() {
         $structure = new external_single_structure([
@@ -356,8 +354,7 @@ class assignments extends baseapi {
     }
 
     /**
-     * Summary of get_unixtimestamp_fields
-     * @return array
+     * {@inheritdoc}
      */
     public static function get_unixtimestamp_fields() {
         return ['timedue', 'opendate', 'closedate'];
